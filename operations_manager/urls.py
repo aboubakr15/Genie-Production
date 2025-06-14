@@ -3,9 +3,10 @@ from .views import (assign_lead_to_leader, done_ready_shows, index, manage_leads
     sheet_detail, unassigned_sales_shows, view_agent_done_shows, view_sales_agents)
 
 from .views import (assign_sales_show, ready_shows_view, cut_ready_show_into_sales_shows, price_requests_view,view_ready_show,
-                    cut_ready_shows, archived_sales_shows, assigned_sales_shows, update_price_requests, archive_sales_show_bulk,
-                    manage_referrals, notifications, archive_sales_show, unarchive_sales_show, archive_ready_show,
-                    unarchive_ready_show, archived_ready_shows, unassigned_x_sales_shows, archive_ready_show_bulk)
+                    cut_ready_shows, archived_sales_shows, assigned_sales_shows, update_price_requests,
+                    manage_referrals, notifications, archive_sales_show, unarchive_sales_show, archive_ready_show, 
+                    reassign_sales_show, unarchive_ready_show, archived_ready_shows, unassigned_x_sales_shows,
+                    archive_ready_show_bulk, reassigned_sales_shows, archive_sales_show_bulk)
 
 from main.views import (lead_details, auto_fill, edit_lead, delete_lead, add_lead, import_folder,
                         upload_sheet, manage_filter_words, delete_filter_word)
@@ -82,4 +83,10 @@ urlpatterns = [
     path('upload-X/', import_folder, name='upload-x'),
 
     path('ready-show/<int:show_id>/', view_ready_show, name='view-ready-show'),
+
+    path('reassign-show/', reassign_sales_show, name='reassign-sales-show'),
+
+    path('reassigned-unassigned-shows/', reassigned_sales_shows, name='reassigned-shows'),
+
+
 ]
