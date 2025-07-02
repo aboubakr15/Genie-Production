@@ -4,16 +4,6 @@
 <main>
     <div class="container">
 
-        <!-- Tabs for filtering by label -->
-        <ul class="nav nav-tabs">
-            {% for label in labels %}
-            <li class="nav-item">
-                <a class="nav-link {% if active_label == label %}active{% endif %}"
-                   href="{% url 'operations_manager:unassigned-sales-shows' label %}">{{ label }}</a>
-            </li>
-            {% endfor %}
-        </ul>
-
         <!-- Search form -->
         <form method="GET" class="mt-3 mb-3">
             <div class="input-group">
@@ -36,11 +26,6 @@
                     {% endfor %}
                 </select>
             </form>
-
-            <form method="POST" action="{% url 'operations_manager:archive_sales_show_bulk' %}" id="archiveForm" class="d-inline">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger">Archive Selected</button>
-            </form>
         </div>
 
         <!-- Table outside forms so checkboxes are accessible to both -->
@@ -52,8 +37,6 @@
                     </th>
                     <th scope="col">Show Name</th>
                     <th scope="col">Leads Count</th>
-                    <th scope="col">New Leads</th>
-                    <th scope="col">(EST, CEN, PAC)</th>
                 </tr>
             </thead>
             <tbody>
@@ -68,12 +51,6 @@
                         </a>
                     </td>
                     <td>{{ show.leads.count }}</td>
-                    <td>{{ blue_red_leads_counts|get_item:show.id|default:0 }}</td>
-                    <td>
-                        {% with counts=timezone_counts|get_item:show.id %}
-                        ({{ counts.est|default:0 }}, {{ counts.cen|default:0 }}, {{ counts.pac|default:0 }})
-                        {% endwith %}
-                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -160,12 +137,6 @@
             }
         });
 
-        // Archive form
-        document.getElementById('archiveForm').addEventListener('submit', function (e) {
-            if (!prepareFormSubmission(this)) {
-                e.preventDefault();
-            }
-        });
     });
 </script>
 {% endblock %}

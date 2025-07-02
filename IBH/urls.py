@@ -30,6 +30,7 @@ urlpatterns = [
     path("leads/", include("leads.urls", namespace="leads")),
     path("sales/", include("sales.urls", namespace="sales")),
     path("admin/", admin.site.urls),
+    path("ai_agent/", include("ai_agent.urls", namespace="ai_agent")),
 ]
 
 if settings.DEBUG:

@@ -25,6 +25,7 @@ from django.db.models import Sum, Q
 from django.contrib.auth.models import User, Group
 from django.core.paginator import Paginator
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 import json, pytz
 import random, string
 from concurrent.futures import ThreadPoolExecutor
@@ -790,28 +791,63 @@ def delete_filter_word(request, word_id):
     return redirect(redirect_name)  # Redirect to the same page
 
 
-
 @csrf_exempt
+@login_required
+@require_http_methods(["POST"])
 def log_inactivity(request):
-    if request.method == 'POST':
-        if lambda user: is_in_group(user, "sales_team_leader") or is_in_group(user, "sales"):
+    try:
+        # Check if user is authenticated
+        if not request.user.is_authenticated:
+            return JsonResponse({"status": "failure", "message": "User not authenticated"}, status=401)
+        
+        user = request.user
+        
+        # Check if user is in the required groups
+        if not user.groups.filter(name__in=['sales', 'sales_team_leader']).exists():
+            return JsonResponse({"status": "failure", "message": "User not authorized"}, status=403)
+        
+        # Parse JSON data
+        try:
             data = json.loads(request.body)
             message = data.get('message', 'User inactive')
-            user = request.user
-
-
-        if user.groups.filter(name__in=['sales', 'sales_team_leader']).exists():
-            # Log the message into SalesLog
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON decode error: {e}")
+            return JsonResponse({"status": "failure", "message": "Invalid JSON data"}, status=400)
+        except Exception as e:
+            logger.error(f"Error parsing request body: {e}")
+            return JsonResponse({"status": "failure", "message": "Error parsing request data"}, status=400)
+        
+        # Log the inactivity
+        try:
+            # Create SalesLog entry
             SalesLog.objects.create(
                 message=message,
                 date=timezone.now(),
                 user=user
             )
-            Log.objects.create(message=f"{request.user.username} was Inactive for 5 minutes")
+            
+            # Create general Log entry
+            Log.objects.create(
+                message=f"{user.username} was inactive for 5 minutes"
+            )
+            
+            logger.info(f"Inactivity logged for user: {user.username}")
+            
+            return JsonResponse({
+                "status": "success", 
+                "message": "Inactivity logged successfully",
+                "user": user.username,
+                "timestamp": timezone.now().isoformat()
+            })
+            
+        except Exception as e:
+            logger.error(f"Database error while logging inactivity: {e}")
+            return JsonResponse({"status": "failure", "message": "Database error"}, status=500)
+            
+    except Exception as e:
+        logger.error(f"Unexpected error in log_inactivity: {e}")
+        return JsonResponse({"status": "failure", "message": "Server error"}, status=500)
 
-
-            return JsonResponse({"status": "success", "message": "Inactivity logged successfully"})
-    return JsonResponse({"status": "failure", "message": "Invalid request"}, status=400)
 
 
 @user_passes_test(lambda user: is_in_group(user, "sales_team_leader") or is_in_group(user, "sales_manager"))

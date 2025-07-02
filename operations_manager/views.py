@@ -13,6 +13,8 @@ from django.db.models import OuterRef, Subquery, Q
 from django.utils import timezone
 from .forms import PriceRequestForm
 from django.http import HttpResponseRedirect
+from django.db import transaction
+from django.views.decorators.http import require_POST
 
 
 logger = logging.getLogger('custom')
@@ -420,7 +422,7 @@ def unassigned_sales_shows(request, label='EHUB'):
 
     # Filter unassigned shows based on the label and search term
     unassigned_shows = SalesShow.objects.filter(
-        Agent__isnull=True, label=label, is_archived=False, is_x=False
+        Agent__isnull=True, label=label, is_archived=False, is_x=False, is_reassigned=False
     )
 
     if search_term:
@@ -429,6 +431,7 @@ def unassigned_sales_shows(request, label='EHUB'):
         )
 
     unassigned_shows = unassigned_shows.order_by("-id")
+    labels = ['EHUB', 'EHUB2', 'EP', 'UK', 'Asia', 'Europe']
 
     # Pagination
     paginator = Paginator(unassigned_shows, 60)
@@ -469,6 +472,7 @@ def unassigned_sales_shows(request, label='EHUB'):
         'blue_red_leads_counts': blue_red_leads_counts,
         'timezone_counts': timezone_counts,
         'search_term': search_term,
+        'labels': labels,
     }
 
     return render(request, 'operations_manager/unassigned_sales_shows.html', context)
@@ -482,7 +486,7 @@ def unassigned_x_sales_shows(request, label='EHUB'):
 
     # Filter unassigned shows based on the label and search term
     unassigned_shows = SalesShow.objects.filter(
-        Agent__isnull=True, is_archived=False, is_x=True
+        Agent__isnull=True, is_archived=False, is_x=True, is_reassigned=False
     )
 
     if search_term:
@@ -542,7 +546,7 @@ def assigned_sales_shows(request, label='EHUB'):
     assigned_shows = SalesShow.objects.filter(
         Agent__isnull=False,
         label=label,
-        is_archived=False
+        is_archived=False, is_reassigned=False
     ).filter(
         Q(name__icontains=search_query) | Q(Agent__username__icontains=search_query)
     ).order_by("is_done", "-id")
@@ -595,7 +599,7 @@ def view_agent_done_shows(request, agent_id):
         messages.success(request, f'Show "{show.name}" has been recycled.')
 
     # Fetch all done shows for the agent
-    shows = SalesShow.objects.filter(is_done=True, Agent=agent, is_recycled=False, is_done_rec=False)
+    shows = SalesShow.objects.filter(is_done=True, Agent=agent, is_recycled=False, is_done_rec=False, is_reassigned=False)
     
     context = {
         'agent': agent,
@@ -709,13 +713,34 @@ def archive_sales_show(request, show_id):
 
 def archive_sales_show_bulk(request):
     if request.method == 'POST':
-        selected_shows = request.POST.get('selected_shows', '').split(',')
-        for show_id in selected_shows:
-            if show_id.isdigit():
-                show = get_object_or_404(SalesShow, id=int(show_id))
-                show.is_archived = True
-                show.save()
-                
+        select_all = request.POST.get('select_all') == 'true'
+        shows_to_archive = []
+
+        if select_all:
+            # Get filters from query params
+            label = request.GET.get('label', 'EHUB')
+            search_term = request.GET.get('search', '')
+
+            # Reconstruct queryset based on filters
+            shows_to_archive = SalesShow.objects.filter(
+                Agent__isnull=True,
+                is_archived=False,
+                is_x=False,
+                label=label
+            )
+
+            if search_term:
+                shows_to_archive = shows_to_archive.filter(name__icontains=search_term)
+
+        else:
+            # Fallback to manually selected checkboxes
+            selected_shows = request.POST.getlist('selected_shows')
+            show_ids = [int(sid) for sid in selected_shows if sid.isdigit()]
+            shows_to_archive = SalesShow.objects.filter(id__in=show_ids)
+
+        # Perform archiving
+        shows_to_archive.update(is_archived=True)
+
         return redirect(request.META.get('HTTP_REFERER', 'operations_manager:unassigned-sales-shows'))
 
 @user_passes_test(lambda user: is_in_group(user, "operations_manager"))
@@ -749,6 +774,65 @@ def unarchive_sales_show(request, show_id):
     # Redirect to the same page (to maintain pagination and filtering)
     referer_url = request.META.get('HTTP_REFERER', 'operations_manager:archived-sales-shows')
     return redirect(referer_url)
+
+
+@require_POST
+@transaction.atomic
+def reassign_sales_show(request):
+    show_id = request.POST.get('show_id')
+    if not show_id:
+        return redirect(request.META.get('HTTP_REFERER'))
+
+    original_show = get_object_or_404(SalesShow, id=show_id)
+
+    # Create a new show using create(), with copied attributes
+    new_show = SalesShow.objects.create(
+        name=f"{original_show.name} (Reassigned)",
+        sheet=original_show.sheet,
+        is_done=False,
+        is_recycled=False,
+        is_done_rec=False,
+        label=original_show.label,
+        is_archived=False,
+        is_x=original_show.is_x,
+        is_reassigned=True,
+        is_done_reassigned=False,
+    )
+
+
+    # Copy the leads (ManyToMany)
+    new_show.leads.set(original_show.leads.all())
+
+    messages.success(request, f"Show '{original_show.name}' successfully reassigned.")
+
+    return redirect(request.META.get('HTTP_REFERER'))
+
+
+def reassigned_sales_shows(request):
+    search_term = request.GET.get("search", "")
+    page_number = request.GET.get("page", 1)
+
+    # Filter only reassigned and unassigned shows
+    shows_qs = SalesShow.objects.filter(
+        is_reassigned=True,
+        Agent__isnull=True
+    )
+
+    if search_term:
+        shows_qs = shows_qs.filter(name__icontains=search_term)
+
+    shows_qs = shows_qs.order_by("-id")  # Recent first
+
+    paginator = Paginator(shows_qs, 20)  # Show 10 per page
+    unassigned_shows = paginator.get_page(page_number)
+
+    context = {
+        "unassigned_shows": unassigned_shows,
+        "sales_agents": User.objects.filter(groups__name__in=["sales", "sales_team_leader", "sales_manager"]),
+        "search_term": search_term,
+    }
+
+    return render(request, "operations_manager/reassigned_shows.html", context)
 
 
 ################################### Copied code cuz i am lazy - for archiving shows ###################################

@@ -15,6 +15,7 @@
                         <tr>
                             <th scope="col">Show Name</th>
                             <th scope="col">Recycle</th>
+                            <th scope="col">Reassign</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -31,6 +32,13 @@
                                             <button type="submit" class="btn btn-warning btn-sm">Recycle</button>
                                         </form>
                                     {% endif %}
+                                </td>
+                                <td>
+                                    <form method="POST" action="{% url 'operations_manager:reassign-sales-show' %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="show_id" value="{{ show.id }}">
+                                        <button type="submit" class="btn btn-secondary btn-sm">Reassign</button>
+                                    </form>
                                 </td>
                             </tr>
                         {% endfor %}

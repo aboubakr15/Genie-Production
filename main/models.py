@@ -128,6 +128,9 @@ class SalesShow(models.Model):
     label = models.CharField(max_length=10, choices=LABEL_CHOICES, default='EHUB')
     is_archived = models.BooleanField(default=False)       # To Archive the show 
     is_x = models.BooleanField(default=False)
+    is_reassigned = models.BooleanField(default=False)
+    is_done_reassigned = models.BooleanField(default=False)
+
 
     def __str__(self) -> str:
         return self.name
