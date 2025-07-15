@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = [
+  "mysql80",
+  "pkg-config",
+  "python312Packages.setuptools",
+  "python312Packages.wheel",
+  "python312Packages.pip"
+]
