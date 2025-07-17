@@ -471,7 +471,7 @@ def unassigned_sales_shows(request, label='EHUB'):
         'active_label': label,
         'blue_red_leads_counts': blue_red_leads_counts,
         'timezone_counts': timezone_counts,
-        'search_term': search_term,
+        'search_term': search_term,  # Already included, kept for clarity
         'labels': labels,
     }
 
@@ -553,14 +553,14 @@ def assigned_sales_shows(request, label='EHUB'):
 
     # Pagination
     page_number = request.GET.get('page', 1)  # Get the page number from the request, default to 1
-    paginator = Paginator(assigned_shows, 60)  # Show 10 shows per page
+    paginator = Paginator(assigned_shows, 60)
     page_obj = paginator.get_page(page_number)
 
     context = {
         'assigned_shows': page_obj,  # Pass the paginated shows to the template
         'label': label,
         'active_label': label,
-        'search_query': search_query,
+        'search_term': search_query,
     }
 
     return render(request, 'operations_manager/assigned_sales_shows.html', context)

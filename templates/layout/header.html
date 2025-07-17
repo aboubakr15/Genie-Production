@@ -38,12 +38,12 @@
           {% endwith %}
           {% endif %}
 
-            <i class="bi bi-bell" style="font-size: 1.5rem; color: #fff; transition: all 0.3s ease;" onmouseover="this.style.color='#ffd700'; this.style.textShadow='0 0 10px #ffd700, 0 0 20px #fff';" onmouseout="this.style.color='#fff'; this.style.textShadow='none';"></i>
-            {% if unread_notifications_count > 0 %}
-            <span class="badge notification-badge bg-primary badge-number" style="position: absolute; top: -5px; right: -5px; background: #ffd700; color: #4a2c7a; animation: pulse 1.5s infinite;">{{ unread_notifications_count }}</span>
-            {% else %}
-            <span class="badge notification-badge bg-primary badge-number" style="display: none;"></span>
-            {% endif %}
+          <i class="bi bi-bell" style="font-size: 1.5rem; color: #fff; transition: all 0.3s ease;" onmouseover="this.style.color='#ffd700'; this.style.textShadow='0 0 10px #ffd700, 0 0 20px #fff';" onmouseout="this.style.color='#fff'; this.style.textShadow='none';"></i>
+          {% if unread_notifications_count > 0 %}
+          <span class="badge notification-badge badge-number" style="position: absolute; top: -5px; right: -5px; background: #ffffff; color: #4a2c7a; animation: pulse 1.5s infinite;">{{ unread_notifications_count }}</span>
+          {% else %}
+          <span class="badge notification-badge bg-primary badge-number" style="display: none;"></span>
+          {% endif %}
           </a>
           <!-- End Notification Icon with Animation -->
         </li>

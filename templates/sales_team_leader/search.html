@@ -1,30 +1,39 @@
 {% extends 'layout/base.html' %}
 
 {% block content %}
+<!-- Include the loading template -->
+{% include "main/loading.html" %}
+
 <div class="container mt-5">
     <h2 class="text-center">Leads Search</h2>
-    <form method="POST" class="mb-4">
+    <form method="GET" class="mb-4" id="searchForm">
         {% csrf_token %}
         <div class="input-group mb-3">
-            <input type="text" class="form-control form-control-lg" name="query" value="{{ query }}" placeholder="Enter your search query" required>
-            <button class="btn btn-primary" type="submit">Search</button>
+            <input type="text" class="form-control form-control-lg" name="query" value="{{ query }}" placeholder="Enter your search query" required id="searchQuery">
+            <button class="btn btn-primary" type="submit" id="searchBtn">Search</button>
         </div>
         <div class="mb-3">
             <label class="form-label">Search By:</label>
             <div class="form-check">
                 <input class="form-check-input" type="radio" name="search_by" id="searchByName" value="lead_name" 
                     {% if search_by == "lead_name" or not search_by %}checked{% endif %}>
-                <label class="form-check-label" for="searchByName">Lead Name</label>
+                <label class="form-check-label" for="searchByName">
+                    Lead Name
+                </label>
             </div>
             <div class="form-check">
                 <input class="form-check-input" type="radio" name="search_by" id="searchByPhone" value="phone_number" 
                     {% if search_by == "phone_number" %}checked{% endif %}>
-                <label class="form-check-label" for="searchByPhone">Phone Number</label>
+                <label class="form-check-label" for="searchByPhone">
+                    Phone Number
+                </label>
             </div>
             <div class="form-check">
                 <input class="form-check-input" type="radio" name="search_by" id="searchByShow" value="show_name" 
                     {% if search_by == "show_name" %}checked{% endif %}>
-                <label class="form-check-label" for="searchByShow">Show Name</label>
+                <label class="form-check-label" for="searchByShow">
+                    Show Name
+                </label>
             </div>
         </div>
     </form>
@@ -44,7 +53,7 @@
             <tr>
                 <td>{{ lead.name }}</td>
                 <td>
-                    <a href="{% url 'sales_team_leader:show-detail' show.id %}" class="btn btn-primary">
+                    <a href="{% url 'sales_manager:show-detail' show.id %}" class="btn btn-primary">
                         {{ show.name }}
                     </a>
                 </td>
@@ -57,8 +66,103 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <!-- Pagination controls -->
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            {% if leads_with_shows.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1&query={{ query|urlencode }}&search_by={{ search_by|urlencode }}" aria-label="First">
+                    <span aria-hidden="true">««</span>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ leads_with_shows.previous_page_number }}&query={{ query|urlencode }}&search_by={{ search_by|urlencode }}" aria-label="Previous">
+                    <span aria-hidden="true">«</span>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">««</span>
+            </li>
+            <li class="page-item disabled">
+                <span class="page-link">«</span>
+            </li>
+            {% endif %}
+            <li class="page-item disabled">
+                <span class="page-link">{{ leads_with_shows.number }} of {{ leads_with_shows.paginator.num_pages }}</span>
+            </li>
+            {% if leads_with_shows.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ leads_with_shows.next_page_number }}&query={{ query|urlencode }}&search_by={{ search_by|urlencode }}" aria-label="Next">
+                    <span aria-hidden="true">»</span>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ leads_with_shows.paginator.num_pages }}&query={{ query|urlencode }}&search_by={{ search_by|urlencode }}" aria-label="Last">
+                    <span aria-hidden="true">»»</span>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">»</span>
+            </li>
+            <li class="page-item disabled">
+                <span class="page-link">»»</span>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+
     {% else %}
     <p class="text-muted">No search results to display. Please enter your search query and choose a search type.</p>
     {% endif %}
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('searchForm');
+    const searchBtn = document.getElementById('searchBtn');
+    const searchQuery = document.getElementById('searchQuery');
+
+    // Handle form submission
+    form.addEventListener('submit', function(e) {
+        if (!searchQuery.value.trim()) {
+            e.preventDefault();
+            alert('Please enter a search query.');
+            return;
+        }
+
+        // Show loading animation with custom text
+        LoadingManager.show({
+            text: 'Searching Leads',
+            subtext: 'Processing your search query... This may take a moment.',
+            animation: 'spinner' // Use spinner animation for search operation
+        });
+
+        // Add loading class to button
+        searchBtn.classList.add('btn-loading');
+        searchBtn.disabled = true;
+    });
+
+    // Hide loading on page load (in case of redirect back to this page)
+    window.addEventListener('load', function() {
+        if (LoadingManager) {
+            LoadingManager.hide();
+        }
+    });
+
+    // Handle browser back button
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+            if (LoadingManager) {
+                LoadingManager.hide();
+            }
+            // Reset button state
+            searchBtn.classList.remove('btn-loading');
+            searchBtn.disabled = false;
+        }
+    });
+});
+</script>
 {% endblock %}

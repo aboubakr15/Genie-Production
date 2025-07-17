@@ -85,14 +85,14 @@
             <ul class="pagination justify-content-center">
                 {% if unassigned_shows.has_previous %}
                 <li class="page-item">
-                    <a class="page-link" href="?page=1{% if active_label %}&label={{ active_label }}{% endif %}">&laquo; First</a>
+                    <a class="page-link" href="?page=1{% if active_label %}&label={{ active_label }}{% endif %}{% if search_term %}&search={{ search_term|urlencode }}{% endif %}">« First</a>
                 </li>
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ unassigned_shows.previous_page_number }}{% if active_label %}&label={{ active_label }}{% endif %}">&lsaquo; Previous</a>
+                    <a class="page-link" href="?page={{ unassigned_shows.previous_page_number }}{% if active_label %}&label={{ active_label }}{% endif %}{% if search_term %}&search={{ search_term|urlencode }}{% endif %}">‹ Previous</a>
                 </li>
                 {% else %}
-                <li class="page-item disabled"><span class="page-link">&laquo; First</span></li>
-                <li class="page-item disabled"><span class="page-link">&lsaquo; Previous</span></li>
+                <li class="page-item disabled"><span class="page-link">« First</span></li>
+                <li class="page-item disabled"><span class="page-link">‹ Previous</span></li>
                 {% endif %}
 
                 <li class="page-item disabled">
@@ -101,19 +101,19 @@
 
                 {% if unassigned_shows.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ unassigned_shows.next_page_number }}{% if active_label %}&label={{ active_label }}{% endif %}">Next &rsaquo;</a>
+                    <a class="page-link" href="?page={{ unassigned_shows.next_page_number }}{% if active_label %}&label={{ active_label }}{% endif %}{% if search_term %}&search={{ search_term|urlencode }}{% endif %}">Next ›</a>
                 </li>
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ unassigned_shows.paginator.num_pages }}{% if active_label %}&label={{ active_label }}{% endif %}">Last &raquo;</a>
+                    <a class="page-link" href="?page={{ unassigned_shows.paginator.num_pages }}{% if active_label %}&label={{ active_label }}{% endif %}{% if search_term %}&search={{ search_term|urlencode }}{% endif %}">Last »</a>
                 </li>
                 {% else %}
-                <li class="page-item disabled"><span class="page-link">Next &rsaquo;</span></li>
-                <li class="page-item disabled"><span class="page-link">Last &raquo;</span></li>
+                <li class="page-item disabled"><span class="page-link">Next ›</span></li>
+                <li class="page-item disabled"><span class="page-link">Last »</span></li>
                 {% endif %}
             </ul>
         </nav>
         {% endif %}
-
+        
         {% else %}
         <p>No Sales Shows available for the selected label.</p>
         {% endif %}

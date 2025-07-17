@@ -4,13 +4,12 @@ from django.contrib import messages
 from main.custom_decorators import is_in_group
 from main.models import (LeadEmails, LeadContactNames, LeadPhoneNumbers, SalesTeams, TerminationCode, UserLeader,
                         LeadTerminationCode, SalesShow, LeadTerminationHistory, Lead, Notification, IncomingsCount)
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, OuterRef, Subquery, Prefetch
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.contrib.auth.decorators import user_passes_test
 from sales_manager.forms import AssignSalesToLeaderForm
 from datetime import datetime
 from django.utils import timezone
-from django.db.models import OuterRef, Subquery
 
 
 @user_passes_test(lambda user: is_in_group(user, "sales_manager"))
@@ -266,37 +265,44 @@ def lead_history_view(request, lead_id):
 
 @user_passes_test(lambda user: user.groups.filter(name__in=["sales_team_leader", "sales_manager"]).exists())
 def search(request):
+    # Handle GET for initial page load and pagination
     if request.method == 'GET':
-        return render(request, "sales_manager/search.html")
+        query = request.GET.get('query', '').strip()
+        search_by = request.GET.get('search_by', '')
+    else:  # POST for form submission
+        query = request.POST.get('query', '').strip()
+        search_by = request.POST.get('search_by', '')
 
-    leads_with_shows = []  # List to hold leads with their corresponding shows
-    query = request.POST.get('query', '').strip()  # Search query
-    search_by = request.POST.get('search_by', '')  # User's search preference
+    # Base queryset for leads with non-null Agent sales shows
+    leads_queryset = Lead.objects.filter(sales_shows__Agent__isnull=False)
 
-    # Get all leads that have associated sales shows where Agent is not null
-    all_leads = Lead.objects.filter(sales_shows__Agent__isnull=False).distinct()
-
+    # Apply search filters
     if query and search_by:
         if search_by == 'lead_name':
-            # Search by lead name
-            all_leads = all_leads.filter(name__icontains=query).distinct()
+            leads_queryset = leads_queryset.filter(name__icontains=query)
         elif search_by == 'phone_number':
-            # Search by phone number
-            phone_numbers = LeadPhoneNumbers.objects.filter(value__icontains=query)
-            all_leads = Lead.objects.filter(id__in=phone_numbers.values('lead_id')).distinct()
+            phone_numbers = LeadPhoneNumbers.objects.filter(value__icontains=query).values('lead_id')
+            leads_queryset = leads_queryset.filter(id__in=phone_numbers)
         elif search_by == 'show_name':
-            # Search by sales show name
-            shows_by_name = SalesShow.objects.filter(name__icontains=query, Agent__isnull=False)
-            all_leads = Lead.objects.filter(sales_shows__in=shows_by_name).distinct()
+            leads_queryset = leads_queryset.filter(sales_shows__name__icontains=query)
 
-    # Create a list of tuples (lead, show) for each lead's associated shows where Agent is not null
-    for lead in all_leads:
-        shows = lead.sales_shows.filter(Agent__isnull=False)  # Filter to shows with non-null Agent
-        for show in shows:
+    # Use Prefetch to eagerly load related sales shows with non-null Agent
+    leads_queryset = leads_queryset.prefetch_related(
+        Prefetch(
+            'sales_shows',
+            queryset=SalesShow.objects.filter(Agent__isnull=False).select_related('Agent'),
+            to_attr='filtered_sales_shows'
+        )
+    ).distinct()
+
+    # Create leads_with_shows list
+    leads_with_shows = []
+    for lead in leads_queryset:
+        for show in lead.filtered_sales_shows:
             leads_with_shows.append((lead, show))
 
     # Paginate results
-    paginator = Paginator(leads_with_shows, 10)  # Show 10 leads per page
+    paginator = Paginator(leads_with_shows, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 

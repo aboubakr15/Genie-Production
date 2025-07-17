@@ -14,6 +14,7 @@ from pathlib import Path
 import os
 # import wfastcgi
 
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-x0t)8qx9buoxxbiq#v4hmxdqt&$e(t%#c0=5jj$rthyb1!042@'
 
@@ -49,6 +50,11 @@ INSTALLED_APPS = [
     # 'widget_tweaks',
 ]
 
+# # for debug_toolbar
+# INTERNAL_IPS = [
+#     "127.0.0.1",
+# ]
+
 ASGI_APPLICATION = 'IBH.asgi.application'
 
 # Session will expire when the browser is closed
@@ -74,10 +80,7 @@ MIDDLEWARE = [
     # "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
 
-# # for debug_toolbar
-# INTERNAL_IPS = [
-#     "127.0.0.1",
-# ]
+
 
 ROOT_URLCONF = 'IBH.urls'
 
