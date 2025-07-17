@@ -1,49 +1,74 @@
 {% extends "layout/clear_base.html" %}
 {% load static %}
+
 {% block content %}
 <main>
-  <div class="container-fluid-logo vh-100 d-flex flex-row align-items-stretch" style="padding: 0%;">
-    <div class="logo-container">
-      <img src="{% static 'assets/Genie_logo.jpeg' %}" alt="Logo" />
+  <div class="container-fluid-logo vh-100 d-flex flex-row align-items-stretch">
+    <div class="logo-container animate__animated animate__fadeIn">
+      <img src="{% static 'assets/Genie_logo.jpeg' %}" alt="Genie Logo" class="genie-logo" />
     </div>
-    <div class="form-container" style="background-color:#ffffff;">
-      <div class="card mb-3" style="background-color: #b6babd;">
-        <div class=" card-body">
-          <div class="pt-4 pb-2">
-            <h5 class="card-title text-center pb-0 fs-4">Login to Your Account</h5>
-            <p class="text-center small">Enter your username & password to login</p>
+    <div class="form-container" style="background-color: #ffffff;">
+      <div class="card mb-3 genie-card animate__animated animate__fadeIn animate__faster" style="background-color: #b6babd;">
+        <div class="card-body p-4">
+          <div class="text-center mb-4">
+            <h4 class="card-title fw-bold text-dark">Welcome to Genie</h4>
+            <p class="text-muted small">Unlock your potential with Genie</p>
           </div>
 
           <form class="row g-3 needs-validation" method="POST" novalidate>
             {% csrf_token %}
             {% if error %}
-            <div class="alert alert-danger">{{ error }}</div>
+            <div class="alert alert-danger alert-dismissible fade show animate__animated animate__shakeX" role="alert">
+              {{ error }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
             {% endif %}
             <div class="col-12">
-              <label for="yourUsername" class="form-label">Username</label>
+              <label for="yourUsername" class="form-label fw-semibold text-dark">Username</label>
               <div class="input-group has-validation">
-                <span class="input-group-text" id="inputGroupPrepend">@</span>
-                <input type="text" name="username" class="form-control" id="yourUsername" required minlength="3"
-                  maxlength="20" pattern="[a-zA-Z0-9_]+"
-                  title="Username must be 3-20 characters long and can contain letters, numbers, and underscores." />
+                <span class="input-group-text" style="background-color: #e0e0e0;">
+                  <i class="fas fa-user text-dark"></i>
+                </span>
+                <input type="text" 
+                       name="username" 
+                       class="form-control form-control-lg" 
+                       id="yourUsername" 
+                       required 
+                       minlength="3" 
+                       maxlength="20" 
+                       pattern="[a-zA-Z0-9_]+" 
+                       title="Username must be 3-20 characters long and can contain letters, numbers, and underscores."
+                       placeholder="Enter your username">
                 <div class="invalid-feedback">
-                  Please enter a valid username (3-20 characters, letters, numbers, and underscores only).
+                  Please enter a valid username (3-20 characters, letters, numbers, underscores).
                 </div>
               </div>
             </div>
 
             <div class="col-12">
-              <label for="yourPassword" class="form-label">Password</label>
-              <input type="password" name="password" class="form-control" id="yourPassword" required minlength="8"
-                title="Password must be at least 8 characters long and include at least one number, one lowercase letter, and one uppercase letter." />
-              <div class="invalid-feedback">
-                Please enter a valid password (at least 8 characters, with one number, one lowercase letter, and one
-                uppercase letter).
+              <label for="yourPassword" class="form-label fw-semibold text-dark">Password</label>
+              <div class="input-group has-validation">
+                <span class="input-group-text" style="background-color: #e0e0e0;">
+                  <i class="fas fa-lock text-dark"></i>
+                </span>
+                <input type="password" 
+                       name="password" 
+                       class="form-control form-control-lg" 
+                       id="yourPassword" 
+                       required 
+                       minlength="8" 
+                       title="Password must be at least 8 characters long."
+                       placeholder="Enter your password">
+                <div class="invalid-feedback">
+                  Please enter a valid password (at least 8 characters).
+                </div>
               </div>
             </div>
 
-            <div class="col-12">
-              <button class="btn btn-primary w-100" style="background-color: #0b2438;" type="submit">Login</button>
+            <div class="col-12 mt-4">
+              <button class="btn btn-primary w-100 btn-lg genie-button" style="background-color: #0b2438;" type="submit">
+                <i class="fas fa-magic me-2"></i>Login
+              </button>
             </div>
           </form>
         </div>
@@ -51,4 +76,146 @@
     </div>
   </div>
 </main>
+
+<!-- Custom Styles -->
+<style>
+  /* Genie Animations */
+  @keyframes genieSmoke {
+    0% { transform: scale(0.8); opacity: 0; filter: blur(10px); }
+    50% { transform: scale(1.1); opacity: 0.7; filter: blur(5px); }
+    100% { transform: scale(1); opacity: 1; filter: blur(0); }
+  }
+
+  @keyframes genieSparkle {
+    0% { box-shadow: 0 0 0 rgba(255, 215, 0, 0); }
+    50% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.7); }
+    100% { box-shadow: 0 0 0 rgba(255, 215, 0, 0); }
+  }
+
+  /* Logo and Card Animation */
+  .genie-logo {
+    animation: genieSmoke 1.5s ease-out forwards;
+  }
+
+  .genie-card {
+    animation: genieSmoke 1.2s ease-out forwards;
+  }
+
+  /* Form Container */
+  .form-container {
+    padding: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Card Styling */
+  .card {
+    border-radius: 12px;
+    max-width: 400px;
+    width: 100%;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Form Elements */
+  .form-control, .form-select {
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    padding: 12px 15px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+  }
+
+  .form-control:focus, .form-select:focus {
+    border-color: #0b2438;
+    box-shadow: 0 0 0 0.2rem rgba(11, 36, 56, 0.25);
+    transform: scale(1.02);
+    outline: none;
+  }
+
+  .input-group-text {
+    border-color: #d1d5db;
+    background-color: #e0e0e0;
+    border-radius: 8px 0 0 8px;
+  }
+
+  /* Button Styling */
+  .genie-button {
+    border-radius: 8px;
+    padding: 12px;
+    font-weight: 600;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .genie-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(11, 36, 56, 0.3);
+    animation: genieSparkle 1.5s infinite;
+  }
+
+  .genie-button::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+    background: rgba(255, 215, 0, 0.2);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+  }
+
+  .genie-button:hover::after {
+    width: 200px;
+    height: 200px;
+  }
+
+  /* Text Styling */
+  .text-dark {
+    color: #1a202c;
+  }
+
+  .text-muted {
+    color: #718096;
+  }
+
+  /* Alert Styling */
+  .alert-danger {
+    border-radius: 8px;
+    margin-bottom: 1rem;
+  }
+
+  /* Responsive Adjustments */
+  @media (max-width: 768px) {
+    .form-container {
+      padding: 20px;
+    }
+
+    .card {
+      border-radius: 8px;
+    }
+
+    .form-control, .form-select {
+      font-size: 0.9rem;
+      padding: 10px 12px;
+    }
+
+    .genie-button {
+      padding: 10px;
+      font-size: 0.9rem;
+    }
+  }
+</style>
+
+<!-- Animate.css for Animations -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
 {% endblock %}

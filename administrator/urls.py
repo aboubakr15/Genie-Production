@@ -5,7 +5,7 @@ from .views import (add_user , delete_user, edit_user, index, done_sheets, archi
 
 app_name="administrator"
 urlpatterns = [
-    path('', index, name='administrator_index'),
+    path('', index, name='index'),
     path('users/add-user/', add_user, name='add-user'),
     path('users/manage-users/', manage_users, name='manage-users'),
     path('view-logs/', view_logs, name='view-logs'),

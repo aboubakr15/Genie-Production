@@ -1,38 +1,115 @@
 {% extends 'layout/base.html' %}
 
 {% block content %}
+<style>
+    /* Table Layout Fixes */
+    .table-responsive {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        overflow-x: hidden;
+    }
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    .table {
+        width: 100%;
+        margin-bottom: 0;
+        table-layout: fixed;
+    }
+
+    .table th {
+        background: var(--bg-gradient);
+        color: white;
+        font-weight: 500;
+        padding: 12px 8px;
+        vertical-align: middle;
+        word-wrap: break-word;
+    }
+
+    .table td {
+        padding: 12px 8px;
+        vertical-align: middle;
+        word-wrap: break-word;
+    }
+
+    /* Column Widths */
+    .table th:nth-child(1) { width: 10%; } /* Entry Date */
+    .table th:nth-child(2) { width: 15%; } /* Company Name */
+    .table th:nth-child(3) { width: 12%; } /* Phone No. */
+    .table th:nth-child(4) { width: 8%; }  /* Time Zone */
+    .table th:nth-child(5) { width: 15%; } /* Email */
+    .table th:nth-child(6) { width: 15%; } /* DM Names */
+    .table th:nth-child(7) { width: 12%; } /* Termination Code */
+    .table th:nth-child(8) { width: 13%; } /* CB Date */
+
+    /* Custom Row Styling */
+    .table-custom-row td {
+        padding: 0;
+    }
+
+    .sub-row {
+        background-color: #E6F0FA;
+        border-radius: 6px;
+        padding: 15px;
+        margin: 0;
+        width: 100%;
+    }
+
+    /* Form Controls in Table */
+    .table .form-control {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 1200px) {
+        .table-responsive {
+            overflow-x: auto;
+        }
+    }
+
+    /* Card and Container Fixes */
+    .card {
+        width: 100%;
+        margin: 0;
+        overflow: hidden;
+    }
+
+    .container {
+        max-width: 100%;
+        padding: 0 15px;
+    }
+</style>
 
 <div id="sortedContent" class="container mt-4">
-    <div class="card p-4">
-        <h1>Prospect</h1>
+    <div class="card p-4 shadow-sm" style="background-color: #F8FAFC; border-radius: 12px;">
+        <h1 class="text-primary fw-bold">Prospect</h1>
 
         <!-- Bootstrap Tabs for Termination Codes -->
-        <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <ul class="nav nav-tabs border-0 mb-4" id="myTab" role="tablist">
             {% for code in termination_codes %}
             <li class="nav-item" role="presentation">
-                <a class="nav-link {% if code.id == selected_code.id %}active{% endif %}" id="tab-{{ code.id }}-tab"
+                <a class="nav-link text-dark {% if code.id == selected_code.id %}active bg-light{% endif %}" id="tab-{{ code.id }}-tab"
                     href="/{{ role }}/view-saved-leads/{{ code.id }}" role="tab" aria-controls="tab-{{ code.id }}"
-                    aria-selected="{% if code.id == selected_code.id %}true{% else %}false{% endif %}">
+                    aria-selected="{% if code.id == selected_code.id %}true{% else %}false{% endif %}"
+                    style="border-radius: 8px; transition: background-color 0.3s ease;">
                     {{ code.name }}
                 </a>
             </li>
             {% endfor %}
         </ul>
 
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4>{{ selected_code.full_name }}</h4>
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+            <h4 class="text-dark mb-2">{{ selected_code.full_name }}</h4>
             <div class="dropdown">
-                <button class="btn btn-secondary dropdown-toggle" type="button" id="orderByDropdown" data-bs-toggle="dropdown"
-                    aria-expanded="false">
+                <button class="btn btn-outline-primary dropdown-toggle" type="button" id="orderByDropdown" data-bs-toggle="dropdown"
+                    aria-expanded="false" style="border-radius: 8px;">
                     Order By
                 </button>
                 <ul class="dropdown-menu" aria-labelledby="orderByDropdown">
-                    <li><a class="dropdown-item order-option" href="?order_by=CB_date"><i class="fa fa-sort-up"></i>CB Date</a></li>
-                    <li><a class="dropdown-item order-option" href="?order_by=-CB_date"><i class="fa fa-sort-down"></i>CB Date</a></li>
-                    <li><a class="dropdown-item order-option" href="?order_by=entry_date"><i class="fa fa-sort-up"></i>Entry Date</a></li>
-                    <li><a class="dropdown-item order-option" href="?order_by=-entry_date"><i class="fa fa-sort-down"></i>Entry Date</a></li>
+                    <li><a class="dropdown-item order-option" href="?order_by=CB_date"><i class="fa fa-sort-up"></i> CB Date</a></li>
+                    <li><a class="dropdown-item order-option" href="?order_by=-CB_date"><i class="fa fa-sort-down"></i> CB Date</a></li>
+                    <li><a class="dropdown-item order-option" href="?order_by=entry_date"><i class="fa fa-sort-up"></i> Entry Date</a></li>
+                    <li><a class="dropdown-item order-option" href="?order_by=-entry_date"><i class="fa fa-sort-down"></i> Entry Date</a></li>
                 </ul>
             </div>
         </div>        
@@ -44,105 +121,110 @@
                 {% if leads_data|length > 0 %}
                 <form method="POST">
                     <!-- Save Changes Button Below the Table -->
-                    <button type="submit" class="btn btn-primary" style="margin-bottom: 10px;">Save Changes</button>
+                    <button type="submit" class="btn btn-success mb-3" style="border-radius: 8px; padding: 8px 20px;">
+                        <i class="fas fa-save me-2"></i>Save Changes
+                    </button>
                     {% csrf_token %}
-                    <table class="table table-striped table-bordered table-hover">
-                        <thead>
-                            <tr class="table-primary">
-                                <th>Entry Date</th>
-                                <th>Company Name</th>
-                                <th>Phone No.</th>
-                                <th>Time Zone</th>
-                                <th>E-mail</th>
-                                <th>DM Names</th>
-                                <th>Termination Code</th>
-                                <th>CB Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for lead_data in leads_data %}
-                            <tr>
-                                <td>{{ lead_data.entry_date|date:"Y-m-d H:i" }}</td>
-                                <td>{{ lead_data.lead.name }}</td>
-                                <td>
-                                    <div id="phone-numbers-display-{{ lead_data.lead.id }}"></div> <!-- Display for new phone numbers -->
-                                    {{ lead_data.phones|join:"<br /> " }}
-                                    <input type="text" class="form-control new-phone" placeholder="Add new phone"
-                                        data-lead-id="{{ lead_data.lead.id }}"
-                                        data-sheet-id="{{ lead_data.sales_show.sheet.id }}">
-                                    <button type="button" class="btn btn-secondary add-phone"
-                                        data-lead-id="{{ lead_data.lead.id }}"
-                                        data-sheet-id="{{ lead_data.sales_show.sheet.id }}">Add</button>
-                                </td>
-                                <td>{{ lead_data.lead.time_zone }}</td>
-                                <td>
-                                    <div id="emails-display-{{ lead_data.lead.id }}"></div> <!-- Display for new emails -->
-                                    {{ lead_data.emails|join:"<br />" }}
-                                    <input type="email" class="form-control new-email" placeholder="Add new email"
-                                        data-lead-id="{{ lead_data.lead.id }}"
-                                        data-sheet-id="{{ lead_data.sales_show.sheet.id }}">
-                                    <button type="button" class="btn btn-secondary add-email"
-                                        data-lead-id="{{ lead_data.lead.id }}"
-                                        data-sheet-id="{{ lead_data.sales_show.sheet.id }}">Add</button>
-                                </td>
-                                <td>
-                                    <div id="contacts-display-{{ lead_data.lead.id }}"></div> <!-- Display for new contact names -->
-                                    {{ lead_data.contacts|join:"<br />" }}
-                                    <input type="text" class="form-control new-contact"
-                                        placeholder="Add new contact name" data-lead-id="{{ lead_data.lead.id }}"
-                                        data-sheet-id="{{ lead_data.sales_show.sheet.id }}">
-                                    <button type="button" class="btn btn-secondary add-contact"
-                                        data-lead-id="{{ lead_data.lead.id }}"
-                                        data-sheet-id="{{ lead_data.sales_show.sheet.id }}">Add</button>
-                                </td>
-                                <td>
-                                    <!-- Editable Termination Code -->
-                                    <select name="termination_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
-                                        class="form-control termination-code-select"
-                                        data-lead-id="{{ lead_data.lead.id }}">
-                                        {% for code in termination_codes_selection %}
-                                        <option value="{{ code.id }}" {% if code.full_name == lead_data.termination %}selected{% endif %}>
-                                            {{ code.name }}
-                                        </option>
-                                        {% endfor %}
-                                    </select>
-                                </td>
-                                <td>
-                                    <!-- Display previous callback dates -->
-                                    {% if lead_data.previous_cb_dates %}
-                                    <ul class="list-unstyled">
-                                        {% for old_cb_date in lead_data.previous_cb_dates %}
-                                        <li><strong>{{ old_cb_date|date:"Y-m-d H:i" }}</strong></li>
-                                        {% endfor %}
-                                    </ul>
-                                    {% endif %}
-
-                                    <!-- Editable callback date -->
-                                    <input {% if lead_data.termination != "Call back" and lead_data.termination != "Incoming" %} disabled {% endif %} type="date"
-                                        name="cb_date_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
-                                        value="{{ lead_data.cb_date|date:'Y-m-d' }}" class="form-control cb-date"
-                                        id="cb_date_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}" />
-                                </td>
-                            </tr>
-                            <!-- Sub-row for additional fields like Special Notes and Options -->
-                            <tr class="table-custom-row">
-                                <td colspan="10">
-                                    <div class="sub-row">
-                                        <div><strong>Show:</strong> {{ lead_data.sales_show }} </div>
-                                        <div>
-                                            <strong>Special Notes:</strong>
-                                            <textarea name="notes_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
-                                                class="form-control">{{ lead_data.notes|default:"" }}</textarea>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered table-hover" style="background-color: #fff; border-radius: 8px; overflow: hidden;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 10%">Entry Date</th>
+                                    <th style="width: 15%">Company Name</th>
+                                    <th style="width: 12%">Phone No.</th>
+                                    <th style="width: 8%">Time Zone</th>
+                                    <th style="width: 15%">E-mail</th>
+                                    <th style="width: 15%">DM Names</th>
+                                    <th style="width: 12%">Termination Code</th>
+                                    <th style="width: 13%">CB Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for lead_data in leads_data %}
+                                <tr>
+                                    <td>{{ lead_data.entry_date|date:"Y-m-d H:i" }}</td>
+                                    <td>{{ lead_data.lead.name }}</td>
+                                    <td>
+                                        <div id="phone-numbers-display-{{ lead_data.lead.id }}" class="mb-2"></div>
+                                        {{ lead_data.phones|join:"<br /> " }}
+                                        <input type="text" class="form-control new-phone mt-2" placeholder="Add new phone"
+                                            data-lead-id="{{ lead_data.lead.id }}"
+                                            data-sheet-id="{{ lead_data.sales_show.sheet.id }}" style="border-radius: 6px;">
+                                        <button type="button" class="btn btn-outline-success add-phone mt-2"
+                                            data-lead-id="{{ lead_data.lead.id }}"
+                                            data-sheet-id="{{ lead_data.sales_show.sheet.id }}" style="border-radius: 6px;">
+                                            Add
+                                        </button>
+                                    </td>
+                                    <td>{{ lead_data.lead.time_zone }}</td>
+                                    <td>
+                                        <div id="emails-display-{{ lead_data.lead.id }}" class="mb-2"></div>
+                                        {{ lead_data.emails|join:"<br />" }}
+                                        <input type="email" class="form-control new-email mt-2" placeholder="Add new email"
+                                            data-lead-id="{{ lead_data.lead.id }}"
+                                            data-sheet-id="{{ lead_data.sales_show.sheet.id }}" style="border-radius: 6px;">
+                                        <button type="button" class="btn btn-outline-success add-email mt-2"
+                                            data-lead-id="{{ lead_data.lead.id }}"
+                                            data-sheet-id="{{ lead_data.sales_show.sheet.id }}" style="border-radius: 6px;">
+                                            Add
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <div id="contacts-display-{{ lead_data.lead.id }}" class="mb-2"></div>
+                                        {{ lead_data.contacts|join:"<br />" }}
+                                        <input type="text" class="form-control new-contact mt-2"
+                                            placeholder="Add new contact name" data-lead-id="{{ lead_data.lead.id }}"
+                                            data-sheet-id="{{ lead_data.sales_show.sheet.id }}" style="border-radius: 6px;">
+                                        <button type="button" class="btn btn-outline-success add-contact mt-2"
+                                            data-lead-id="{{ lead_data.lead.id }}"
+                                            data-sheet-id="{{ lead_data.sales_show.sheet.id }}" style="border-radius: 6px;">
+                                            Add
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <select name="termination_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
+                                            class="form-control termination-code-select"
+                                            data-lead-id="{{ lead_data.lead.id }}" style="border-radius: 6px;">
+                                            {% for code in termination_codes_selection %}
+                                            <option value="{{ code.id }}" {% if code.full_name == lead_data.termination %}selected{% endif %}>
+                                                {{ code.name }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                    <td>
+                                        {% if lead_data.previous_cb_dates %}
+                                        <ul class="list-unstyled mb-2">
+                                            {% for old_cb_date in lead_data.previous_cb_dates %}
+                                            <li><strong>{{ old_cb_date|date:"Y-m-d H:i" }}</strong></li>
+                                            {% endfor %}
+                                        </ul>
+                                        {% endif %}
+                                        <input {% if lead_data.termination != "Call back" and lead_data.termination != "Incoming" %} disabled {% endif %} type="date"
+                                            name="cb_date_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
+                                            value="{{ lead_data.cb_date|date:'Y-m-d' }}" class="form-control cb-date"
+                                            id="cb_date_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}" style="border-radius: 6px;" />
+                                    </td>
+                                </tr>
+                                <tr class="table-custom-row">
+                                    <td colspan="8">
+                                        <div class="sub-row">
+                                            <div class="mb-2"><strong>Show:</strong> {{ lead_data.sales_show }}</div>
+                                            <div>
+                                                <strong>Special Notes:</strong>
+                                                <textarea name="notes_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
+                                                    class="form-control mt-2" style="border-radius: 6px; resize: vertical; min-height: 60px;">{{ lead_data.notes|default:"" }}</textarea>
+                                            </div>
                                         </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </form>
                 {% else %}
-                <div class="alert alert-warning">No leads available for this termination code.</div>
+                <div class="alert alert-warning p-3" style="border-radius: 8px;">No leads available for this termination code.</div>
                 {% endif %}
             </div>
         </div>
@@ -159,12 +241,12 @@
             let phoneNumber = phoneNumberInput.val();
             let leadId = $(button).data('lead-id');
             let sheetId = $(button).data('sheet-id');
-            let phoneDisplay = $('#phone-numbers-display-' + leadId); // Display specific to the lead
+            let phoneDisplay = $('#phone-numbers-display-' + leadId);
 
             if (phoneNumber) {
                 $.ajax({
                     type: 'POST',
-                    url: '{% url "api:add_phone_number" %}',  // Use your namespaced URL
+                    url: '{% url "api:add_phone_number" %}',
                     data: {
                         value: phoneNumber,
                         lead_id: leadId,
@@ -173,9 +255,8 @@
                     },
                     success: function (response) {
                         alert(response.message);
-                        // Append the new phone number above the form
-                        phoneDisplay.append('<div>' + phoneNumber + '</div>'); // Add the new phone number
-                        phoneNumberInput.val('');  // Clear input field
+                        phoneDisplay.append('<div>' + phoneNumber + '</div>');
+                        phoneNumberInput.val('');
                     },
                     error: function (xhr) {
                         const errors = xhr.responseJSON.errors;
@@ -193,12 +274,12 @@
             let email = emailInput.val();
             let leadId = $(button).data('lead-id');
             let sheetId = $(button).data('sheet-id');
-            let emailDisplay = $('#emails-display-' + leadId); // Display specific to the lead
+            let emailDisplay = $('#emails-display-' + leadId);
 
             if (email) {
                 $.ajax({
                     type: 'POST',
-                    url: '{% url "api:add_email" %}',  // Use your namespaced URL
+                    url: '{% url "api:add_email" %}',
                     data: {
                         value: email,
                         lead_id: leadId,
@@ -207,9 +288,8 @@
                     },
                     success: function (response) {
                         alert(response.message);
-                        // Append the new email above the form
-                        emailDisplay.append('<div>' + email + '</div>'); // Add the new email
-                        emailInput.val('');  // Clear input field
+                        emailDisplay.append('<div>' + email + '</div>');
+                        emailInput.val('');
                     },
                     error: function (xhr) {
                         const errors = xhr.responseJSON.errors;
@@ -227,12 +307,12 @@
             let contactName = contactNameInput.val();
             let leadId = $(button).data('lead-id');
             let sheetId = $(button).data('sheet-id');
-            let contactDisplay = $('#contacts-display-' + leadId); // Display specific to the lead
+            let contactDisplay = $('#contacts-display-' + leadId);
 
             if (contactName) {
                 $.ajax({
                     type: 'POST',
-                    url: '{% url "api:add_contact_name" %}',  // Use your namespaced URL
+                    url: '{% url "api:add_contact_name" %}',
                     data: {
                         value: contactName,
                         lead_id: leadId,
@@ -241,9 +321,8 @@
                     },
                     success: function (response) {
                         alert(response.message);
-                        // Append the new contact name above the form
-                        contactDisplay.append('<div>' + contactName + '</div>'); // Add the new contact name
-                        contactNameInput.val('');  // Clear input field
+                        contactDisplay.append('<div>' + contactName + '</div>');
+                        contactNameInput.val('');
                     },
                     error: function (xhr) {
                         const errors = xhr.responseJSON.errors;

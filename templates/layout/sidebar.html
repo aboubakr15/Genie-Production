@@ -3,26 +3,25 @@
     {% if request.user.is_authenticated %}
     {% with request.user.groups.first as user_group %}
 
-
     {% if user_group and user_group.name == 'administrator' %}
-    <li class="nav-item">
-      <a class="nav-link" href="{% url 'administrator:administrator_index' %}">
+    <li class="nav-item" data-tooltip="Dashboard">
+      <a class="nav-link" href="{% url 'administrator:index' %}">
         <i class="bi bi-grid"></i>
         <span>Dashboard</span>
       </a>
     </li>
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="View logs">
       <a class="nav-link" href="{% url 'administrator:view-logs' %}">
         <i class="bi bi-card-list"></i>
         <span>View logs</span>
       </a>
     </li>
-    <li class="nav-item">
-      <a class="nav-link collapsed" data-bs-target="#components-nav" data-bs-toggle="collapse" href="#">
+    <li class="nav-item" data-tooltip="Users">
+      <a class="nav-link collapsed" data-bs-target="#components-nav-admin" data-bs-toggle="collapse" href="#">
         <i class="bi bi-person-lines-fill"></i><span>Users</span>
         <i class="bi bi-chevron-down ms-auto"></i>
       </a>
-      <ul id="components-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+      <ul id="components-nav-admin" class="nav-content collapse" data-bs-parent="#sidebar-nav">
         <li>
           <a href="{% url 'administrator:add-user' %}">
             <i class="bi bi-circle"></i><span>Add user</span>
@@ -35,109 +34,109 @@
         </li>
       </ul>
     </li>
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Ready Shows">
       <a class="nav-link" href="{% url 'administrator:manage-sheets' %}">
         <i class="bi bi-card-list"></i><span>Ready Shows</span>
       </a>
     </li>
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Ready Shows Done">
       <a class="nav-link" href="{% url 'administrator:sheets-done' %}">
         <i class="bi bi-card-list"></i><span>Ready Shows Done</span>
       </a>
     </li>
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="X Shows">
       <a class="nav-link" href="{% url 'administrator:manage-x-sheets' %}">
         <i class="bi bi-bookmark"></i><span>X Shows</span>
       </a>
     </li>
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="X Shows Done">
       <a class="nav-link" href="{% url 'administrator:sheets-x-done' %}">
         <i class="bi bi-card-list"></i><span>X Shows Done</span>
       </a>
     </li>
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Archived Shows">
       <a class="nav-link" href="{% url 'administrator:archived-sheets' %}">
         <i class="bi bi-archive"></i><span>Archived Shows</span>
       </a>
     </li>
     {% endif %}
-    {% endwith %}
+
+
+    {% if user_group and user_group.name == 'ai_agent' %}
+    <li class="nav-item" data-tooltip="Dashboard">
+      <a class="nav-link" href="{% url 'ai_agent:index' %}">
+        <i class="bi bi-grid"></i>
+        <span>Dashboard</span>
+      </a>
+    </li>
     {% endif %}
 
 
-    {% if request.user.is_authenticated %}
-    {% with request.user.groups.first as user_group %}
     {% if user_group and user_group.name == 'operations_team_leader' %}
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Dashboard">
       <a class="nav-link" href="{% url 'operations_team_leader:index' %}">
         <i class="bi bi-grid"></i>
         <span>Dashboard</span>
       </a>
     </li>
-    <li class="nav-item">
-      <a class="nav-link collapsed" data-bs-target="#components-nav" data-bs-toggle="collapse" href="#">
+    <li class="nav-item" data-tooltip="Leads">
+      <a class="nav-link collapsed" data-bs-target="#components-nav-ops" data-bs-toggle="collapse" href="#">
         <i class="bi bi-person-lines-fill"></i><span>Leads</span>
         <i class="bi bi-chevron-down ms-auto"></i>
       </a>
-      <ul id="components-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
-        <li>
-          <a href="{% url 'operations_team_leader:add-lead' %}">
-            <i class="bi bi-circle"></i><span>Add Lead</span>
-          </a>
-        </li>
-        <li>
-          <a href="{% url 'operations_team_leader:auto-fill' %}">
-            <i class="bi bi-circle"></i><span>Auto fill</span>
-          </a>
-        </li>
-        <li>
-          <a href="{% url 'operations_team_leader:upload-sheet' %}">
-            <i class="bi bi-circle"></i><span>Upload Sheet</span>
-          </a>
-        </li>
-        <li>
-          <a href="{% url 'operations_team_leader:upload-x' %}">
-            <i class="bi bi-circle"></i><span>Upload X Folder</span>
-          </a>
-        </li>
-      </ul>
+      <ul id="components-nav-ops" class="nav-content collapse" data-bs-parent hiçbir
+      <li>
+        <a href="{% url 'operations_team_leader:add-lead' %}">
+          <i class="bi bi-circle"></i><span>Add Lead</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'operations_team_leader:auto-fill' %}">
+          <i class="bi bi-circle"></i><span>Auto fill</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'operations_team_leader:upload-sheet' %}">
+          <i class="bi bi-circle"></i><span>Upload Sheet</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'operations_team_leader:upload-x' %}">
+          <i class="bi bi-circle"></i><span>Upload X Folder</span>
+        </a>
+      </li>
+    </ul>
     </li>
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Leads Average">
       <a class="nav-link" href="{% url 'operations_team_leader:leads-average' %}">
         <i class="bi bi-card-list"></i><span>Leads Average</span>
       </a>
     </li>
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Black List">
       <a class="nav-link" href="{% url 'operations_team_leader:manage-filter-words' %}">
         <i class="bi bi-shield"></i><span>Black List</span>
       </a>
     </li>
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Notifications">
       <a class="nav-link" href="{% url 'operations_team_leader:notifications' %}">
         <i class="bi bi-bell"></i><span>Notifications</span>
       </a>
     </li>
     {% endif %}
-    {% endwith %}
-    {% endif %}
 
-
-
-    {% if request.user.is_authenticated %}
-    {% with request.user.groups.first as user_group %}
     {% if user_group and user_group.name == 'leads' %}
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Dashboard">
       <a class="nav-link" href="{% url 'leads:leads_index' %}">
         <i class="bi bi-grid"></i>
         <span>Dashboard</span>
       </a>
     </li>
-    <li class="nav-item">
-      <a class="nav-link collapsed" data-bs-target="#components-nav" data-bs-toggle="collapse" href="#">
+    <li class="nav-item" data-tooltip="Leads">
+      <a class="nav-link collapsed" data-bs-target="#components-nav-leads" data-bs-toggle="collapse" href="#">
         <i class="bi bi-person-lines-fill"></i><span>Leads</span>
         <i class="bi bi-chevron-down ms-auto"></i>
       </a>
-      <ul id="components-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+      <ul id="components-nav-leads" class="nav-content collapse" data-bs-parent="#sidebar-nav">
         <li>
           <a href="{% url 'leads:auto-fill' %}">
             <i class="bi bi-circle"></i><span>Auto fill</span>
@@ -150,38 +149,31 @@
         </li>
       </ul>
     </li>
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Leads Average">
       <a class="nav-link" href="{% url 'leads:leads-average' %}">
         <i class="bi bi-card-list"></i><span>Leads Average</span>
       </a>
     </li>
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Notifications">
       <a class="nav-link" href="{% url 'leads:notifications' %}">
         <i class="bi bi-bell"></i><span>Notifications</span>
       </a>
     </li>
     {% endif %}
-    {% endwith %}
-    {% endif %}
 
-
-
-
-    {% if request.user.is_authenticated %}
-    {% with request.user.groups.first as user_group %}
     {% if user_group and user_group.name == 'sales_team_leader' %}
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Dashboard">
       <a class="nav-link" href="{% url 'sales_team_leader:index' %}">
         <i class="bi bi-grid"></i>
         <span>Dashboard</span>
       </a>
     </li>
-    <li class="nav-item">
-      <a class="nav-link collapsed" data-bs-target="#components-nav" data-bs-toggle="collapse" href="#">
+    <li class="nav-item" data-tooltip="Ready Shows">
+      <a class="nav-link collapsed" data-bs-target="#components-nav-sales" data-bs-toggle="collapse" href="#">
         <i class="bi bi-person-lines-fill"></i><span>Ready Shows</span>
         <i class="bi bi-chevron-down ms-auto"></i>
       </a>
-      <ul id="components-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+      <ul id="components-nav-sales" class="nav-content collapse" data-bs-parent="#sidebar-nav">
         <li>
           <a href="{% url 'sales_team_leader:assigned-shows' %}">
             <i class="bi bi-circle"></i><span>New</span>
@@ -194,87 +186,79 @@
         </li>
       </ul>
     </li>
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Team shows">
       <a class="nav-link" href="{% url 'sales_team_leader:view-team-shows' %}">
         <i class="bi bi-people"></i><span>Team shows</span>
       </a>
     </li>
-    <li class="nav-item">
-      <a class="nav-link collapsed" data-bs-target="#components-nav-2" data-bs-toggle="collapse" href="#">
+    <li class="nav-item" data-tooltip="Recycled Shows">
+      <a class="nav-link collapsed" data-bs-target="#components-nav-2-sales" data-bs-toggle="collapse" href="#">
         <i class="bi bi-recycle"></i><span>Recycled Shows</span>
         <i class="bi bi-chevron-down ms-auto"></i>
       </a>
-      <ul id="components-nav-2" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+      <ul id="components-nav-2-sales" class="nav-content collapse" data-bs-parent="#sidebar-nav">
         <li>
           <a href="{% url 'sales_team_leader:view-recycled-shows' %}">
             <i class="bi bi-circle"></i><span>New</span>
           </a>
         </li>
-        <li></li>
-        <a href="{% url 'sales_team_leader:view-done-recycled-shows' %}">
-          <i class="bi bi-circle"></i><span>Done</span>
-        </a>
+        <li>
+          <a href="{% url 'sales_team_leader:view-done-recycled-shows' %}">
+            <i class="bi bi-circle"></i><span>Done</span>
+          </a>
+        </li>
       </ul>
     </li>
-
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Recycled Shows - Team">
       <a class="nav-link" href="{% url 'sales_team_leader:view-team-recycled' %}">
         <i class="bi bi-recycle"></i><span>Recycled Shows - Team</span>
       </a>
     </li>
-
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Prospect">
       <a class="nav-link" href="{% url 'sales_team_leader:view-saved-leads' %}">
         <i class="bi bi-bookmark"></i><span>Prospect</span>
       </a>
     </li>
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Team Prospect">
       <a class="nav-link" href="{% url 'sales_team_leader:view-team-prospect' %}">
         <i class="bi bi-bookmark"></i><span>Team Prospect</span>
       </a>
     </li>
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Search">
       <a class="nav-link" href="{% url 'sales_team_leader:search' %}">
         <i class="bi bi-search"></i><span>Search</span>
       </a>
     </li>
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Activity Logs">
       <a class="nav-link" href="{% url 'sales_team_leader:sales-logs' %}">
         <i class="bi bi-grid"></i><span>Activity Logs</span>
       </a>
     </li>
     {% endif %}
-    {% endwith %}
-    {% endif %}
 
-
-
-
-    {% if request.user.is_authenticated %}
-    {% with request.user.groups.first as user_group %}
     {% if user_group and user_group.name == 'sales_manager' %}
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Dashboard">
       <a class="nav-link" href="{% url 'sales_manager:index' %}">
         <i class="bi bi-grid"></i>
         <span>Dashboard</span>
       </a>
     </li>
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Leads Inventory">
       <a class="nav-link" href="{% url 'sales_manager:leads-inventory' %}">
         <i class="bi bi-search"></i><span>Leads Inventory</span>
       </a>
     </li>
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Manage teams">
       <a class="nav-link" href="{% url 'sales_manager:manage-sales-teams' %}">
         <i class="bi bi-people-fill"></i><span>Manage teams</span>
       </a>
     </li>
-    <li class="nav-item">
-      <a class="nav-link collapsed" data-bs-target="#components-nav" data-bs-toggle="collapse" href="#">
+    <li class="nav-item" data-tooltip="Ready Shows">
+      <a class="nav-link collapsed" data-bs-target="#components-nav-sales-mgr" data-bs-toggle="collapse" href="#">
         <i class="bi bi-person-lines-fill"></i><span>Ready Shows</span>
         <i class="bi bi-chevron-down ms-auto"></i>
       </a>
-      <ul id="components-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+      <ul id="components-nav-sales-mgr" class="nav-content collapse" data-bs-parent="#sidebar-nav">
         <li>
           <a href="{% url 'sales_manager:assigned-shows' %}">
             <i class="bi bi-circle"></i><span>New</span>
@@ -287,256 +271,236 @@
         </li>
       </ul>
     </li>
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Teams shows">
       <a class="nav-link" href="{% url 'sales_manager:view-teams-shows' %}">
         <i class="bi bi-people"></i><span>Teams shows</span>
       </a>
     </li>
-    <li class="nav-item">
-      <a class="nav-link collapsed" data-bs-target="#components-nav-2" data-bs-toggle="collapse" href="#">
+    <li class="nav-item" data-tooltip="Recycled Shows">
+      <a class="nav-link collapsed" data-bs-target="#components-nav-2-sales-mgr" data-bs-toggle="collapse" href="#">
         <i class="bi bi-person-lines-fill"></i><span>Recycled Shows</span>
         <i class="bi bi-chevron-down ms-auto"></i>
       </a>
-      <ul id="components-nav-2" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+      <ul id="components-nav-2-sales-mgr" class="nav-content collapse" data-bs-parent="#sidebar-nav">
         <li>
           <a href="{% url 'sales_manager:view-recycled-shows' %}">
             <i class="bi bi-circle"></i><span>New</span>
           </a>
         </li>
-        <li></li>
-        <a href="{% url 'sales_manager:view-done-recycled-shows' %}">
-          <i class="bi bi-circle"></i><span>Done</span>
-        </a>
+        <li>
+          <a href="{% url 'sales_manager:view-done-recycled-shows' %}">
+            <i class="bi bi-circle"></i><span>Done</span>
+          </a>
+        </li>
       </ul>
     </li>
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Recycled Shows - Teams">
       <a class="nav-link" href="{% url 'sales_manager:view-teams-shows-recycled' %}">
         <i class="bi bi-recycle"></i><span>Recycled Shows - Teams</span>
       </a>
     </li>
-
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Prospect">
       <a class="nav-link" href="{% url 'sales_manager:view-saved-leads' %}">
         <i class="bi bi-bookmark"></i><span>Prospect</span>
       </a>
     </li>
-
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Teams prospect">
       <a class="nav-link" href="{% url 'sales_manager:view-teams-prospect' %}">
         <i class="bi bi-bookmark"></i><span>Teams prospect</span>
       </a>
     </li>
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Referrals Sheet">
       <a class="nav-link" href="{% url 'sales_manager:manage-referrals' %}">
         <i class="bi bi-flag"></i><span>Referrals Sheet</span>
       </a>
     </li>
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Search">
       <a class="nav-link" href="{% url 'sales_manager:search' %}">
         <i class="bi bi-search"></i><span>Search</span>
       </a>
     </li>
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Activity Logs">
       <a class="nav-link" href="{% url 'sales_manager:sales-logs' %}">
         <i class="bi bi-grid"></i><span>Activity Logs</span>
       </a>
     </li>
     {% endif %}
-    {% endwith %}
-    {% endif %}
 
-
-
-
-    {% if request.user.is_authenticated %}
-    {% with request.user.groups.first as user_group %}
     {% if user_group and user_group.name == 'sales' %}
-    <li class="nav-item">
+    <li class="nav-item" data-tooltip="Dashboard">
       <a class="nav-link" href="{% url 'sales:index' %}">
         <i class="bi bi-grid"></i>
         <span>Dashboard</span>
       </a>
     </li>
-    <li class="nav-item">
-      <a class="nav-link collapsed" data-bs-target="#components-nav" data-bs-toggle="collapse" href="#">
+    <li class="nav-item" data-tooltip="Ready Shows">
+      <a class="nav-link collapsed" data-bs-target="#components-nav-sales-reg" data-bs-toggle="collapse" href="#">
         <i class="bi bi-person-lines-fill"></i><span>Ready Shows</span>
         <i class="bi bi-chevron-down ms-auto"></i>
       </a>
-      <ul id="components-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+      <ul id="components-nav-sales-reg" class="nav-content collapse" data-bs-parent="#sidebar-nav">
         <li>
           <a href="{% url 'sales:assigned-shows' %}">
             <i class="bi bi-circle"></i><span>New</span>
           </a>
         </li>
-        <li></li>
-        <a href="{% url 'sales:view-done-shows' %}">
-          <i class="bi bi-circle"></i><span>Done</span>
-        </a>
+        <li>
+          <a href="{% url 'sales:view-done-shows' %}">
+            <i class="bi bi-circle"></i><span>Done</span>
+          </a>
+        </li>
+      </ul>
     </li>
-  </ul>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link collapsed" data-bs-target="#components-nav-2" data-bs-toggle="collapse" href="#">
-      <i class="bi bi-person-lines-fill"></i><span>Recycled Shows</span>
-      <i class="bi bi-chevron-down ms-auto"></i>
-    </a>
-    <ul id="components-nav-2" class="nav-content collapse" data-bs-parent="#sidebar-nav">
-      <li>
-        <a href="{% url 'sales:view-recycled-shows' %}">
-          <i class="bi bi-circle"></i><span>New</span>
-        </a>
-      </li>
-      <li></li>
-      <a href="{% url 'sales:view-done-recycled-shows' %}">
-        <i class="bi bi-circle"></i><span>Done</span>
+    <li class="nav-item" data-tooltip="Recycled Shows">
+      <a class="nav-link collapsed" data-bs-target="#components-nav-2-sales-reg" data-bs-toggle="collapse" href="#">
+        <i class="bi bi-person-lines-fill"></i><span>Recycled Shows</span>
+        <i class="bi bi-chevron-down ms-auto"></i>
       </a>
-    </ul>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" href="{% url 'sales:view_saved_leads' %}">
-      <i class="bi bi-bookmark"></i><span>Prospect</span>
-    </a>
-  </li>
-  {% endif %}
-  {% endwith %}
-  {% endif %}
-
-
-
-
-  
-  {% if request.user.is_authenticated %}
-  {% with request.user.groups.first as user_group %}
-  {% if user_group and user_group.name == 'operations_manager' %}
-  <li class="nav-item">
-    <a class="nav-link" href="{% url 'operations_manager:index' %}">
-      <i class="bi bi-grid"></i>
-      <span>Dashboard</span>
-    </a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" href="{% url 'operations_manager:manage-referrals' %}">
-      <i class="bi bi-flag"></i><span>Referrals Sheet</span>
-    </a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" href="{% url 'operations_manager:price-requests' %}">
-      <i class="bi bi-bookmark"></i><span>Price Requests</span>
-    </a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" href="{% url 'operations_manager:manage-filter-words' %}">
-      <i class="bi bi-shield"></i><span>Black List</span>
-    </a>
-  </li>
-
-  <!-- Dropdown for Ready Shows -->
-  <li class="nav-item">
-    <a class="nav-link collapsed" data-bs-target="#ready-shows-nav" data-bs-toggle="collapse" href="#">
-      <i class="bi bi-card-list"></i><span>Ready Shows</span>
-      <i class="bi bi-chevron-down ms-auto"></i>
-    </a>
-    <ul id="ready-shows-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
-      <li>
-        <a href="{% url 'operations_manager:ready-shows' %}">
-          <i class="bi bi-circle"></i><span>New Shows</span>
-        </a>
-      </li>
-      <li>
-        <a href="{% url 'operations_manager:done-ready-shows' %}">
-          <i class="bi bi-circle"></i><span>Done Shows</span>
-        </a>
-      </li>
-    </ul>
-  </li>
-
-  <li class="nav-item">
-    <a class="nav-link" href="{% url 'operations_manager:archived-sheets' %}">
-      <i class="bi bi-archive"></i><span>Archived Ready Shows</span>
-    </a>
-  </li>
-
-  <!-- Dropdown for Sales Shows -->
-  <li class="nav-item">
-    <a class="nav-link collapsed" data-bs-target="#sales-shows-nav" data-bs-toggle="collapse" href="#">
-      <i class="bi bi-card-list"></i><span>Sales Shows</span>
-      <i class="bi bi-chevron-down ms-auto"></i>
-    </a>
-    <ul id="sales-shows-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
-      <li>
-        <a href="{% url 'operations_manager:unassigned-sales-shows' %}">
-          <i class="bi bi-circle"></i><span>Unassigned Shows</span>
-        </a>
-      </li>
-      <li>
-        <a href="{% url 'operations_manager:unassigned-x-sales-shows' %}">
-          <i class="bi bi-circle"></i><span>Unassigned X Shows</span>
-        </a>
-      </li>
-      <li>
-        <a href="{% url 'operations_manager:assigned-sales-shows' %}">
-          <i class="bi bi-circle"></i><span>Assigned Shows</span>
-        </a>
-      </li>
-    </ul>
-  </li>
-
-  <li class="nav-item">
-    <a class="nav-link" href="{% url 'operations_manager:archived-sales-shows' %}">
-      <i class="bi bi-archive"></i><span>Archived Sales Shows</span>
-    </a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" href="{% url 'operations_manager:view-sales-agents' %}">
-      <i class="bi bi-recycle"></i><span>Recycling</span>
-    </a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" href="{% url 'operations_manager:reassigned-shows' %}">
-      <i class="bi bi-card-list"></i><span>Reassigned shows</span>
-    </a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" href="{% url 'operations_manager:manage-leads-teams' %}">
-      <i class="bi bi-people"></i><span>Manage teams</span>
-    </a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link collapsed" data-bs-target="#components-nav" data-bs-toggle="collapse" href="#">
-      <i class="bi bi-person-lines-fill"></i><span>Leads</span>
-      <i class="bi bi-chevron-down ms-auto"></i>
-    </a>
-    <ul id="components-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
-      <li>
-        <a href="{% url 'operations_manager:add-lead' %}">
-          <i class="bi bi-circle"></i><span>Add Lead</span>
-        </a>
-      </li>
-      <li>
-        <a href="{% url 'operations_manager:auto-fill' %}">
-          <i class="bi bi-circle"></i><span>Auto fill</span>
-        </a>
-      </li>
-      <li>
-        <a href="{% url 'operations_manager:upload-sheet' %}">
-          <i class="bi bi-circle"></i><span>Upload Sheet</span>
-        </a>
-      </li>
-      <li>
-        <a href="{% url 'operations_manager:upload-x' %}">
-          <i class="bi bi-circle"></i><span>Upload X Folder</span>
-        </a>
-      </li>
-    </ul>
+      <ul id="components-nav-2-sales-reg" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+        <li>
+          <a href="{% url 'sales:view-recycled-shows' %}">
+            <i class="bi bi-circle"></i><span>New</span>
+          </a>
+        </li>
+        <li>
+          <a href="{% url 'sales:view-done-recycled-shows' %}">
+            <i class="bi bi-circle"></i><span>Done</span>
+          </a>
+        </li>
+      </ul>
+    </li>
+    <li class="nav-item" data-tooltip="Prospect">
+      <a class="nav-link" href="{% url 'sales:view_saved_leads' %}">
+        <i class="bi bi-bookmark"></i><span>Prospect</span>
+      </a>
+    </li>
     {% endif %}
+
+    {% if user_group and user_group.name == 'operations_manager' %}
+    <li class="nav-item" data-tooltip="Dashboard">
+      <a class="nav-link" href="{% url 'operations_manager:index' %}">
+        <i class="bi bi-grid"></i>
+        <span>Dashboard</span>
+      </a>
+    </li>
+    <li class="nav-item" data-tooltip="Referrals Sheet">
+      <a class="nav-link" href="{% url 'operations_manager:manage-referrals' %}">
+        <i class="bi bi-flag"></i><span>Referrals Sheet</span>
+      </a>
+    </li>
+    <li class="nav-item" data-tooltip="Price Requests">
+      <a class="nav-link" href="{% url 'operations_manager:price-requests' %}">
+        <i class="bi bi-bookmark"></i><span>Price Requests</span>
+      </a>
+    </li>
+    <li class="nav-item" data-tooltip="Black List">
+      <a class="nav-link" href="{% url 'operations_manager:manage-filter-words' %}">
+        <i class="bi bi-shield"></i><span>Black List</span>
+      </a>
+    </li>
+    <li class="nav-item" data-tooltip="Ready Shows">
+      <a class="nav-link collapsed" data-bs-target="#ready-shows-nav" data-bs-toggle="collapse" href="#">
+        <i class="bi bi-card-list"></i><span>Ready Shows</span>
+        <i class="bi bi-chevron-down ms-auto"></i>
+      </a>
+      <ul id="ready-shows-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+        <li>
+          <a href="{% url 'operations_manager:ready-shows' %}">
+            <i class="bi bi-circle"></i><span>New Shows</span>
+          </a>
+        </li>
+        <li>
+          <a href="{% url 'operations_manager:done-ready-shows' %}">
+            <i class="bi bi-circle"></i><span>Done Shows</span>
+          </a>
+        </li>
+      </ul>
+    </li>
+    <li class="nav-item" data-tooltip="Archived Ready Shows">
+      <a class="nav-link" href="{% url 'operations_manager:archived-sheets' %}">
+        <i class="bi bi-archive"></i><span>Archived Ready Shows</span>
+      </a>
+    </li>
+    <li class="nav-item" data-tooltip="Sales Shows">
+      <a class="nav-link collapsed" data-bs-target="#sales-shows-nav" data-bs-toggle="collapse" href="#">
+        <i class="bi bi-card-list"></i><span>Sales Shows</span>
+        <i class="bi bi-chevron-down ms-auto"></i>
+      </a>
+      <ul id="sales-shows-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+        <li>
+          <a href="{% url 'operations_manager:unassigned-sales-shows' %}">
+            <i class="bi bi-circle"></i><span>Unassigned Shows</span>
+          </a>
+        </li>
+        <li>
+          <a href="{% url 'operations_manager:unassigned-x-sales-shows' %}">
+            <i class="bi bi-circle"></i><span>Unassigned X Shows</span>
+          </a>
+        </li>
+        <li>
+          <a href="{% url 'operations_manager:assigned-sales-shows' %}">
+            <i class="bi bi-circle"></i><span>Assigned Shows</span>
+          </a>
+        </li>
+      </ul>
+    </li>
+    <li class="nav-item" data-tooltip="Archived Sales Shows">
+      <a class="nav-link" href="{% url 'operations_manager:archived-sales-shows' %}">
+        <i class="bi bi-archive"></i><span>Archived Sales Shows</span>
+      </a>
+    </li>
+    <li class="nav-item" data-tooltip="Recycling">
+      <a class="nav-link" href="{% url 'operations_manager:view-sales-agents' %}">
+        <i class="bi bi-recycle"></i><span>Recycling</span>
+      </a>
+    </li>
+    <li class="nav-item" data-tooltip="Reassigned shows">
+      <a class="nav-link" href="{% url 'operations_manager:reassigned-shows' %}">
+        <i class="bi bi-card-list"></i><span>Reassigned shows</span>
+      </a>
+    </li>
+    <li class="nav-item" data-tooltip="Manage teams">
+      <a class="nav-link" href="{% url 'operations_manager:manage-leads-teams' %}">
+        <i class="bi bi-people"></i><span>Manage teams</span>
+      </a>
+    </li>
+    <li class="nav-item" data-tooltip="Leads">
+      <a class="nav-link collapsed" data-bs-target="#components-nav-ops-mgr" data-bs-toggle="collapse" href="#">
+        <i class="bi bi-person-lines-fill"></i><span>Leads</span>
+        <i class="bi bi-chevron-down ms-auto"></i>
+      </a>
+      <ul id="components-nav-ops-mgr" class="nav-content collapse" data-bs-parent="#sidebar-nav">
+        <li>
+          <a href="{% url 'operations_manager:add-lead' %}">
+            <i class="bi bi-circle"></i><span>Add Lead</span>
+          </a>
+        </li>
+        <li>
+          <a href="{% url 'operations_manager:auto-fill' %}">
+            <i class="bi bi-circle"></i><span>Auto fill</span>
+          </a>
+        </li>
+        <li>
+          <a href="{% url 'operations_manager:upload-sheet' %}">
+            <i class="bi bi-circle"></i><span>Upload Sheet</span>
+          </a>
+        </li>
+        <li>
+          <a href="{% url 'operations_manager:upload-x' %}">
+            <i class="bi bi-circle"></i><span>Upload X Folder</span>
+          </a>
+        </li>
+      </ul>
+    </li>
+    {% endif %}
+
+    <li class="nav-item" data-tooltip="Logout">
+      <a class="nav-link" href="{% url 'main:logout' %}">
+        <i class="bi bi-box-arrow-left"></i>
+        <span>Logout</span>
+      </a>
+    </li>
     {% endwith %}
     {% endif %}
-
-  <li class="nav-item">
-    <a class="nav-link" href="{% url 'main:logout' %}">
-      <i class="bi bi-box-arrow-left"></i>
-      <span>Logout</span>
-    </a>
-  </li>
   </ul>
 </aside>

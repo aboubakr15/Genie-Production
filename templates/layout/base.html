@@ -7,16 +7,17 @@
   <meta charset="utf-8" />
   <meta content="width=device-width, initial-scale=1.0" name="viewport" />
 
-  <title>The Genie</title>
+  <title style="align-items: center;">The Genie</title>
   <link rel="icon" href="{% static 'assets/Genie_logo.jpeg' %}" type="image/x-icon">
   <meta content="" name="description" />
   <meta content="" name="keywords" />
 
   <!-- Google Fonts -->
   <link href="https://fonts.gstatic.com" rel="preconnect" />
-  <link
-    href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Nunito:300,300i,400,400i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i"
-    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- For some icons like the save button icon in sheets -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <!-- Vendor CSS Files -->
   <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" />
@@ -30,10 +31,151 @@
   <!-- Template Main CSS File -->
   <link href="{% static 'assets/css/style.css' %}" rel="stylesheet" />
 
-  <!-- PopUp Notification Library -->
-  <link href="{% static 'assets/css/notification.css' %}" rel="stylesheet" />
-  <script src="{% static 'assets/js/notification.js' %}"></script>
-  <script src="{% static 'assets/js/jquery.js' %}"></script>
+  <style>
+    :root {
+      --primary-color: #4a2c7a;
+      --secondary-color: #8e44ad;
+      --accent-color: #ffd700;
+      --text-primary: #2c3e50;
+      --text-secondary: #7f8c8d;
+      --bg-gradient: linear-gradient(135deg, var(--primary-color), var(--secondary-color), #3498db);
+      --card-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+      --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --font-primary: 'Poppins', sans-serif;
+      --font-secondary: 'Inter', sans-serif;
+    }
+
+    body {
+      font-family: var(--font-primary);
+      background: #f8f9fa;
+      color: var(--text-primary);
+    }
+
+    /* Main Content Adjustment */
+    .main {
+      margin-left: 80px;
+      padding: 20px;
+      transition: var(--transition-smooth);
+    }
+
+    @media (min-width: 1200px) {
+      .main {
+        margin-left: 80px;
+      }
+
+      .sidebar:hover + .main {
+        margin-left: 300px;
+      }
+    }
+
+    @media (max-width: 1199.98px) {
+      .main {
+        margin-left: 0;
+      }
+    }
+
+    /* Modern Card Styles */
+    .card {
+      background: white;
+      border-radius: 15px;
+      border: none;
+      box-shadow: var(--card-shadow);
+      transition: var(--transition-smooth);
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
+    .card-body {
+      padding: 1.5rem;
+    }
+
+    /* Button Styles */
+    .btn {
+      border-radius: 8px;
+      padding: 0.5rem 1.5rem;
+      font-weight: 500;
+      transition: var(--transition-smooth);
+    }
+
+    .btn-primary {
+      background: var(--bg-gradient);
+      border: none;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(74, 44, 122, 0.3);
+    }
+
+    /* Table Styles */
+    .table {
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: var(--card-shadow);
+    }
+
+    .table thead th {
+      background: var(--bg-gradient);
+      color: white;
+      font-weight: 500;
+      border: none;
+    }
+
+    /* Form Controls */
+    .form-control {
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      padding: 0.75rem 1rem;
+      transition: var(--transition-smooth);
+    }
+
+    .form-control:focus {
+      border-color: var(--secondary-color);
+      box-shadow: 0 0 0 3px rgba(142, 68, 173, 0.1);
+    }
+
+    /* Alert Styles */
+    .alert {
+      border-radius: 10px;
+      border: none;
+      padding: 1rem 1.5rem;
+      margin-bottom: 1.5rem;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateY(-20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--secondary-color);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-color);
+    }
+  </style>
 
 </head>
 

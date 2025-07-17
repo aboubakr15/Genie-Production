@@ -9,6 +9,14 @@
 /*--------------------------------------------------------------
 # General
 --------------------------------------------------------------*/
+.table-scroll {
+  overflow-x: auto;
+  /* Enables horizontal scrolling */
+  white-space: nowrap;
+  /* Prevents line breaks */
+}
+
+
 :root {
   scroll-behavior: smooth;
 }
@@ -597,164 +605,258 @@ h6 {
 /*--------------------------------------------------------------
 # Sidebar
 --------------------------------------------------------------*/
+/* Hover-based sidebar styles */
 .sidebar {
   position: fixed;
-  top: 60px;
+  top: 0;
   left: 0;
-  bottom: 0;
-  width: 300px;
-  z-index: 996;
-  transition: all 0.3s;
-  padding: 20px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #aab7cf transparent;
-  box-shadow: 0px 0px 20px rgba(1, 41, 112, 0.1);
-  background-color: #fff;
+  width: 60px; /* Collapsed width - showing only icons */
+  height: 100vh;
+  background-color: #f8f9fa;
+  transition: width 0.3s ease;
+  overflow: hidden;
+  z-index: 1000;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
 }
 
-@media (max-width: 1199px) {
+.sidebar:hover {
+  width: 280px; /* Expanded width on hover */
+}
+
+/* Navigation items */
+.sidebar .nav-item {
+  position: relative;
+  margin: 2px 0;
+}
+
+.sidebar .nav-link {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  color: #333;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  border-radius: 4px;
+  margin: 0 8px;
+}
+
+.sidebar .nav-link:hover {
+  background-color: #e9ecef;
+  color: #007bff;
+}
+
+.sidebar .nav-link i {
+  min-width: 20px;
+  margin-right: 15px;
+  text-align: center;
+  font-size: 16px;
+}
+
+.sidebar .nav-link span {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar:hover .nav-link span {
+  opacity: 1;
+}
+
+/* Active link styling */
+.sidebar .nav-link.active {
+  background-color: #007bff;
+  color: white;
+}
+
+/* Collapsed navigation items - hide Bootstrap collapse chevron */
+.sidebar .nav-link .bi-chevron-down {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar:hover .nav-link .bi-chevron-down {
+  opacity: 1;
+}
+
+/* Submenu styling - work with Bootstrap's collapse */
+.sidebar .nav-content {
+  background-color: rgba(0,0,0,0.05);
+  border-radius: 4px;
+  margin: 0 8px;
+  overflow: hidden;
+}
+
+.sidebar .nav-content li {
+  list-style: none;
+}
+
+.sidebar .nav-content a {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  color: #666;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  border-radius: 4px;
+  margin: 2px 4px;
+}
+
+.sidebar .nav-content a:hover {
+  background-color: rgba(0,123,255,0.1);
+  color: #007bff;
+}
+
+.sidebar .nav-content a i {
+  min-width: 16px;
+  margin-right: 10px;
+  text-align: center;
+  font-size: 12px;
+}
+
+.sidebar .nav-content a span {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar:hover .nav-content a span {
+  opacity: 1;
+}
+
+/* Adjust main content when sidebar is present */
+.main {
+  margin-left: 60px;
+  transition: margin-left 0.3s ease;
+  padding: 20px;
+}
+
+/* Tooltip for collapsed sidebar items */
+.sidebar .nav-item::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 70px;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #333;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1001;
+  pointer-events: none;
+}
+
+.sidebar .nav-item::after {
+  content: '';
+  position: absolute;
+  left: 65px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-right: 5px solid #333;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1001;
+  pointer-events: none;
+}
+
+.sidebar:not(:hover) .nav-item:hover::before,
+.sidebar:not(:hover) .nav-item:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Hide tooltips when sidebar is expanded */
+.sidebar:hover .nav-item::before,
+.sidebar:hover .nav-item::after {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Prevent Bootstrap collapse from working when sidebar is collapsed */
+.sidebar:not(:hover) .nav-content.collapse {
+  display: none !important;
+}
+
+/* Style the logout button */
+.sidebar .nav-item:last-child .nav-link {
+  margin-top: 20px;
+  border-top: 1px solid #dee2e6;
+  padding-top: 15px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
   .sidebar {
-    left: -300px;
+    width: 0;
+    overflow: hidden;
   }
+  
+  .sidebar:hover {
+    width: 280px;
+  }
+  
+  .main {
+    margin-left: 0;
+  }
+  
+  /* Add a hover trigger area for mobile */
+  .sidebar-trigger {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 15px;
+    height: 100vh;
+    z-index: 998;
+    background-color: rgba(0,123,255,0.1);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .sidebar-trigger:hover {
+    opacity: 1;
+  }
+}
+
+/* Smooth scrolling for sidebar content */
+.sidebar {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #ccc transparent;
 }
 
 .sidebar::-webkit-scrollbar {
-  width: 5px;
-  height: 8px;
-  background-color: #fff;
+  width: 4px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .sidebar::-webkit-scrollbar-thumb {
-  background-color: #aab7cf;
+  background-color: #ccc;
+  border-radius: 2px;
 }
 
-@media (min-width: 1200px) {
-
-  #main,
-  #footer {
-    margin-left: 300px;
-  }
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background-color: #aaa;
 }
 
-@media (max-width: 1199px) {
-  .toggle-sidebar .sidebar {
-    left: 0;
-  }
+/* Hide scrollbar when collapsed */
+.sidebar:not(:hover) {
+  scrollbar-width: none;
 }
 
-@media (min-width: 1200px) {
-
-  .toggle-sidebar #main,
-  .toggle-sidebar #footer {
-    margin-left: 0;
-  }
-
-  .toggle-sidebar .sidebar {
-    left: -300px;
-  }
-}
-
-.sidebar-nav {
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-.sidebar-nav li {
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-.sidebar-nav .nav-item {
-  margin-bottom: 5px;
-}
-
-.sidebar-nav .nav-heading {
-  font-size: 11px;
-  text-transform: uppercase;
-  color: #899bbd;
-  font-weight: 600;
-  margin: 10px 0 5px 15px;
-}
-
-.sidebar-nav .nav-link {
-  display: flex;
-  align-items: center;
-  font-size: 15px;
-  font-weight: 600;
-  color: #4154f1;
-  transition: 0.3;
-  background: #f6f9ff;
-  padding: 10px 15px;
-  border-radius: 4px;
-}
-
-.sidebar-nav .nav-link i {
-  font-size: 16px;
-  margin-right: 10px;
-  color: #4154f1;
-}
-
-.sidebar-nav .nav-link.collapsed {
-  color: #012970;
-  background: #fff;
-}
-
-.sidebar-nav .nav-link.collapsed i {
-  color: #899bbd;
-}
-
-.sidebar-nav .nav-link:hover {
-  color: #4154f1;
-  background: #f6f9ff;
-}
-
-.sidebar-nav .nav-link:hover i {
-  color: #4154f1;
-}
-
-.sidebar-nav .nav-link .bi-chevron-down {
-  margin-right: 0;
-  transition: transform 0.2s ease-in-out;
-}
-
-.sidebar-nav .nav-link:not(.collapsed) .bi-chevron-down {
-  transform: rotate(180deg);
-}
-
-.sidebar-nav .nav-content {
-  padding: 5px 0 0 0;
-  margin: 0;
-  list-style: none;
-}
-
-.sidebar-nav .nav-content a {
-  display: flex;
-  align-items: center;
-  font-size: 14px;
-  font-weight: 600;
-  color: #012970;
-  transition: 0.3;
-  padding: 10px 0 10px 40px;
-  transition: 0.3s;
-}
-
-.sidebar-nav .nav-content a i {
-  font-size: 6px;
-  margin-right: 8px;
-  line-height: 0;
-  border-radius: 50%;
-}
-
-.sidebar-nav .nav-content a:hover,
-.sidebar-nav .nav-content a.active {
-  color: #4154f1;
-}
-
-.sidebar-nav .nav-content a.active i {
-  background-color: #4154f1;
+.sidebar:not(:hover)::-webkit-scrollbar {
+  display: none;
 }
 
 /*--------------------------------------------------------------

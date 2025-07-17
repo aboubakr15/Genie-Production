@@ -1,193 +1,99 @@
 {% load static %}
 
-<style>
-  .nav-bar-counter {
-    position: relative;
-  }
-
-  .badge {
-    font-size: 0.75rem;
-    padding: 5px;
-  }
-</style>
-
-<header id="header" class="header fixed-top d-flex align-items-center">
-  <div class="d-flex align-items-center justify-content-between">
-    <a href="/" class="logo d-flex align-items-center">
-      <img src="{% static 'assets/Genie_logo.jpeg' %}" alt="" />
-      <span class="d-none d-lg-block">The Genie</span>
+<header id="header" class="header fixed-top d-flex align-items-center" style="background: linear-gradient(135deg, #4a2c7a, #8e44ad, #3498db); padding: 10px 20px; border-radius: 0 0 15px 15px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);">
+  <div class="d-flex align-items-center justify-content-between w-100">
+    <a href="/" class="logo d-flex align-items-center" style="transition: all 0.3s ease;">
+      <img src="{% static 'assets/Genie_logo.jpeg' %}" alt="Genie Logo" style="max-height: 40px; border-radius: 50%; box-shadow: 0 0 10px #fff; transition: transform 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 0 20px #ffd700';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0 10px #fff';">
+      <span class="d-none d-lg-block ms-2" style="font-family: 'Poppins', sans-serif; font-size: 1.5rem; font-weight: 700; color: #ffd700; text-shadow: 0 0 5px #fff, 0 0 10px #ffd700; transition: text-shadow 0.3s ease;" onmouseover="this.style.textShadow='0 0 10px #fff, 0 0 20px #ffd700';" onmouseout="this.style.textShadow='0 0 5px #fff, 0 0 10px #ffd700';">The Genie</span>
     </a>
-    <i class="bi bi-list toggle-sidebar-btn"></i>
-  </div>
-  <!-- End Logo -->
+    <!-- End Logo -->
 
-  <nav class="header-nav ms-auto">
-    <ul class="d-flex align-items-center">
-      <li class="nav-item d-block d-lg-none">
-        <a class="nav-link nav-icon search-bar-toggle" href="#">
-          <i class="bi bi-search"></i>
-        </a>
-      </li>
-      <!-- End Search Icon-->
+    <nav class="header-nav ms-auto">
+      <ul class="d-flex align-items-center">
+        <li class="nav-item d-block d-lg-none">
+          <a class="nav-link nav-icon search-bar-toggle" href="#" style="color: #fff; transition: color 0.3s ease;" onmouseover="this.style.color='#ffd700';">
+            <i class="bi bi-search"></i>
+          </a>
+        </li>
+        <!-- End Search Icon-->
 
-      <li class="nav-item dropdown">
-        {% if request.user.is_authenticated %}
-        {% with request.user.groups.first as user_group %}
-        {% if user_group %}
-        {% if user_group.name == 'operations_team_leader' %}
-        <a class="nav-link nav-icon nav-bar-counter" href="{% url 'operations_team_leader:notifications' %}">
-        {% elif user_group.name == 'operations_manager' %}
-        <a class="nav-link nav-icon nav-bar-counter" href="{% url 'operations_manager:notifications' %}">
-        {% elif user_group.name == 'leads' %}
-        <a class="nav-link nav-icon nav-bar-counter" href="{% url 'leads:notifications' %}">
-        {% elif user_group.name == 'sales_manager' %}
-        <a class="nav-link nav-icon nav-bar-counter" href="{% url 'sales_manager:notifications' %}">
-        {% elif user_group.name == 'sales_team_leader' %}
-        <a class="nav-link nav-icon nav-bar-counter" href="{% url 'sales_team_leader:notifications' %}">
-        {% elif user_group.name == 'sales' %}
-        <a class="nav-link nav-icon nav-bar-counter" href="{% url 'sales:notifications' %}">
-        {% endif %}
-        {% endif %}
-        {% endwith %}
-        {% endif %}
-
-          <i class="bi bi-bell"></i>
-          {% if unread_notifications_count > 0 %}
-          <span class="badge notification-badge bg-primary badge-number">{{ unread_notifications_count }}</span>
-          {% else %}
-              <span class="badge notification-badge bg-primary badge-number" style="display: none;"></span>
+        <li class="nav-item dropdown">
+          {% if request.user.is_authenticated %}
+          {% with request.user.groups.first as user_group %}
+          {% if user_group %}
+          {% if user_group.name == 'operations_team_leader' %}
+          <a class="nav-link nav-icon nav-bar-counter" href="{% url 'operations_team_leader:notifications' %}" style="position: relative; transition: all 0.3s ease;">
+          {% elif user_group.name == 'operations_manager' %}
+          <a class="nav-link nav-icon nav-bar-counter" href="{% url 'operations_manager:notifications' %}" style="position: relative; transition: all 0.3s ease;">
+          {% elif user_group.name == 'leads' %}
+          <a class="nav-link nav-icon nav-bar-counter" href="{% url 'leads:notifications' %}" style="position: relative; transition: all 0.3s ease;">
+          {% elif user_group.name == 'sales_manager' %}
+          <a class="nav-link nav-icon nav-bar-counter" href="{% url 'sales_manager:notifications' %}" style="position: relative; transition: all 0.3s ease;">
+          {% elif user_group.name == 'sales_team_leader' %}
+          <a class="nav-link nav-icon nav-bar-counter" href="{% url 'sales_team_leader:notifications' %}" style="position: relative; transition: all 0.3s ease;">
+          {% elif user_group.name == 'sales' %}
+          <a class="nav-link nav-icon nav-bar-counter" href="{% url 'sales:notifications' %}" style="position: relative; transition: all 0.3s ease;">
           {% endif %}
-      </li>
-      <!-- End Notification Nav -->
+          {% endif %}
+          {% endwith %}
+          {% endif %}
 
+            <i class="bi bi-bell" style="font-size: 1.5rem; color: #fff; transition: all 0.3s ease;" onmouseover="this.style.color='#ffd700'; this.style.textShadow='0 0 10px #ffd700, 0 0 20px #fff';" onmouseout="this.style.color='#fff'; this.style.textShadow='none';"></i>
+            {% if unread_notifications_count > 0 %}
+            <span class="badge notification-badge bg-primary badge-number" style="position: absolute; top: -5px; right: -5px; background: #ffd700; color: #4a2c7a; animation: pulse 1.5s infinite;">{{ unread_notifications_count }}</span>
+            {% else %}
+            <span class="badge notification-badge bg-primary badge-number" style="display: none;"></span>
+            {% endif %}
+          </a>
+          <!-- End Notification Icon with Animation -->
+        </li>
+        <!-- End Notification Nav -->
 
-      <li class="nav-item dropdown pe-3">
-        <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
+        <li class="nav-item dropdown pe-3">
+          <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown" style="transition: all 0.3s ease;">
+            <span class="d-none d-md-block dropdown-toggle px-2" style="font-size: 1.2rem; color: #fff; background: rgba(255, 255, 255, 0.1); padding: 5px 15px; border-radius: 20px; animation: pulse 2s infinite;">
+              {{request.user.username}}
+            </span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile" style="animation: slideIn 0.3s ease-out; border-radius: 10px; background: rgba(255, 255, 255, 0.95); box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);">
+            <li class="dropdown-header">
+              <h6 style="color: #4a2c7a; font-family: 'Poppins', sans-serif;">{{request.user.username}}</h6>
+              <span style="color: #8e44ad;">{{request.user.groups.first.name}}</span>
+            </li>
+            <li>
+              <hr class="dropdown-divider" />
+            </li>
 
-          <span class="d-none d-md-block dropdown-toggle px-2"
-            style="font-size: 1.2rem">{{request.user.username}}</span> </a>
-        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
-          <li class="dropdown-header">
-            <h6>{{request.user.username}}</h6>
-            <span>{{request.user.groups.first.name}}</span>
-          </li>
-          <li>
-            <hr class="dropdown-divider" />
-          </li>
-
-          <li>
-            <a class="dropdown-item d-flex align-items-center" href="{% url 'main:logout' %}">
-              <i class="bi bi-box-arrow-right"></i>
-              <span>Sign Out</span>
-            </a>
-          </li>
-        </ul>
-        <!-- End Profile Dropdown Items -->
-      </li>
-      <!-- End Profile Nav -->
-    </ul>
-  </nav>
+            <li>
+              <a class="dropdown-item d-flex align-items-center" href="{% url 'main:logout' %}" style="color: #4a2c7a; transition: color 0.3s ease;" onmouseover="this.style.color='#8e44ad';">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Sign Out</span>
+              </a>
+            </li>
+          </ul>
+          <!-- End Profile Dropdown Items -->
+        </li>
+        <!-- End Profile Nav -->
+      </ul>
+    </nav>
+  </div>
   <!-- End Icons Navigation -->
+  <style>
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    @keyframes slideIn {
+      from { transform: translateY(-10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .header-nav .nav-link:hover {
+      color: #ffd700 !important;
+    }
+    .dropdown-menu .dropdown-item:hover {
+      background: rgba(142, 68, 173, 0.1);
+      color: #8e44ad !important;
+    }
+  </style>
 </header>
-
-<!-- <script>
-  const notificationSocket = new WebSocket(
-    'ws://' + window.location.host + '/ws/notifications/'
-  );
-
-  document.addEventListener('DOMContentLoaded', function () {
-    loadNotifications();
-  });
-
-  function loadNotifications() {
-    const notifications = JSON.parse(localStorage.getItem('notifications')) || [];
-
-    // Filter unread notifications
-    const unreadNotifications = notifications.filter(notification => !notification.read);
-
-    const notificationBadge = document.querySelector('.badge-number');
-    unreadNotificationsCount = unreadNotifications.length;
-    if (unreadNotificationsCount > 0) {
-      notificationBadge.textContent = unreadNotificationsCount;
-      notificationBadge.style.display = 'inline';
-    }
-  }
-
-  notificationSocket.onmessage = function (e) {
-    const data = JSON.parse(e.data);
-    const message = data['message'];
-    const id = data['id'];
-    const read = data['read'];
-    const state = data['state'];
-
-    // Save and display new notification
-    const newNotification = {
-      id: id,
-      title: 'New Notification',
-      message: message,
-      timestamp: new Date().toLocaleTimeString(),
-      read: read
-    };
-
-    saveNotification(newNotification);
-
-    const popup = Notification({
-      position: 'top-right',
-      duration: 5000,
-      isHidePrev: false,
-      isHideTitle: false,
-      maxOpened: 3,
-    });
-
-    if (state == 'SUCCESS') {
-      // success
-      popup.success({
-        title: newNotification.title,
-        message: newNotification.message
-      });
-    } else if (state == 'INFO') {
-      // info
-      popup.info({
-        title: newNotification.title,
-        message: newNotification.message
-      })
-    } else if (state == 'WARNING') {
-      // warning
-      popup.warning({
-        title: newNotification.title,
-        message: newNotification.message
-      })
-    } else if (state == 'ERROR') {
-      // error
-      popup.error({
-        title: newNotification.title,
-        message: newNotification.message
-      })
-    }
-
-    loadNotifications();
-  };
-
-  function saveNotification(notification) {
-    const notifications = JSON.parse(localStorage.getItem('notifications')) || [];
-    const unreadNotifications = notifications.filter(notification => !notification.read);
-
-    // Update the existing notification if it already exists
-    const existingIndex = unreadNotifications.findIndex(n => n.id === notification.id);
-    if (existingIndex > -1) {
-      unreadNotifications[existingIndex] = notification;
-    } else {
-      unreadNotifications.push(notification);
-    }
-
-    localStorage.setItem('notifications', JSON.stringify(unreadNotifications));
-  }
-
-  notificationSocket.onclose = function (e) {
-    console.error('Notification socket closed unexpectedly');
-  };
-
-  document.querySelector('.nav-bar-counter').addEventListener('click', function (e) {
-    localStorage.removeItem('notifications');
-  })
-</script> -->

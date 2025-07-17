@@ -1,6 +1,8 @@
 {% extends "layout/base.html" %}
 
 {% block content %}
+<!-- Include the loading template -->
+{% include "main/loading.html" %}
 <main>
     <div class="container">
         <section class="section">
@@ -20,7 +22,7 @@
                             {% endif %}
 
                             <!-- File Upload Form -->
-                            <form method="post" enctype="multipart/form-data">
+                            <form method="post" enctype="multipart/form-data" id="fileUploadForm">
                                 {% csrf_token %}
 
                                 <div class="mb-3">
@@ -29,7 +31,7 @@
                                 </div>
 
                                 <div class="d-grid">
-                                    <button type="submit" class="btn btn-primary">Upload</button>
+                                    <button type="submit" class="btn btn-primary" id="uploadBtn">Upload</button>
                                 </div>
                             </form>
 
@@ -50,4 +52,60 @@
         </section>
     </div>
 </main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('fileUploadForm');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const fileInput = document.getElementById('file');
+    
+    // Update button text when a file is selected
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            uploadBtn.innerHTML = `Upload (${this.files[0].name})`;
+        } else {
+            uploadBtn.innerHTML = 'Upload';
+        }
+    });
+    
+    // Handle form submission
+    form.addEventListener('submit', function(e) {
+        if (!fileInput.files.length) {
+            e.preventDefault();
+            alert('Please select a file to upload.');
+            return;
+        }
+        
+        // Show loading animation with custom text
+        LoadingManager.show({
+            text: 'Uploading File',
+            subtext: 'Processing your file... This may take a moment.',
+            animation: 'spinner' // Use spinner animation for single file upload
+        });
+        
+        // Add loading class to button
+        uploadBtn.classList.add('btn-loading');
+        uploadBtn.disabled = true;
+    });
+    
+    // Hide loading on page load (in case of redirect back to this page)
+    window.addEventListener('load', function() {
+        if (LoadingManager) {
+            LoadingManager.hide();
+        }
+    });
+    
+    // Handle browser back button
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+            if (LoadingManager) {
+                LoadingManager.hide();
+            }
+            // Reset button state
+            uploadBtn.classList.remove('btn-loading');
+            uploadBtn.disabled = false;
+        }
+    });
+});
+</script>
 {% endblock %}

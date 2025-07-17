@@ -1,38 +1,139 @@
 {% extends 'layout/base.html' %}
 
 {% block content %}
+<style>
+    /* Table Layout Fixes */
+    .table-responsive {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        overflow-x: hidden;
+    }
+
+    .table {
+        width: 100%;
+        margin-bottom: 0;
+        table-layout: fixed;
+    }
+
+    .table th {
+        background: var(--bg-gradient);
+        color: white;
+        font-weight: 500;
+        padding: 12px 8px;
+        vertical-align: middle;
+        word-wrap: break-word;
+        font-size: 0.9rem;
+    }
+
+    .table td {
+        padding: 12px 8px;
+        vertical-align: middle;
+        word-wrap: break-word;
+        font-size: 0.9rem;
+    }
+
+    /* Base Column Widths for PR mode */
+    .table:not(.flag-mode) th:nth-child(1) { width: 7%; }   /* Entry Date */
+    .table:not(.flag-mode) th:nth-child(2) { width: 12%; }  /* Company Name */
+    .table:not(.flag-mode) th:nth-child(3) { width: 12%; }  /* Phone No. */
+    .table:not(.flag-mode) th:nth-child(4) { width: 8%; }   /* Time Zone */
+    .table:not(.flag-mode) th:nth-child(5) { width: 17%; }  /* Email */
+    .table:not(.flag-mode) th:nth-child(6) { width: 12%; }  /* DM Names */
+    .table:not(.flag-mode) th:nth-child(7) { width: 12%; }   /* Termination Code */
+    .table:not(.flag-mode) th:nth-child(8) { width: 12%; }   /* CB Date */
+    .table:not(.flag-mode) th:nth-child(9) { width: 8%; }  /* Sales Agent */
+
+    /* Custom Row Styling */
+    .table-custom-row {
+        background-color: #f8f9fa;
+    }
+
+    .table-custom-row td {
+        padding: 0 !important;
+    }
+
+    .table-custom-row td[colspan] {
+        width: 100%;
+    }
+
+    .sub-row {
+        background-color: #E6F0FA;
+        border-radius: 6px;
+        padding: 15px;
+        margin: 0;
+        width: 100%;
+    }
+
+    /* Form Controls */
+    .form-control {
+        width: 100%;
+        font-size: 0.9rem;
+        padding: 6px 8px;
+    }
+
+    /* Container and Card Fixes */
+    .container {
+        max-width: 100%;
+        padding: 0 15px;
+        margin: 0 auto;
+    }
+
+    .card {
+        margin: 0;
+        overflow: hidden;
+    }
+
+    /* Input Fields */
+    input[type="text"],
+    input[type="email"],
+    input[type="number"],
+    select {
+        padding: 6px 8px;
+        font-size: 0.9rem;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 1400px) {
+        .table th,
+        .table td {
+            font-size: 0.85rem;
+        }
+    }
+</style>
 <div class="container mt-4">
-    <div class="card p-4">
-        <h1> Team Prospect: {{team_name}} </h1>
+    <div class="card p-4 shadow-sm" style="background-color: #F8FAFC; border-radius: 12px;">
+        <h1 class="text-primary fw-bold">Team Prospect: {{team_name}}</h1>
 
         <!-- Bootstrap Tabs for Termination Codes -->
-        <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <ul class="nav nav-tabs border-0 mb-4" id="myTab" role="tablist">
             {% for code in termination_codes %}
             <li class="nav-item" role="presentation">
-                <a class="nav-link {% if code.id == selected_code.id %}active{% endif %}" id="tab-{{ code.id }}-tab" {%if role == "sales_team_leader" %}
+                <a class="nav-link text-dark {% if code.id == selected_code.id %}active bg-light{% endif %}" id="tab-{{ code.id }}-tab" {%if role == "sales_team_leader" %}
                     href="{% url 'sales_team_leader:view-team-prospect-with-id' code.id %}" {% else %}
                     href="{% url 'sales_manager:view-team-prospect-with-leader' code.id leader.id %}" {% endif %}
                     role="tab" aria-controls="tab-{{ code.id }}"
-                    aria-selected="{% if code.id == selected_code.id %}true{% else %}false{% endif %}">
+                    aria-selected="{% if code.id == selected_code.id %}true{% else %}false{% endif %}"
+                    style="border-radius: 8px; transition: background-color 0.3s ease;">
                     {{ code.name }}
                 </a>
             </li>
             {% endfor %}
         </ul>
 
-        
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4>{{ selected_code.full_name }}</h4>
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+            <h4 class="text-dark mb-2">{{ selected_code.full_name }}</h4>
             <div class="dropdown">
-                <button class="btn btn-secondary dropdown-toggle" type="button" id="orderByDropdown" data-bs-toggle="dropdown"
-                    aria-expanded="false">
+                <button class="btn btn-outline-primary dropdown-toggle" type="button" id="orderByDropdown" data-bs-toggle="dropdown"
+                    aria-expanded="false" style="border-radius: 8px;">
                     Order By
                 </button>
                 <ul class="dropdown-menu" aria-labelledby="orderByDropdown">
-                    <li><a class="dropdown-item order-option" href="?order_by=CB_date"><i class="fa fa-sort-up"></i>CB Date</a></li>
-                    <li><a class="dropdown-item order-option" href="?order_by=-CB_date"><i class="fa fa-sort-down"></i>CB Date</a></li>
-                    <li><a class="dropdown-item order-option" href="?order_by=entry_date"><i class="fa fa-sort-up"></i>Entry Date</a></li>
-                    <li><a class="dropdown-item order-option" href="?order_by=-entry_date"><i class="fa fa-sort-down"></i>Entry Date</a></li>
+                    <li><a class="dropdown-item order-option" href="?order_by=CB_date"><i class="fa fa-sort-up"></i> CB Date</a></li>
+                    <li><a class="dropdown-item order-option" href="?order_by=-CB_date"><i class="fa fa-sort-down"></i> CB Date</a></li>
+                    <li><a class="dropdown-item order-option" href="?order_by=entry_date"><i class="fa fa-sort-up"></i> Entry Date</a></li>
+                    <li><a class="dropdown-item order-option" href="?order_by=-entry_date"><i class="fa fa-sort-down"></i> Entry Date</a></li>
+                </ul>
             </div>
         </div>     
 
@@ -42,12 +143,14 @@
 
                 {% if leads_data|length > 0 %}
                 <form method="POST">
-                    <button type="submit" class="btn btn-primary" style="margin-bottom: 10px;">Save Changes</button>
+                    <button type="submit" class="btn btn-success mb-3" style="border-radius: 8px; padding: 8px 20px;">
+                        <i class="fas fa-save me-2"></i>Save Changes
+                    </button>
                     {% csrf_token %}
                     <div class="table-responsive">
-                        <table class="table table-striped table-bordered table-hover">
-                            <thead>
-                                <tr class="table-primary">
+                        <table class="table table-striped table-bordered table-hover" style="background-color: #fff; border-radius: 8px; overflow: hidden;">
+                            <thead class="table-primary">
+                                <tr>
                                     <th>Entry Date</th>
                                     <th>Company Name</th>
                                     <th>Phone No.</th>
@@ -64,70 +167,75 @@
                                 <tr>
                                     <td>{{ lead_data.entry_date|date:"Y-m-d H:i" }}</td>
                                     <td>{{ lead_data.lead.name }}</td>
-                                    <td id="phone-numbers-display-{{ lead_data.lead.id }}">
+                                    <td id="phone-numbers-display-{{ lead_data.lead.id }}" class="mb-2">
                                         {{ lead_data.phones|join:"<br /> " }}
-                                        <input type="text" class="new-phone form-control" placeholder="Add new phone" />
-                                        <button type="button" class="btn btn-secondary add-phone"
+                                        <input type="text" class="new-phone form-control mt-2" placeholder="Add new phone"
                                             data-lead-id="{{ lead_data.lead.id }}"
-                                            data-sheet-id="{{ lead_data.sales_show.sheet.id }}">Add</button>
+                                            data-sheet-id="{{ lead_data.sales_show.sheet.id }}" style="border-radius: 6px;">
+                                        <button type="button" class="btn btn-outline-success add-phone mt-2"
+                                            data-lead-id="{{ lead_data.lead.id }}"
+                                            data-sheet-id="{{ lead_data.sales_show.sheet.id }}" style="border-radius: 6px;">
+                                            Add
+                                        </button>
                                     </td>
                                     <td>{{ lead_data.timezone }}</td>
-                                    <td id="emails-display-{{ lead_data.lead.id }}">
+                                    <td id="emails-display-{{ lead_data.lead.id }}" class="mb-2">
                                         {{ lead_data.emails|join:"<br />" }}
-                                        <input type="text" class="new-email form-control" placeholder="Add new email" />
-                                        <button type="button" class="btn btn-secondary add-email"
+                                        <input type="text" class="new-email form-control mt-2" placeholder="Add new email"
                                             data-lead-id="{{ lead_data.lead.id }}"
-                                            data-sheet-id="{{ lead_data.sales_show.sheet.id }}">Add</button>
+                                            data-sheet-id="{{ lead_data.sales_show.sheet.id }}" style="border-radius: 6px;">
+                                        <button type="button" class="btn btn-outline-success add-email mt-2"
+                                            data-lead-id="{{ lead_data.lead.id }}"
+                                            data-sheet-id="{{ lead_data.sales_show.sheet.id }}" style="border-radius: 6px;">
+                                            Add
+                                        </button>
                                     </td>
-                                    <td id="contacts-display-{{ lead_data.lead.id }}">
+                                    <td id="contacts-display-{{ lead_data.lead.id }}" class="mb-2">
                                         {{ lead_data.contacts|join:"<br />" }}
-                                        <input type="text" class="new-contact form-control"
-                                            placeholder="Add new contact" />
-                                        <button type="button" class="btn btn-secondary add-contact"
+                                        <input type="text" class="new-contact form-control mt-2"
+                                            placeholder="Add new contact" data-lead-id="{{ lead_data.lead.id }}"
+                                            data-sheet-id="{{ lead_data.sales_show.sheet.id }}" style="border-radius: 6px;">
+                                        <button type="button" class="btn btn-outline-success add-contact mt-2"
                                             data-lead-id="{{ lead_data.lead.id }}"
-                                            data-sheet-id="{{ lead_data.sales_show.sheet.id }}">Add</button>
+                                            data-sheet-id="{{ lead_data.sales_show.sheet.id }}" style="border-radius: 6px;">
+                                            Add
+                                        </button>
                                     </td>
-
-                                    <!-- Termination Code Dropdown -->
                                     <td>
                                         <select
                                             name="termination_code_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
-                                            class="form-control termination-code-select">
+                                            class="form-control termination-code-select" style="border-radius: 6px;">
                                             {% for code in termination_codes_selection %}
-                                            <option value="{{ code.id }}" {% if lead_data.termination == code.full_name%}selected{% endif %}>
+                                            <option value="{{ code.id }}" {% if lead_data.termination == code.full_name %}selected{% endif %}>
                                                 {{ code.name }}
                                             </option>
                                             {% endfor %}
                                         </select>
                                     </td>
                                     <td>
-                                        <!-- Display previous callback dates -->
                                         {% if lead_data.previous_cb_dates %}
-                                        <ul class="list-unstyled">
+                                        <ul class="list-unstyled mb-2">
                                             {% for old_cb_date in lead_data.previous_cb_dates %}
                                             <li><strong>{{ old_cb_date|date:"Y-m-d H:i" }}</strong></li>
                                             {% endfor %}
                                         </ul>
                                         {% endif %}
-
-                                        <!-- Editable callback date -->
                                         <input type="date"
                                             name="cb_date_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
                                             value="{{ lead_data.cb_date|date:'Y-m-d' }}" class="form-control cb-date"
-                                            id="cb_date_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}" />
+                                            id="cb_date_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}" style="border-radius: 6px;" />
                                     </td>
                                     <td>{{ lead_data.Agent }}</td>
                                 </tr>
-                                <!-- Sub-row for additional fields like Special Notes and Options -->
                                 <tr class="table-custom-row">
                                     <td colspan="10">
-                                        <div class="sub-row">
-                                            <div><strong>Show:</strong> {{ lead_data.sales_show }} </div>
+                                        <div class="sub-row p-3" style="background-color: #E6F0FA; border-radius: 6px; max-height: 150px; overflow-y: auto;">
+                                            <div><strong>Show:</strong> {{ lead_data.sales_show }}</div>
                                             <div>
                                                 <strong>Special Notes:</strong>
                                                 <textarea
                                                     name="notes_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
-                                                    class="form-control">{{ lead_data.notes|default:"" }}</textarea>
+                                                    class="form-control" style="border-radius: 6px; resize: vertical; min-height: 60px;">{{ lead_data.notes|default:"" }}</textarea>
                                             </div>
                                         </div>
                                     </td>
@@ -138,7 +246,7 @@
                     </div>
                 </form>
                 {% else %}
-                <div class="alert alert-warning">No leads available for this termination code.</div>
+                <div class="alert alert-warning p-3" style="border-radius: 8px;">No leads available for this termination code.</div>
                 {% endif %}
             </div>
         </div>
@@ -160,12 +268,12 @@
                     data: {
                         lead_id: leadId,
                         sheet_id: sheetId,
-                        value: newPhone,  // Change 'phone' to 'value'
+                        value: newPhone,
                         csrfmiddlewaretoken: '{{ csrf_token }}'
                     },
                     success: function (response) {
                         $('#phone-numbers-display-' + leadId).append('<br>' + newPhone);
-                        $(this).siblings('.new-phone').val(''); // Clear input field
+                        $(this).siblings('.new-phone').val('');
                     }.bind(this),
                     error: function (xhr) {
                         alert('Error adding phone number: ' + xhr.responseText);
@@ -189,7 +297,7 @@
                     data: {
                         lead_id: leadId,
                         sheet_id: sheetId,
-                        value: newEmail,  // Change 'email' to 'value'
+                        value: newEmail,
                         csrfmiddlewaretoken: '{{ csrf_token }}'
                     },
                     success: function (response) {
@@ -218,7 +326,7 @@
                     data: {
                         lead_id: leadId,
                         sheet_id: sheetId,
-                        value: newContact,  // Change 'contact' to 'value'
+                        value: newContact,
                         csrfmiddlewaretoken: '{{ csrf_token }}'
                     },
                     success: function (response) {

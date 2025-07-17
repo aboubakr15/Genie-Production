@@ -1,11 +1,3 @@
-/**
-* Template Name: NiceAdmin
-* Template URL: https://bootstrapmade.com/nice-admin-bootstrap-admin-html-template/
-* Updated: Apr 20 2024 with Bootstrap v5.3.3
-* Author: BootstrapMade.com
-* License: https://bootstrapmade.com/license/
-*/
-
 /*--------------------------------------------------------------
 # General
 --------------------------------------------------------------*/
@@ -605,164 +597,266 @@ h6 {
 /*--------------------------------------------------------------
 # Sidebar
 --------------------------------------------------------------*/
+/* Sidebar Styles */
 .sidebar {
   position: fixed;
-  top: 60px;
+  top: 60px; /* Matches header height */
   left: 0;
-  bottom: 0;
-  width: 300px;
-  z-index: 996;
-  transition: all 0.3s;
-  padding: 20px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #aab7cf transparent;
-  box-shadow: 0px 0px 20px rgba(1, 41, 112, 0.1);
+  width: 60px; /* Collapsed width showing only icons */
+  height: calc(100vh - 60px); /* Full height minus header */
   background-color: #fff;
+  transition: width 0.3s ease;
+  overflow: hidden;
+  z-index: 996; /* Below header (997) but above content */
+  box-shadow: 2px 0 5px rgba(1, 41, 112, 0.1);
+  font-family: "Nunito", sans-serif;
 }
 
-@media (max-width: 1199px) {
-  .sidebar {
-    left: -300px;
-  }
+.sidebar:hover {
+  width: 280px; /* Expanded width on hover */
 }
 
-.sidebar::-webkit-scrollbar {
-  width: 5px;
-  height: 8px;
-  background-color: #fff;
-}
-
-.sidebar::-webkit-scrollbar-thumb {
-  background-color: #aab7cf;
-}
-
-@media (min-width: 1200px) {
-
-  #main,
-  #footer {
-    margin-left: 300px;
-  }
-}
-
-@media (max-width: 1199px) {
-  .toggle-sidebar .sidebar {
-    left: 0;
-  }
-}
-
-@media (min-width: 1200px) {
-
-  .toggle-sidebar #main,
-  .toggle-sidebar #footer {
-    margin-left: 0;
-  }
-
-  .toggle-sidebar .sidebar {
-    left: -300px;
-  }
-}
-
+/* Navigation items */
 .sidebar-nav {
   padding: 0;
   margin: 0;
   list-style: none;
 }
 
-.sidebar-nav li {
-  padding: 0;
-  margin: 0;
-  list-style: none;
+.sidebar .nav-item {
+  position: relative;
+  margin: 2px 0;
 }
 
-.sidebar-nav .nav-item {
-  margin-bottom: 5px;
-}
-
-.sidebar-nav .nav-heading {
-  font-size: 11px;
-  text-transform: uppercase;
-  color: #899bbd;
-  font-weight: 600;
-  margin: 10px 0 5px 15px;
-}
-
-.sidebar-nav .nav-link {
+.sidebar .nav-link {
   display: flex;
   align-items: center;
-  font-size: 15px;
-  font-weight: 600;
-  color: #4154f1;
-  transition: 0.3;
-  background: #f6f9ff;
-  padding: 10px 15px;
-  border-radius: 4px;
-}
-
-.sidebar-nav .nav-link i {
-  font-size: 16px;
-  margin-right: 10px;
-  color: #4154f1;
-}
-
-.sidebar-nav .nav-link.collapsed {
+  padding: 12px 15px;
   color: #012970;
-  background: #fff;
-}
-
-.sidebar-nav .nav-link.collapsed i {
-  color: #899bbd;
-}
-
-.sidebar-nav .nav-link:hover {
-  color: #4154f1;
-  background: #f6f9ff;
-}
-
-.sidebar-nav .nav-link:hover i {
-  color: #4154f1;
-}
-
-.sidebar-nav .nav-link .bi-chevron-down {
-  margin-right: 0;
-  transition: transform 0.2s ease-in-out;
-}
-
-.sidebar-nav .nav-link:not(.collapsed) .bi-chevron-down {
-  transform: rotate(180deg);
-}
-
-.sidebar-nav .nav-content {
-  padding: 5px 0 0 0;
-  margin: 0;
-  list-style: none;
-}
-
-.sidebar-nav .nav-content a {
-  display: flex;
-  align-items: center;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  border-radius: 4px;
+  margin: 0 6px;
   font-size: 14px;
   font-weight: 600;
-  color: #012970;
-  transition: 0.3;
-  padding: 10px 0 10px 40px;
-  transition: 0.3s;
 }
 
-.sidebar-nav .nav-content a i {
-  font-size: 6px;
-  margin-right: 8px;
-  line-height: 0;
-  border-radius: 50%;
-}
-
-.sidebar-nav .nav-content a:hover,
-.sidebar-nav .nav-content a.active {
+.sidebar .nav-link:hover {
+  background-color: #f6f9ff;
   color: #4154f1;
 }
 
-.sidebar-nav .nav-content a.active i {
+.sidebar .nav-link i {
+  min-width: 30px;
+  margin-right: 10px;
+  text-align: center;
+  font-size: 18px;
+}
+
+.sidebar .nav-link span {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar:hover .nav-link span {
+  opacity: 1;
+}
+
+/* Active link styling */
+.sidebar .nav-link.active {
   background-color: #4154f1;
+  color: #fff;
+}
+
+.sidebar .nav-link.active:hover {
+  background-color: #5969f3;
+}
+
+/* Submenu styling */
+.sidebar .nav-content {
+  background-color: #f6f9ff;
+  border-radius: 4px;
+  margin: 0 6px;
+  overflow: hidden;
+}
+
+.sidebar .nav-content li {
+  list-style: none;
+}
+
+.sidebar .nav-content a {
+  display: flex;
+  align-items: center;
+  padding: 8px 15px 8px 30px;
+  color: #444444;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  border-radius: 4px;
+  margin: 2px 4px;
+  font-size: 13px;
+}
+
+.sidebar .nav-content a:hover {
+  background-color: #e0e7ff;
+  color: #4154f1;
+}
+
+.sidebar .nav-content a i {
+  min-width: 20px;
+  margin-right: 8px;
+  text-align: center;
+  font-size: 12px;
+}
+
+.sidebar .nav-content a span {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar:hover .nav-content a span {
+  opacity: 1;
+}
+
+/* Chevron for collapsible menus */
+.sidebar .nav-link .bi-chevron-down {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  font-size: 12px;
+}
+
+.sidebar:hover .nav-link .bi-chevron-down {
+  opacity: 1;
+}
+
+/* Tooltip for collapsed sidebar items */
+.sidebar .nav-item::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 65px;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #012970;
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1001;
+}
+
+.sidebar .nav-item::after {
+  content: '';
+  position: absolute;
+  left: 60px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-right: 5px solid #012970;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.sidebar:not(:hover) .nav-item:hover::before,
+.sidebar:not(:hover) .nav-item:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+.sidebar:hover .nav-item::before,
+.sidebar:hover .nav-item::after {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Prevent Bootstrap collapse when sidebar is collapsed */
+.sidebar:not(:hover) .nav-content.collapse {
+  display: none !important;
+}
+
+/* Logout button styling */
+.sidebar .nav-item:last-child .nav-link {
+  margin-top: 20px;
+  border-top: 1px solid #ebeef4;
+  padding-top: 15px;
+}
+
+/* Scrollbar styling */
+.sidebar {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #aab7cf transparent;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background-color: #aab7cf;
+  border-radius: 2px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background-color: #899bbd;
+}
+
+.sidebar:not(:hover) {
+  scrollbar-width: none;
+}
+
+.sidebar:not(:hover)::-webkit-scrollbar {
+  display: none;
+}
+
+/* Adjust main content to accommodate sidebar */
+.main {
+  margin-left: 60px;
+  transition: margin-left 0.3s ease;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 0;
+    overflow: hidden;
+  }
+  
+  .sidebar:hover {
+    width: 280px;
+  }
+  
+  .main {
+    margin-left: 0;
+  }
+  
+  .sidebar-trigger {
+    position: fixed;
+    left: 0;
+    top: 60px;
+    width: 15px;
+    height: calc(100vh - 60px);
+    z-index: 995;
+    background-color: rgba(65, 84, 241, 0.1);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .sidebar-trigger:hover {
+    opacity: 1;
+  }
 }
 
 /*--------------------------------------------------------------
@@ -1297,4 +1391,104 @@ h6 {
   justify-content: center;
   box-sizing: border-box;
   /* Includes padding in the element's total width and height */
+}
+
+/*--------------------------------------------------------------
+# Loading Animation
+--------------------------------------------------------------*/
+
+:root {
+    --primary-purple: #6f42c1;
+    --light-purple: #8b5cf6;
+    --dark-purple: #5a2d91;
+    --accent-blue: #4dabf7;
+    --bg-gray: #f8f9fa;
+}
+
+/* Enhanced Button Styles */
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-purple), var(--light-purple));
+    border: none;
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(111, 66, 193, 0.3);
+    background: linear-gradient(135deg, var(--dark-purple), var(--primary-purple));
+}
+
+/* Enhanced Form Controls */
+.form-control {
+    border-radius: 8px;
+    border: 2px solid rgba(111, 66, 193, 0.1);
+    padding: 12px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: var(--primary-purple);
+    box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.25);
+}
+
+/* Enhanced Cards */
+.card-purple {
+    background: linear-gradient(135deg, #ffffff, #f8f9fa);
+    border: 1px solid rgba(111, 66, 193, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(111, 66, 193, 0.1);
+}
+
+/* Enhanced Alerts */
+.alert-success {
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    color: #155724;
+    border: none;
+    border-radius: 8px;
+}
+
+.alert-warning {
+    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+    color: #856404;
+    border: none;
+    border-radius: 8px;
+}
+
+.alert-danger {
+    background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+    color: #721c24;
+    border: none;
+    border-radius: 8px;
+}
+
+/* Enhanced Headers */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--primary-purple);
+    font-weight: 700;
+}
+
+/* Loading Button State */
+.btn-loading {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.btn-loading::after {
+    content: '';
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid #fff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: 8px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }

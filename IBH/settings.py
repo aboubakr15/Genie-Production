@@ -14,21 +14,6 @@ from pathlib import Path
 import os
 # import wfastcgi
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
-STATIC_URL = '/static/'  # URL to access static files
-
-# Where static files will be collected for production
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-# Add any extra locations for static files during development
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),  # Do not include STATIC_ROOT here
-]
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
-
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-x0t)8qx9buoxxbiq#v4hmxdqt&$e(t%#c0=5jj$rthyb1!042@'
 
@@ -65,7 +50,6 @@ INSTALLED_APPS = [
 ]
 
 ASGI_APPLICATION = 'IBH.asgi.application'
-
 
 # Session will expire when the browser is closed
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
@@ -171,10 +155,17 @@ USE_I18N = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
+STATIC_URL = '/static/'  # URL to access static files
 
-STATIC_URL = 'static/'
-STATICFILES_DIRS = [ BASE_DIR / "static" ]
-# STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Directory where static files will be collected IN PRODUCTION
+# Where static files will be collected for production
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Add any extra locations for static files during development
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),  # Do not include STATIC_ROOT here
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -207,7 +198,7 @@ LOGGING = {
         '': {
             'handlers': ['file'],
             'level': 'DEBUG',
-            'propagate': False,
+            'propagate': True,
         },
         # Add other apps here as needed
     },

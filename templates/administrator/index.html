@@ -5,20 +5,40 @@
     <h1 class="text-center mb-4">Dashboard</h1>
 
     <form method="get" class="mb-4">
-        <div class="row">
-            <div class="col-md-4">
-                <label for="start_date" class="form-label">Start Date</label>
-                <input type="date" name="start_date" id="start_date" class="form-control" value="{{ start_date }}">
-            </div>
-            <div class="col-md-4">
-                <label for="end_date" class="form-label">End Date</label>
-                <input type="date" name="end_date" id="end_date" class="form-control" value="{{ end_date }}">
-            </div>
-            <div class="col-md-4">
-                <button type="submit" class="btn btn-primary mt-4">Filter</button>
+        <div class="card shadow-sm p-4 modern-filter-card" style="animation: fadeIn 0.5s ease-in;">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="start_date" class="form-label text-dark fw-bold">Start Date</label>
+                    <input type="date" name="start_date" id="start_date" class="form-control form-control-lg" value="{{ start_date }}" style="border-radius: 8px; transition: transform 0.2s ease, box-shadow 0.2s ease;" onfocus="this.style.transform='scale(1.02)'; this.style.boxShadow='0 0 5px rgba(74, 144, 226, 0.5)';" onblur="this.style.transform='scale(1)'; this.style.boxShadow='none';">
+                </div>
+                <div class="col-md-4">
+                    <label for="end_date" class="form-label text-dark fw-bold">End Date</label>
+                    <input type="date" name="end_date" id="end_date" class="form-control form-control-lg" value="{{ end_date }}" style="border-radius: 8px; transition: transform 0.2s ease, box-shadow 0.2s ease;" onfocus="this.style.transform='scale(1.02)'; this.style.boxShadow='0 0 5px rgba(74, 144, 226, 0.5)';" onblur="this.style.transform='scale(1)'; this.style.boxShadow='none';">
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary mt-3 w-100" style="border-radius: 8px; padding: 10px 20px; transition: transform 0.3s ease, background-color 0.3s ease;" onmouseover="this.style.transform='scale(1.05)'; this.style.backgroundColor='#357ABD';" onmouseout="this.style.transform='scale(1)'; this.style.backgroundColor='#0D6EFD';">Filter</button>
+                </div>
             </div>
         </div>
+        <style>
+            .modern-filter-card {
+                background-color: #F8FAFC !important;
+                border-radius: 12px !important;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1) !important;
+            }
+            .modern-filter-card .form-control {
+                border-radius: 8px !important;
+            }
+            .modern-filter-card .btn {
+                border-radius: 8px !important;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+        </style>
     </form>
+
 
     <div class="row">
         <!-- Prospects Generated -->
