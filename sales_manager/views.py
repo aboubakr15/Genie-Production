@@ -6,7 +6,7 @@ from main.models import (LeadEmails, LeadContactNames, LeadPhoneNumbers, SalesTe
                         LeadTerminationCode, SalesShow, LeadTerminationHistory, Lead, Notification, IncomingsCount)
 from django.db.models import Count, Sum, OuterRef, Subquery, Prefetch
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.decorators import user_passes_test, login_required
 from sales_manager.forms import AssignSalesToLeaderForm
 from datetime import datetime
 from django.utils import timezone
@@ -264,56 +264,126 @@ def lead_history_view(request, lead_id):
 
 
 @user_passes_test(lambda user: user.groups.filter(name__in=["sales_team_leader", "sales_manager"]).exists())
+@login_required
 def search(request):
-    # Handle GET for initial page load and pagination
-    if request.method == 'GET':
-        query = request.GET.get('query', '').strip()
-        search_by = request.GET.get('search_by', '')
-    else:  # POST for form submission
-        query = request.POST.get('query', '').strip()
-        search_by = request.POST.get('search_by', '')
+    user = request.user
+    # Dynamically determine the template path based on user group
+    if user.groups.filter(name="sales_manager").exists():
+        template_path = "sales_manager/search.html"
+    elif user.groups.filter(name="sales_team_leader").exists():
+        template_path = "sales_team_leader/search.html"
+    else:
+        # Fallback for users with no recognized group
+        template_path = "sales_manager/search.html"
 
-    # Base queryset for leads with non-null Agent sales shows
+    # --- Get query and search type ---
+    query = request.GET.get('query', '').strip() if request.method == 'GET' else request.POST.get('query', '').strip()
+    search_by = request.GET.get('search_by', '') if request.method == 'GET' else request.POST.get('search_by', '')
+
+    leads_with_shows = []
+    shows_queryset = None
+
+    # --- Case 1: Search by show name (only shows, no leads) ---
+    if search_by == 'show_name' and query:
+        shows_queryset = SalesShow.objects.filter(
+            Agent__isnull=False,
+            name__icontains=query
+        ).select_related('Agent').distinct()
+
+        paginator = Paginator(shows_queryset, 20)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+        context = {
+            'shows_only': True,
+            'shows': page_obj,
+            'query': query,
+            'search_by': search_by,
+        }
+        return render(request, template_path, context)
+
+    # --- Case 2: Lead-based search (lead_name or phone_number) ---
     leads_queryset = Lead.objects.filter(sales_shows__Agent__isnull=False)
 
-    # Apply search filters
     if query and search_by:
         if search_by == 'lead_name':
             leads_queryset = leads_queryset.filter(name__icontains=query)
+
+            leads_queryset = leads_queryset.prefetch_related(
+                Prefetch(
+                    'sales_shows',
+                    queryset=SalesShow.objects.filter(Agent__isnull=False).select_related('Agent'),
+                    to_attr='filtered_sales_shows'
+                )
+            ).distinct()
+
+            for lead in leads_queryset:
+                for show in lead.filtered_sales_shows:
+                    leads_with_shows.append((lead, show))
+
         elif search_by == 'phone_number':
-            phone_numbers = LeadPhoneNumbers.objects.filter(value__icontains=query).values('lead_id')
-            leads_queryset = leads_queryset.filter(id__in=phone_numbers)
-        elif search_by == 'show_name':
-            leads_queryset = leads_queryset.filter(sales_shows__name__icontains=query)
+            phone_entries = LeadPhoneNumbers.objects.filter(value__icontains=query).values('lead_id', 'sheet_id')
+            lead_ids = [entry['lead_id'] for entry in phone_entries]
+            sheet_ids = [entry['sheet_id'] for entry in phone_entries]
 
-    # Use Prefetch to eagerly load related sales shows with non-null Agent
-    leads_queryset = leads_queryset.prefetch_related(
-        Prefetch(
-            'sales_shows',
-            queryset=SalesShow.objects.filter(Agent__isnull=False).select_related('Agent'),
-            to_attr='filtered_sales_shows'
-        )
-    ).distinct()
+            leads_queryset = leads_queryset.filter(id__in=lead_ids)
 
-    # Create leads_with_shows list
-    leads_with_shows = []
-    for lead in leads_queryset:
-        for show in lead.filtered_sales_shows:
-            leads_with_shows.append((lead, show))
+            leads_queryset = leads_queryset.prefetch_related(
+                Prefetch(
+                    'sales_shows',
+                    queryset=SalesShow.objects.filter(Agent__isnull=False).select_related('Agent'),
+                    to_attr='all_sales_shows'
+                )
+            ).distinct()
 
-    # Paginate results
+            for lead in leads_queryset:
+                matching_shows = [
+                    show for show in lead.all_sales_shows
+                    if show.sheet_id in sheet_ids and lead.id in show.leads.values_list('id', flat=True)
+                ]
+                if matching_shows:
+                    for show in matching_shows:
+                        leads_with_shows.append((lead, show))
+                else:
+                    leads_with_shows.append((lead, None))
+        else:
+            leads_queryset = leads_queryset.prefetch_related(
+                Prefetch(
+                    'sales_shows',
+                    queryset=SalesShow.objects.filter(Agent__isnull=False).select_related('Agent'),
+                    to_attr='filtered_sales_shows'
+                )
+            ).distinct()
+
+            for lead in leads_queryset:
+                for show in lead.filtered_sales_shows:
+                    leads_with_shows.append((lead, show))
+    else:
+        leads_queryset = leads_queryset.prefetch_related(
+            Prefetch(
+                'sales_shows',
+                queryset=SalesShow.objects.filter(Agent__isnull=False).select_related('Agent'),
+                to_attr='filtered_sales_shows'
+            )
+        ).distinct()
+
+        for lead in leads_queryset:
+            for show in lead.filtered_sales_shows:
+                leads_with_shows.append((lead, show))
+
+    # --- Pagination ---
     paginator = Paginator(leads_with_shows, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     context = {
+        'shows_only': False,
         'leads_with_shows': page_obj,
         'query': query,
         'search_by': search_by,
     }
 
-    return render(request, "sales_manager/search.html", context)
-
+    return render(request, template_path, context)
 
 
 @user_passes_test(lambda user: is_in_group(user, 'sales_manager'))

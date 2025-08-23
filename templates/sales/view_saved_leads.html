@@ -1,6 +1,8 @@
 {% extends 'layout/base.html' %}
 
 {% block content %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
 <style>
     /* Table Layout Fixes */
     .table-responsive {
@@ -120,7 +122,7 @@
 
                 {% if leads_data|length > 0 %}
                 <form method="POST">
-                    <!-- Save Changes Button Below the Table -->
+                    <!-- Save Changes Button -->
                     <button type="submit" class="btn btn-success mb-3" style="border-radius: 8px; padding: 8px 20px;">
                         <i class="fas fa-save me-2"></i>Save Changes
                     </button>
@@ -145,41 +147,50 @@
                                     <td>{{ lead_data.entry_date|date:"Y-m-d H:i" }}</td>
                                     <td>{{ lead_data.lead.name }}</td>
                                     <td>
-                                        <div id="phone-numbers-display-{{ lead_data.lead.id }}" class="mb-2"></div>
-                                        {{ lead_data.phones|join:"<br /> " }}
-                                        <input type="text" class="form-control new-phone mt-2" placeholder="Add new phone"
-                                            data-lead-id="{{ lead_data.lead.id }}"
-                                            data-sheet-id="{{ lead_data.sales_show.sheet.id }}" style="border-radius: 6px;">
-                                        <button type="button" class="btn btn-outline-success add-phone mt-2"
-                                            data-lead-id="{{ lead_data.lead.id }}"
-                                            data-sheet-id="{{ lead_data.sales_show.sheet.id }}" style="border-radius: 6px;">
-                                            Add
-                                        </button>
+                                        <ul id="phone-numbers-{{ lead_data.lead.id }}" class="list-unstyled mb-2">
+                                            {% for phone in lead_data.phones %}
+                                            <li>{{ phone }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                        <div class="input-group">
+                                            <input type="text" id="phone-number-input-{{ lead_data.lead.id }}"
+                                                class="form-control form-control-sm" placeholder="Add Phone Number">
+                                            <button type="button" onclick="addPhoneNumber({{ lead_data.lead.id }}, {{ lead_data.sales_show.sheet.id }})"
+                                                class="btn btn-outline-success btn-sm" style="border-radius: 0 6px 6px 0;">
+                                                Add
+                                            </button>
+                                        </div>
                                     </td>
                                     <td>{{ lead_data.lead.time_zone }}</td>
                                     <td>
-                                        <div id="emails-display-{{ lead_data.lead.id }}" class="mb-2"></div>
-                                        {{ lead_data.emails|join:"<br />" }}
-                                        <input type="email" class="form-control new-email mt-2" placeholder="Add new email"
-                                            data-lead-id="{{ lead_data.lead.id }}"
-                                            data-sheet-id="{{ lead_data.sales_show.sheet.id }}" style="border-radius: 6px;">
-                                        <button type="button" class="btn btn-outline-success add-email mt-2"
-                                            data-lead-id="{{ lead_data.lead.id }}"
-                                            data-sheet-id="{{ lead_data.sales_show.sheet.id }}" style="border-radius: 6px;">
-                                            Add
-                                        </button>
+                                        <ul id="emails-{{ lead_data.lead.id }}" class="list-unstyled mb-2">
+                                            {% for email in lead_data.emails %}
+                                            <li>{{ email }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                        <div class="input-group">
+                                            <input type="email" id="email-input-{{ lead_data.lead.id }}"
+                                                class="form-control form-control-sm" placeholder="Add Email">
+                                            <button type="button" onclick="addEmail({{ lead_data.lead.id }}, {{ lead_data.sales_show.sheet.id }})"
+                                                class="btn btn-outline-success btn-sm" style="border-radius: 0 6px 6px 0;">
+                                                Add
+                                            </button>
+                                        </div>
                                     </td>
                                     <td>
-                                        <div id="contacts-display-{{ lead_data.lead.id }}" class="mb-2"></div>
-                                        {{ lead_data.contacts|join:"<br />" }}
-                                        <input type="text" class="form-control new-contact mt-2"
-                                            placeholder="Add new contact name" data-lead-id="{{ lead_data.lead.id }}"
-                                            data-sheet-id="{{ lead_data.sales_show.sheet.id }}" style="border-radius: 6px;">
-                                        <button type="button" class="btn btn-outline-success add-contact mt-2"
-                                            data-lead-id="{{ lead_data.lead.id }}"
-                                            data-sheet-id="{{ lead_data.sales_show.sheet.id }}" style="border-radius: 6px;">
-                                            Add
-                                        </button>
+                                        <ul id="contact-names-{{ lead_data.lead.id }}" class="list-unstyled mb-2">
+                                            {% for contact in lead_data.contacts %}
+                                            <li>{{ contact }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                        <div class="input-group">
+                                            <input type="text" id="contact-name-input-{{ lead_data.lead.id }}"
+                                                class="form-control form-control-sm" placeholder="Add Contact Name">
+                                            <button type="button" onclick="addContactName({{ lead_data.lead.id }}, {{ lead_data.sales_show.sheet.id }})"
+                                                class="btn btn-outline-success btn-sm" style="border-radius: 0 6px 6px 0;">
+                                                Add
+                                            </button>
+                                        </div>
                                     </td>
                                     <td>
                                         <select name="termination_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
@@ -232,121 +243,95 @@
 </div>
 
 <script>
-    $(document).ready(function () {
-        console.log("Ready");
-
-        // Function to handle adding new phone numbers
-        function addPhoneNumber(button) {
-            let phoneNumberInput = $(button).siblings('.new-phone');
-            let phoneNumber = phoneNumberInput.val();
-            let leadId = $(button).data('lead-id');
-            let sheetId = $(button).data('sheet-id');
-            let phoneDisplay = $('#phone-numbers-display-' + leadId);
-
-            if (phoneNumber) {
-                $.ajax({
-                    type: 'POST',
-                    url: '{% url "api:add_phone_number" %}',
-                    data: {
-                        value: phoneNumber,
-                        lead_id: leadId,
-                        sheet_id: sheetId,
-                        csrfmiddlewaretoken: '{{ csrf_token }}'
-                    },
-                    success: function (response) {
-                        alert(response.message);
-                        phoneDisplay.append('<div>' + phoneNumber + '</div>');
-                        phoneNumberInput.val('');
-                    },
-                    error: function (xhr) {
-                        const errors = xhr.responseJSON.errors;
-                        alert('Error: ' + JSON.stringify(errors));
+    function addPhoneNumber(leadId, sheetId) {
+        const phoneNumberInput = $('#phone-number-input-' + leadId).val();
+        if (phoneNumberInput) {
+            $.ajax({
+                url: "{% url 'api:add_phone_number' %}",
+                method: "POST",
+                data: {
+                    'lead_id': leadId,
+                    'value': phoneNumberInput,
+                    'sheet_id': sheetId,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}',
+                },
+                success: function (response) {
+                    $('#phone-numbers-' + leadId).append('<li>' + phoneNumberInput + '</li>');
+                    $('#phone-number-input-' + leadId).val('');
+                    alert('Phone number added successfully!');
+                },
+                error: function (error) {
+                    if (error.responseJSON && error.responseJSON.errors) {
+                        alert('Error adding phone number: ' + error.responseJSON.errors.value);
+                    } else {
+                        alert('Error adding phone number. Please try again.');
                     }
-                });
-            } else {
-                alert("Please enter a phone number.");
-            }
+                }
+            });
+        } else {
+            alert("Please enter a phone number.");
         }
+    }
 
-        // Function to handle adding new emails
-        function addEmail(button) {
-            let emailInput = $(button).siblings('.new-email');
-            let email = emailInput.val();
-            let leadId = $(button).data('lead-id');
-            let sheetId = $(button).data('sheet-id');
-            let emailDisplay = $('#emails-display-' + leadId);
-
-            if (email) {
-                $.ajax({
-                    type: 'POST',
-                    url: '{% url "api:add_email" %}',
-                    data: {
-                        value: email,
-                        lead_id: leadId,
-                        sheet_id: sheetId,
-                        csrfmiddlewaretoken: '{{ csrf_token }}'
-                    },
-                    success: function (response) {
-                        alert(response.message);
-                        emailDisplay.append('<div>' + email + '</div>');
-                        emailInput.val('');
-                    },
-                    error: function (xhr) {
-                        const errors = xhr.responseJSON.errors;
-                        alert('Error: ' + JSON.stringify(errors));
+    function addEmail(leadId, sheetId) {
+        const emailInput = $('#email-input-' + leadId).val();
+        if (emailInput) {
+            $.ajax({
+                url: "{% url 'api:add_email' %}",
+                method: "POST",
+                data: {
+                    'lead_id': leadId,
+                    'value': emailInput,
+                    'sheet_id': sheetId,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}',
+                },
+                success: function (response) {
+                    $('#emails-' + leadId).append('<li>' + emailInput + '</li>');
+                    $('#email-input-' + leadId).val('');
+                    alert('Email added successfully!');
+                },
+                error: function (error) {
+                    if (error.responseJSON && error.responseJSON.errors) {
+                        alert('Error adding email: ' + error.responseJSON.errors.value);
+                    } else {
+                        alert('Error adding email. Please try again.');
                     }
-                });
-            } else {
-                alert("Please enter an email.");
-            }
+                }
+            });
+        } else {
+            alert("Please enter an email.");
         }
+    }
 
-        // Function to handle adding new contact names
-        function addContactName(button) {
-            let contactNameInput = $(button).siblings('.new-contact');
-            let contactName = contactNameInput.val();
-            let leadId = $(button).data('lead-id');
-            let sheetId = $(button).data('sheet-id');
-            let contactDisplay = $('#contacts-display-' + leadId);
-
-            if (contactName) {
-                $.ajax({
-                    type: 'POST',
-                    url: '{% url "api:add_contact_name" %}',
-                    data: {
-                        value: contactName,
-                        lead_id: leadId,
-                        sheet_id: sheetId,
-                        csrfmiddlewaretoken: '{{ csrf_token }}'
-                    },
-                    success: function (response) {
-                        alert(response.message);
-                        contactDisplay.append('<div>' + contactName + '</div>');
-                        contactNameInput.val('');
-                    },
-                    error: function (xhr) {
-                        const errors = xhr.responseJSON.errors;
-                        alert('Error: ' + JSON.stringify(errors));
+    function addContactName(leadId, sheetId) {
+        const contactNameInput = $('#contact-name-input-' + leadId).val();
+        if (contactNameInput) {
+            $.ajax({
+                url: "{% url 'api:add_contact_name' %}",
+                method: "POST",
+                data: {
+                    'lead_id': leadId,
+                    'value': contactNameInput,
+                    'sheet_id': sheetId,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}',
+                },
+                success: function (response) {
+                    $('#contact-names-' + leadId).append('<li>' + contactNameInput + '</li>');
+                    $('#contact-name-input-' + leadId).val('');
+                    alert('Contact name added successfully!');
+                },
+                error: function (error) {
+                    if (error.responseJSON && error.responseJSON.errors) {
+                        alert('Error adding contact name: ' + error.responseJSON.errors.value);
+                    } else {
+                        alert('Error adding contact name. Please try again.');
                     }
-                });
-            } else {
-                alert("Please enter a contact name.");
-            }
+                }
+            });
+        } else {
+            alert("Please enter a contact name.");
         }
-
-        // Event listeners for add buttons
-        $('.add-phone').click(function () {
-            addPhoneNumber(this);
-        });
-
-        $('.add-email').click(function () {
-            addEmail(this);
-        });
-
-        $('.add-contact').click(function () {
-            addContactName(this);
-        });
-    });
+    }
 </script>
 
 {% endblock %}
