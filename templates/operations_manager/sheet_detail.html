@@ -18,11 +18,10 @@
                     {% for lead in leads %}
                     <tr>
                         <td>{{ lead.name }}</td>
-                        <td>{{ lead.time_zone }}</td>
                         <td>
                             {% for phone in lead.leadphonenumbers_set.all %}
                                 {% if phone.sheet_id == sheet.id %}
-                                    {{ phone.value }}{% if not forloop.last %}, {% endif %}
+                                    {{ phone.value }} : {{ phone.time_zone }} {% if not forloop.last %}, {% endif %}
                                 {% endif %}
                             {% endfor %}
                         </td>

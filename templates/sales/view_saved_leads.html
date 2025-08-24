@@ -133,8 +133,7 @@
                                 <tr>
                                     <th style="width: 10%">Entry Date</th>
                                     <th style="width: 15%">Company Name</th>
-                                    <th style="width: 12%">Phone No.</th>
-                                    <th style="width: 8%">Time Zone</th>
+                                    <th style="width: 12%">Phone No. / time zone</th>
                                     <th style="width: 15%">E-mail</th>
                                     <th style="width: 15%">DM Names</th>
                                     <th style="width: 12%">Termination Code</th>
@@ -149,7 +148,7 @@
                                     <td>
                                         <ul id="phone-numbers-{{ lead_data.lead.id }}" class="list-unstyled mb-2">
                                             {% for phone in lead_data.phones %}
-                                            <li>{{ phone }}</li>
+                                            <li>{{ phone.value }} : {{ phone.time_zone }}</li>
                                             {% endfor %}
                                         </ul>
                                         <div class="input-group">
@@ -161,7 +160,6 @@
                                             </button>
                                         </div>
                                     </td>
-                                    <td>{{ lead_data.lead.time_zone }}</td>
                                     <td>
                                         <ul id="emails-{{ lead_data.lead.id }}" class="list-unstyled mb-2">
                                             {% for email in lead_data.emails %}

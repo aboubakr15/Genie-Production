@@ -17,8 +17,7 @@
                 <thead>
                   <tr>
                     <th scope="col">Name</th>
-                    <th scope="col">Time Zone</th>
-                    <th scope="col">Phone Numbers</th>
+                    <th scope="col">Phone Numbers / Time Zone</th>
                     <th scope="col">Emails</th>
                     <th scope="col">Contact Names</th>
                   </tr>
@@ -27,10 +26,9 @@
                   {% for lead in leads %}
                   <tr>
                     <td>{{ lead.name }}</td>
-                    <td>{{ lead.time_zone }}</td>
                     <td>
                       {% for phone in lead.leadphonenumbers_set.filter(sheet=sheet) %}
-                      {{ phone.value }}<br>
+                      {{ phone.value }} : {{ phone.time_zone }}<br>
                       {% endfor %}
                     </td>
                     <td>

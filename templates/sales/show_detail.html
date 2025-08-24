@@ -1,12 +1,6 @@
 {% extends "layout/base.html" %}
 
 {% block content %}
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-table@latest/dist/bootstrap-table.min.css">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap-table@latest/dist/bootstrap-table.min.js"></script>
-
 
 <main>
     <div class="container">
@@ -34,8 +28,7 @@
                                         <thead>
                                             <tr>
                                                 <th data-field="company_name" style="min-width: 200px;">Company Name</th>
-                                                <th data-field="time_zone" style="min-width: 50px;">Time Zone</th>
-                                                <th data-field="phone_numbers" style="min-width: 100px;">Phone Numbers</th>
+                                                <th data-field="phone_numbers" style="min-width: 100px;">Phone Number / time zone</th>
                                                 <th data-field="emails" style="min-width: 100px;">Emails</th>
                                                 <th data-field="contact_names" style="min-width: 100px;">Contact Names</th>
                                                 <th data-field="termination_code" style="min-width: 100px; width: 100px;">Termination</th>
@@ -48,14 +41,13 @@
                                             {% for lead_detail in leads_with_details %}
                                             <tr>
                                                 <td>{{ lead_detail.lead.name }}</td>
-                                                <td>{{ lead_detail.lead.time_zone }}</td>
 
                                                 <!-- Phone Numbers Column -->
                                                 <td>
                                                     <ul id="phone-numbers-{{ lead_detail.lead.id }}"
                                                         class="list-unstyled">
                                                         {% for phone in lead_detail.phone_numbers %}
-                                                        <li>{{ phone.value }}</li>
+                                                        <li>{{ phone.value }} : {{ phone.time_zone }} </li>
                                                         {% endfor %}
                                                     </ul>
                                                     <div class="input-group">

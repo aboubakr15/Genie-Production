@@ -9,11 +9,10 @@ from leads.forms import UploadSheetsForm
 from .utils import has_valid_contact, is_valid_phone_number, clean_company_name, filter_companies, get_string_value, get_lead_related_data
 from .models import (Lead, Sheet, LeadContactNames, LeadEmails, LeadPhoneNumbers, Log, LeadsAverage, UserLeader, FilterWords,
                     FilterType, LeadsColors, SalesLog, LeadTerminationCode, Notification, TaskLog, TerminationCode)
-from .forms import AutoFillForm, FilterWordsForm #UploadFilesForm # ImportSheetsForm  # For mass importing 
+from .forms import LeadForm, AutoFillForm, FilterWordsForm #UploadFilesForm # ImportSheetsForm  # For mass importing 
 import os, logging, pandas as pd
 from django.core.exceptions import ObjectDoesNotExist
 from datetime import datetime, timezone as dt_timezone, timedelta
-from operations_team_leader.forms import LeadForm
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseForbidden
 from openpyxl.styles import PatternFill
@@ -148,49 +147,75 @@ def add_lead(request):
     group_name = None
     if request.user.groups.exists():
         group_name = request.user.groups.first().name
-
+        
     if request.method == 'POST':
         form = LeadForm(request.POST)
         if form.is_valid():
             lead = form.save(commit=False)
-
-            # Debugging
-            print("Selected Sheets:", form.cleaned_data.get('sheets'))
-
             sheets = form.cleaned_data.get('sheets')
+            
             if not sheets:
                 messages.error(request, "Please select at least one sheet.")
-                return render(request, f'{group_name}/add_lead.html', {
-                    'form': form,
-                })
-
+                return render(request, "main/manage_lead_update.html", {'form': form})
+            
             lead.save()
-
-            phone_numbers = form.cleaned_data.get('phone_numbers')
+            
+            # Process phone numbers with time zones
+            phone_data = form.cleaned_data.get('phone_numbers')
+            if phone_data:
+                for line in phone_data.split('\n'):
+                    line = line.strip()
+                    if line:
+                        # Split by comma, but be careful of time zones with commas
+                        parts = line.split(',', 1)  # Split into max 2 parts
+                        if len(parts) == 2:
+                            phone_number = parts[0].strip()
+                            time_zone = parts[1].strip()
+                            
+                            if phone_number:
+                                # Create phone number with time zone for each selected sheet
+                                for sheet in sheets:
+                                    LeadPhoneNumbers.objects.get_or_create(
+                                        lead=lead, 
+                                        value=phone_number, 
+                                        sheet=sheet,
+                                        defaults={'time_zone': time_zone}
+                                    )
+                        else:
+                            # Handle case where time zone is missing
+                            phone_number = parts[0].strip()
+                            if phone_number:
+                                for sheet in sheets:
+                                    LeadPhoneNumbers.objects.get_or_create(
+                                        lead=lead, 
+                                        value=phone_number, 
+                                        sheet=sheet
+                                    )
+            
+            # Process emails (no time zones)
             emails = form.cleaned_data.get('emails')
+            if emails:
+                for email in emails.split(','):
+                    email = email.strip()
+                    if email:
+                        for sheet in sheets:
+                            LeadEmails.objects.get_or_create(lead=lead, value=email, sheet=sheet)
+            
+            # Process contact names (no time zones)
             contact_names = form.cleaned_data.get('contact_names')
-
-            for phone_number in phone_numbers.split(','):
-                phone_number = phone_number.strip()
-                if phone_number:
-                    LeadPhoneNumbers.objects.get_or_create(lead=lead, value=phone_number, sheet=sheets.first())
-
-            for email in emails.split(','):
-                email = email.strip()
-                if email:
-                    LeadEmails.objects.get_or_create(lead=lead, value=email, sheet=sheets.first())
-
-            for contact_name in contact_names.split(','):
-                contact_name = contact_name.strip()
-                if contact_name:
-                    LeadContactNames.objects.get_or_create(lead=lead, value=contact_name, sheet=sheets.first())
-
+            if contact_names:
+                for contact_name in contact_names.split(','):
+                    contact_name = contact_name.strip()
+                    if contact_name:
+                        for sheet in sheets:
+                            LeadContactNames.objects.get_or_create(lead=lead, value=contact_name, sheet=sheet)
+            
             # Associate lead with all selected sheets
             for sheet in sheets:
                 sheet.leads.add(lead)
-
+            
             messages.success(request, "Lead added successfully!")
-
+            
             if group_name == 'operations_manager':
                 return redirect('operations_manager:index')
             elif group_name == 'operations_team_leader':
@@ -201,11 +226,8 @@ def add_lead(request):
             messages.error(request, "Please correct the errors below.")
     else:
         form = LeadForm()
-
-    return render(request, f"{group_name}/add_lead.html", {
-        'form': form,
-    })
-
+    
+    return render(request, "main/manage_lead_update.html", {'form': form})
 
 @user_passes_test(lambda user: is_in_group(user, "operations_team_leader") or is_in_group(user, "operations_manager"))
 def edit_lead(request, pk):
@@ -224,24 +246,56 @@ def edit_lead(request, pk):
             sheets = form.cleaned_data.get('sheets')
             if not sheets:
                 messages.error(request, "Please select at least one sheet.")
-                return render(request, f'{group_name}/edit_lead.html', {
+                return render(request, 'main/manage_lead_update.html', {
                     'form': form,
                 })
 
             lead.save()
 
-            # Update Phone Numbers
-            current_phone_numbers = LeadPhoneNumbers.objects.filter(lead=lead).values_list('value', flat=True)
-            new_phone_numbers = {phone_number.strip() for phone_number in form.cleaned_data.get('phone_numbers').split(',') if phone_number.strip()}
+            # Process phone numbers with time zones
+            phone_data = form.cleaned_data.get('phone_numbers')
+            new_phone_data = {}
+            
+            if phone_data:
+                for line in phone_data.split('\n'):
+                    line = line.strip()
+                    if line:
+                        # Split by comma, but be careful of time zones with commas
+                        parts = line.split(',', 1)  # Split into max 2 parts
+                        if len(parts) == 2:
+                            phone_number = parts[0].strip()
+                            time_zone = parts[1].strip()
+                            new_phone_data[phone_number] = time_zone
+                        else:
+                            # If no time zone provided, use None
+                            phone_number = parts[0].strip()
+                            new_phone_data[phone_number] = None
 
-            # Delete removed phone numbers
-            LeadPhoneNumbers.objects.filter(lead=lead).exclude(value__in=new_phone_numbers).delete()
-            # Add new phone numbers
-            for phone_number in new_phone_numbers.difference(current_phone_numbers):
-                for sheet in sheets:
-                    LeadPhoneNumbers.objects.get_or_create(lead=lead, value=phone_number, sheet=sheet)
+            # Update Phone Numbers with Time Zones
+            current_phone_objects = LeadPhoneNumbers.objects.filter(lead=lead)
+            
+            # Delete phone numbers that were removed
+            current_phone_numbers = current_phone_objects.values_list('value', flat=True)
+            numbers_to_delete = set(current_phone_numbers) - set(new_phone_data.keys())
+            LeadPhoneNumbers.objects.filter(lead=lead, value__in=numbers_to_delete).delete()
+            
+            # Update existing or create new phone numbers with time zones
+            for phone_number, time_zone in new_phone_data.items():
+                if phone_number:  # Skip empty phone numbers
+                    for sheet in sheets:
+                        obj, created = LeadPhoneNumbers.objects.get_or_create(
+                            lead=lead,
+                            value=phone_number,
+                            sheet=sheet,
+                            defaults={'time_zone': time_zone}
+                        )
+                        if not created:
+                            # Update time zone if it was provided
+                            if time_zone is not None:
+                                obj.time_zone = time_zone
+                                obj.save()
 
-            # Update Emails
+            # Update Emails (no time zones)
             current_emails = LeadEmails.objects.filter(lead=lead).values_list('value', flat=True)
             new_emails = {email.strip() for email in form.cleaned_data.get('emails').split(',') if email.strip()}
 
@@ -252,7 +306,7 @@ def edit_lead(request, pk):
                 for sheet in sheets:
                     LeadEmails.objects.get_or_create(lead=lead, value=email, sheet=sheet)
 
-            # Update Contact Names
+            # Update Contact Names (no time zones)
             current_contact_names = LeadContactNames.objects.filter(lead=lead).values_list('value', flat=True)
             new_contact_names = {contact_name.strip() for contact_name in form.cleaned_data.get('contact_names').split(',') if contact_name.strip()}
 
@@ -291,16 +345,25 @@ def edit_lead(request, pk):
     else:
         # Initialize form with existing lead data
         form = LeadForm(instance=lead)
+        
         # Set initial values for other fields
-        form.fields['sheets'].initial = lead.sheets.all()  # Make sure to use `all()` to get a queryset of sheets
-        form.fields['phone_numbers'].initial = ', '.join(LeadPhoneNumbers.objects.filter(lead=lead).values_list('value', flat=True))
+        form.fields['sheets'].initial = lead.sheets.all()
+        
+        # Format phone numbers with time zones for display
+        phone_numbers_with_time_zones = []
+        for pn in LeadPhoneNumbers.objects.filter(lead=lead):
+            if pn.time_zone:
+                phone_numbers_with_time_zones.append(f"{pn.value},{pn.time_zone}")
+            else:
+                phone_numbers_with_time_zones.append(pn.value)
+        
+        form.fields['phone_numbers'].initial = '\n'.join(phone_numbers_with_time_zones)
         form.fields['emails'].initial = ', '.join(LeadEmails.objects.filter(lead=lead).values_list('value', flat=True))
         form.fields['contact_names'].initial = ', '.join(LeadContactNames.objects.filter(lead=lead).values_list('value', flat=True))
 
-    return render(request, f"{group_name}/edit_lead.html", {
+    return render(request, "main/manage_lead_update.html", {
         'form': form,
     })
-
 
 @user_passes_test(lambda user: is_in_group(user, "operations_team_leader") or is_in_group(user, "operations_manager"))
 def delete_lead(request, pk):

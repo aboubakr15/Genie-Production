@@ -34,7 +34,7 @@
                                     {% for lead in leads %}
                                     <tr>
                                         <td>{{ lead.name }}</td>
-                                        <td>{{ lead.time_zone }}</td>
+                                        <td>{{ lead.recent_time_zone|default:"" }}</td>
                                         <td>{{ lead.recent_phone_number|default:"" }}</td>
                                         <td>{{ lead.recent_email|default:"" }}</td>
                                         <td>{{ lead.recent_contact_name|default:"" }}</td>

@@ -1,8 +1,6 @@
 {% extends 'layout/base.html' %}
 
 {% block content %}
-<!-- Ensure jQuery is loaded -->
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
 <style>
     .table-responsive {
@@ -37,30 +35,28 @@
 
     .table:not(.flag-mode) th:nth-child(1) { width: 8%; }  /* Entry Date */
     .table:not(.flag-mode) th:nth-child(2) { width: 12%; } /* Company Name */
-    .table:not(.flag-mode) th:nth-child(3) { width: 8%; }  /* Phone No. */
-    .table:not(.flag-mode) th:nth-child(4) { width: 5%; }  /* Time Zone */
-    .table:not(.flag-mode) th:nth-child(5) { width: 12%; } /* Email */
-    .table:not(.flag-mode) th:nth-child(6) { width: 12%; } /* DM Names */
-    .table:not(.flag-mode) th:nth-child(7) { width: 8%; }  /* Termination Code */
-    .table:not(.flag-mode) th:nth-child(8) { width: 11%; } /* CB Date */
-    .table:not(.flag-mode) th:nth-child(9) { width: 7%; }  /* Status */
-    .table:not(.flag-mode) th:nth-child(10) { width: 6%; } /* No. of Rooms */
-    .table:not(.flag-mode) th:nth-child(11) { width: 6%; } /* No. of Nights */
-    .table:not(.flag-mode) th:nth-child(12) { width: 5%; } /* Sales Agent */
+    .table:not(.flag-mode) th:nth-child(3) { width: 13%; }  /* Phone No. */
+    .table:not(.flag-mode) th:nth-child(4) { width: 12%; } /* Email */
+    .table:not(.flag-mode) th:nth-child(5) { width: 12%; } /* DM Names */
+    .table:not(.flag-mode) th:nth-child(6) { width: 8%; }  /* Termination Code */
+    .table:not(.flag-mode) th:nth-child(7) { width: 11%; } /* CB Date */
+    .table:not(.flag-mode) th:nth-child(8) { width: 7%; }  /* Status */
+    .table:not(.flag-mode) th:nth-child(9) { width: 6%; } /* No. of Rooms */
+    .table:not(.flag-mode) th:nth-child(10) { width: 6%; } /* No. of Nights */
+    .table:not(.flag-mode) th:nth-child(11) { width: 5%; } /* Sales Agent */
 
     .table.flag-mode th:nth-child(1) { width: 7%; }  /* Entry Date */
     .table.flag-mode th:nth-child(2) { width: 10%; } /* Company Name */
     .table.flag-mode th:nth-child(3) { width: 5%; }  /* Qualified */
-    .table.flag-mode th:nth-child(4) { width: 8%; }  /* Phone No. */
-    .table.flag-mode th:nth-child(5) { width: 6%; }  /* Time Zone */
-    .table.flag-mode th:nth-child(6) { width: 10%; } /* Email */
-    .table.flag-mode th:nth-child(7) { width: 10%; } /* DM Names */
-    .table.flag-mode th:nth-child(8) { width: 5%; }  /* Termination Code */
-    .table.flag-mode th:nth-child(9) { width: 11%; } /* CB Date */
-    .table.flag-mode th:nth-child(10) { width: 7%; } /* Status */
-    .table.flag-mode th:nth-child(11) { width: 6%; } /* No. of Rooms */
-    .table.flag-mode th:nth-child(12) { width: 6%; } /* No. of Nights */
-    .table.flag-mode th:nth-child(13) { width: 7%; } /* Sales Agent */
+    .table.flag-mode th:nth-child(4) { width: 14%; }  /* Phone No. */
+    .table.flag-mode th:nth-child(5) { width: 10%; } /* Email */
+    .table.flag-mode th:nth-child(6) { width: 10%; } /* DM Names */
+    .table.flag-mode th:nth-child(7) { width: 5%; }  /* Termination Code */
+    .table.flag-mode th:nth-child(8) { width: 11%; } /* CB Date */
+    .table.flag-mode th:nth-child(9) { width: 7%; } /* Status */
+    .table.flag-mode th:nth-child(10) { width: 6%; } /* No. of Rooms */
+    .table.flag-mode th:nth-child(11) { width: 6%; } /* No. of Nights */
+    .table.flag-mode th:nth-child(12) { width: 7%; } /* Sales Agent */
 
     .table-custom-row td {
         padding: 0 !important;
@@ -179,7 +175,6 @@
                                     <th>Qualified</th>
                                     {% endif %}
                                     <th>Phone No.</th>
-                                    <th>Time Zone</th>
                                     <th>E-mail</th>
                                     <th>DM Names</th>
                                     <th>Termination Code</th>
@@ -204,7 +199,7 @@
                                     <td>
                                         <ul id="phone-numbers-{{ lead_data.lead.id }}" class="list-unstyled mb-2">
                                             {% for phone in lead_data.phones %}
-                                            <li>{{ phone }}</li>
+                                            <li>{{ phone.value }} : {{ phone.time_zone }}</li>
                                             {% endfor %}
                                         </ul>
                                         <div class="input-group">
@@ -217,7 +212,6 @@
                                             </button>
                                         </div>
                                     </td>
-                                    <td>{{ lead_data.timezone }}</td>
                                     <td>
                                         <ul id="emails-{{ lead_data.lead.id }}" class="list-unstyled mb-2">
                                             {% for email in lead_data.emails %}

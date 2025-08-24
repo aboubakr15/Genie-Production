@@ -345,7 +345,7 @@ def view_saved_leads(request, code_id=None):
     for lead_termination in leads:
         lead = lead_termination.lead
         phones = LeadPhoneNumbers.objects.filter(
-            lead=lead, sheet=lead_termination.sales_show.sheet).values_list('value', flat=True)
+            lead=lead, sheet=lead_termination.sales_show.sheet)
         emails = LeadEmails.objects.filter(
             lead=lead, sheet=lead_termination.sales_show.sheet).values_list('value', flat=True)
         contacts = LeadContactNames.objects.filter(
@@ -375,7 +375,7 @@ def view_saved_leads(request, code_id=None):
             'num_nights': lead_termination.num_nights,
             'options': lead_termination.options,
             'entry_date': lead_termination.entry_date,
-            'timezone': lead_termination.lead.time_zone,
+            # 'timezone': lead_termination.lead.time_zone,
             'Agent': sales_show.Agent,
             'is_qualified': lead_termination.is_qualified,  
             'entry_date': lead_termination.entry_date,

@@ -9,7 +9,6 @@
           <div class="card">
             <div class="card-body">
               <h5 class="card-title">{{ lead.name }}</h5>
-              <p class="card-body">Time Zone: {{ lead.time_zone }}</p>
 
               <table class="table table-bordered">
                 <thead>
@@ -24,7 +23,7 @@
                     <td>
                       <ul>
                         {% for phone_number in phone_numbers %}
-                        <li>{{ phone_number.value }}</li>
+                        <li>{{ phone_number.value }} : {{ phone_number.time_zone }}</li>
                         {% empty %}
                         <li>No phone numbers available.</li>
                         {% endfor %}

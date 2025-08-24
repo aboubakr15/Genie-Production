@@ -282,6 +282,16 @@ def cut_sheet_into_ready_show(request, sheet_id):
 
     # Process all leads
     all_leads = sheet.leads.all()
+    
+    # Prefetch phone numbers with time zones for all leads
+    from django.db.models import Prefetch
+    phone_numbers_prefetch = Prefetch(
+        'leadphonenumbers_set',
+        queryset=LeadPhoneNumbers.objects.filter(sheet=sheet),
+        to_attr='phone_numbers'
+    )
+    all_leads = all_leads.prefetch_related(phone_numbers_prefetch)
+
     for lead in all_leads:
         # Handle referrals
         if LeadTerminationHistory.objects.filter(lead=lead, termination_code__name__in=['show', 'CD']).exists():
@@ -289,28 +299,63 @@ def cut_sheet_into_ready_show(request, sheet_id):
                 leads_to_referral.append(lead)
             continue
 
-        # Determine lead's region if it's not NA
+        # Determine lead's time zone based on phone numbers
+        time_zone = None
         region = None
-        time_zone_lower = lead.time_zone.strip().lower() if lead.time_zone else ''
-        if time_zone_lower not in ['cen', 'est', 'pac']:
-            if time_zone_lower in uk_countries:
-                region = 'UK'
-            elif time_zone_lower in europe_countries:
-                region = 'Europe'
-            elif time_zone_lower in asia_countries:
-                region = 'Asia'
+        
+        # Get time zones from all phone numbers for this lead
+        phone_time_zones = []
+        for pn in getattr(lead, 'phone_numbers', []):
+            if pn.time_zone:
+                phone_time_zones.append(pn.time_zone.strip().lower())
+        
+        # Use the most common time zone, or first available
+        if phone_time_zones:
+            from collections import Counter
+            time_zone_counter = Counter(phone_time_zones)
+            time_zone = time_zone_counter.most_common(1)[0][0]
+        else:
+            # If no phone numbers with time zones, check if it's a regional lead
+            # For regional leads, we might need to determine region differently
+            pass
 
-        # Sort leads based on color and region
+        # If we have a valid NA time zone, use it
+        if time_zone and time_zone.lower() in ['cen', 'est', 'pac']:
+            time_zone_lower = time_zone.lower()
+        else:
+            # For regional leads, determine region based on country/time_zone data
+            time_zone_lower = ''
+            # Check if any phone number time_zone indicates a region
+            for pn in getattr(lead, 'phone_numbers', []):
+                if pn.time_zone:
+                    tz_lower = pn.time_zone.strip().lower()
+                    if tz_lower in uk_countries:
+                        region = 'UK'
+                        break
+                    elif tz_lower in europe_countries:
+                        region = 'Europe'
+                        break
+                    elif tz_lower in asia_countries:
+                        region = 'Asia'
+                        break
+
+        # Sort leads based on color and region/time_zone
         if sheet.is_x and LeadsColors.objects.filter(lead=lead, sheet=sheet, color__in=['red', 'blue']).exists():
             if time_zone_lower in ['cen', 'est', 'pac']:
-                red_blue_na_leads[lead.time_zone.lower()].append(lead)
+                red_blue_na_leads[time_zone_lower].append(lead)
             elif region:
                 red_blue_region_leads[region].append(lead)
+            else:
+                # If no time zone or region found, put in EST as default
+                red_blue_na_leads['est'].append(lead)
         else:
             if time_zone_lower in ['cen', 'est', 'pac']:
-                na_leads[lead.time_zone.lower()].append(lead)
+                na_leads[time_zone_lower].append(lead)
             elif region:
                 region_leads[region].append(lead)
+            else:
+                # If no time zone or region found, put in EST as default
+                na_leads['est'].append(lead)
 
     def distribute_na_leads_evenly(leads_dict, num_shows):
         shows_leads = [[] for _ in range(num_shows)]
@@ -581,7 +626,7 @@ def view_sheet_admin(request, sheet_id):
     formatted_leads = []
     for lead in leads:
         phone_numbers = list(
-            LeadPhoneNumbers.objects.filter(lead=lead, sheet=sheet).values_list('value', flat=True)
+            LeadPhoneNumbers.objects.filter(lead=lead, sheet=sheet)
         )
         emails = list(
             LeadEmails.objects.filter(lead=lead, sheet=sheet).values_list('value', flat=True)
@@ -592,7 +637,6 @@ def view_sheet_admin(request, sheet_id):
 
         formatted_leads.append({
             'company_name': lead.name,
-            'time_zone': lead.time_zone,
             'phone_numbers': phone_numbers,
             'emails': emails,
             'contact_names': contact_names,

@@ -239,7 +239,7 @@ def view_team_prospect(request, code_id=None, leader_id=None):
     leads_data = []
     for lead_termination in leads:
         lead = lead_termination.lead
-        phones = LeadPhoneNumbers.objects.filter(lead=lead, sheet=lead_termination.sales_show.sheet).values_list('value', flat=True)
+        phones = LeadPhoneNumbers.objects.filter(lead=lead, sheet=lead_termination.sales_show.sheet)
         emails = LeadEmails.objects.filter(lead=lead, sheet=lead_termination.sales_show.sheet).values_list('value', flat=True)
         contacts = LeadContactNames.objects.filter(lead=lead, sheet=lead_termination.sales_show.sheet).values_list('value', flat=True)
         sales_show = lead_termination.sales_show
@@ -266,7 +266,7 @@ def view_team_prospect(request, code_id=None, leader_id=None):
             'num_nights': lead_termination.num_nights,
             'options': lead_termination.options,
             'entry_date': lead_termination.entry_date,
-            'timezone': lead.time_zone,
+            # 'timezone': lead.time_zone,
             'Agent': sales_show.Agent,
             'termination_code_id': lead_termination.flag.id,
             'is_qualified': lead_termination.is_qualified,

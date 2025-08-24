@@ -28,23 +28,25 @@ def index(request):
     
     # Get the most recent phone number, email, and contact name
     recent_phone_number = LeadPhoneNumbers.objects.filter(lead=OuterRef('pk')).order_by('-id').values('value')[:1]
+    recent_time_zone = LeadPhoneNumbers.objects.filter(lead=OuterRef('pk')).order_by('-id').values('time_zone')[:1]
     recent_email = LeadEmails.objects.filter(lead=OuterRef('pk')).order_by('-id').values('value')[:1]
     recent_contact_name = LeadContactNames.objects.filter(lead=OuterRef('pk')).order_by('-id').values('value')[:1]
 
     if query:
         leads = Lead.objects.filter(name__icontains=query).order_by("-id")
     else:
-        leads = Lead.objects.all().order_by("-id")
+        leads = Lead.objects.none()
     
     # Annotate leads with recent contact information
     leads = leads.annotate(
         recent_phone_number=Subquery(recent_phone_number),
+        recent_time_zone=Subquery(recent_time_zone),
         recent_email=Subquery(recent_email),
         recent_contact_name=Subquery(recent_contact_name)
     )
     
     page = request.GET.get('page', '')
-    paginator = Paginator(leads, 30)  
+    paginator = Paginator(leads[:10 * 30], 30)  
 
     try:
         leads_page = paginator.page(page)

@@ -1,7 +1,6 @@
 {% extends 'layout/base.html' %}
 
 {% block content %}
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
 <style>
     /* Table Layout Fixes */
@@ -36,15 +35,14 @@
     /* Column Widths */
     .table th:nth-child(1) { width: 8%; }
     .table th:nth-child(2) { width: 12%; }
-    .table th:nth-child(3) { width: 10%; }
-    .table th:nth-child(4) { width: 7%; }
+    .table th:nth-child(3) { width: 17%; }
+    .table th:nth-child(4) { width: 12%; }
     .table th:nth-child(5) { width: 12%; }
-    .table th:nth-child(6) { width: 12%; }
-    .table th:nth-child(7) { width: 10%; }
-    .table th:nth-child(8) { width: 9%; }
+    .table th:nth-child(6) { width: 10%; }
+    .table th:nth-child(7) { width: 9%; }
+    .table th:nth-child(8) { width: 7%; }
     .table th:nth-child(9) { width: 7%; }
-    .table th:nth-child(10) { width: 7%; }
-    .table th:nth-child(11) { width: 6%; }
+    .table th:nth-child(10) { width: 6%; }
 
     .table-custom-row {
         background-color: #f8f9fa;
@@ -128,8 +126,7 @@
                                 <tr>
                                     <th>Entry Date</th>
                                     <th>Company Name</th>
-                                    <th>Phone No.</th>
-                                    <th>Time Zone</th>
+                                    <th>Phone No. / time zone</th>
                                     <th>Email</th>
                                     <th>DM Names</th>
                                     <th>Termination Code</th>
@@ -147,7 +144,7 @@
                                     <td>
                                         <ul id="phone-numbers-{{ lead_data.lead.id }}" class="list-unstyled mb-2">
                                             {% for phone in lead_data.phones %}
-                                            <li>{{ phone }}</li>
+                                            <li>{{ phone.value }} : {{ phone.time_zone }}</li>
                                             {% endfor %}
                                         </ul>
                                         <div class="input-group">
@@ -161,7 +158,6 @@
                                             </button>
                                         </div>
                                     </td>
-                                    <td>{{ lead_data.lead.time_zone }}</td>
                                     <td>
                                         <ul id="emails-{{ lead_data.lead.id }}" class="list-unstyled mb-2">
                                             {% for email in lead_data.emails %}

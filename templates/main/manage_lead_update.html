@@ -1,0 +1,215 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<main>
+  <div class="container">
+    <section class="section">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title">
+                {% if 'edit' in request.path %}Edit{% else %}Add New{% endif %} Lead
+              </h5>
+              <form method="post" novalidate class="needs-validation">
+                {% csrf_token %}
+
+                <!-- Display non-field errors -->
+                {% if form.non_field_errors %}
+                  <div class="alert alert-danger mb-3">
+                    {{ form.non_field_errors }}
+                  </div>
+                {% endif %}
+
+                <!-- Name field -->
+                <div class="mb-3">
+                  <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }}</label>
+                  <input type="text" id="{{ form.name.id_for_label }}" name="{{ form.name.html_name }}" class="form-control {% if form.name.errors %}is-invalid{% endif %}" value="{{ form.name.value|default:'' }}" />
+                  {% for error in form.name.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                  {% endfor %}
+                </div>
+
+                <!-- Sheet Name field (dropdown) -->
+                <div class="mb-3">
+                  <label for="{{ form.sheets.id_for_label }}" class="form-label">{{ form.sheets.label }}</label>
+                  <select name="{{ form.sheets.html_name }}" id="{{ form.sheets.id_for_label }}" class="form-control" multiple>
+                    {% for option in form.sheets.field.queryset %}
+                    <option value="{{ option.pk }}" {% if option.pk in form.sheets.value %}selected{% endif %}>{{ option }}</option>
+                    {% endfor %}
+                  </select>
+                  <div class="form-text">{{ form.sheets.help_text }}</div>
+                  {% for error in form.sheets.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                  {% endfor %}
+                </div>
+
+                <!-- Phone Numbers with Time Zones -->
+                <div class="mb-3">
+                  <label for="{{ form.phone_numbers.id_for_label }}" class="form-label">Phone Numbers with Time Zones</label>
+                  <textarea id="{{ form.phone_numbers.id_for_label }}" name="{{ form.phone_numbers.html_name }}" 
+                    class="form-control {% if form.phone_numbers.errors %}is-invalid{% endif %}" 
+                    rows="4" placeholder="{{ form.phone_numbers.field.widget.attrs.placeholder }}">{{ form.phone_numbers.value|default:'' }}</textarea>
+                  <div class="form-text">{{ form.phone_numbers.help_text }}</div>
+                  <small class="form-text text-muted">
+                    Example format:<br>
+                    +1234567890,est<br>
+                    +0987654321,London<br>
+                  </small>
+                  {% for error in form.phone_numbers.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                  {% endfor %}
+                  
+                  <!-- Time Zone Helper Buttons -->
+                  <div class="mt-2">
+                    <small class="me-2">Quick add time zone:</small>
+                    <button type="button" class="btn btn-sm btn-outline-secondary timezone-btn" data-tz="est">est</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary timezone-btn" data-tz="cen">cen</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary timezone-btn" data-tz="pac">pac</button>
+                  </div>
+                </div>
+
+                <!-- Emails -->
+                <div class="mb-3">
+                  <label for="{{ form.emails.id_for_label }}" class="form-label">Emails</label>
+                  <textarea id="{{ form.emails.id_for_label }}" name="{{ form.emails.html_name }}" 
+                    class="form-control {% if form.emails.errors %}is-invalid{% endif %}" 
+                    rows="2" placeholder="{{ form.emails.field.widget.attrs.placeholder }}">{{ form.emails.value|default:'' }}</textarea>
+                  <div class="form-text">{{ form.emails.help_text }}</div>
+                  {% for error in form.emails.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                  {% endfor %}
+                </div>
+
+                <!-- Contact Names -->
+                <div class="mb-3">
+                  <label for="{{ form.contact_names.id_for_label }}" class="form-label">Contact Names</label>
+                  <textarea id="{{ form.contact_names.id_for_label }}" name="{{ form.contact_names.html_name }}" 
+                    class="form-control {% if form.contact_names.errors %}is-invalid{% endif %}" 
+                    rows="2" placeholder="{{ form.contact_names.field.widget.attrs.placeholder }}">{{ form.contact_names.value|default:'' }}</textarea>
+                  <div class="form-text">{{ form.contact_names.help_text }}</div>
+                  {% for error in form.contact_names.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                  {% endfor %}
+                </div>
+
+                <!-- Submit Button -->
+                <div class="text-center mt-4">
+                  <button type="submit" class="btn btn-primary">
+                    {% if 'edit' in request.path %}Update{% else %}Add{% endif %} Lead
+                  </button>
+                  <a href="
+                    {% if 'operations_manager' in request.path %}
+                      {% url 'operations_manager:index' %}
+                    {% elif 'operations_team_leader' in request.path %}
+                      {% url 'operations_team_leader:index' %}
+                    {% else %}
+                      #
+                    {% endif %}" 
+                    class="btn btn-secondary ms-2">Cancel</a>
+                </div>
+              </form>
+
+              <!-- Display form errors -->
+              {% if form.errors %}
+                <div class="alert alert-danger mt-3">
+                  <ul class="mb-0">
+                    {% for field in form %}
+                      {% for error in field.errors %}
+                        <li>{{ field.label }}: {{ error }}</li>
+                      {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                      <li>{{ error }}</li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              {% endif %}
+
+              <!-- Display messages -->
+              {% if messages %}
+                <div class="mt-3">
+                  {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+  $(document).ready(function () {
+    // Initialize Select2 for sheets dropdown
+    $('#{{ form.sheets.id_for_label }}').select2({
+      placeholder: 'Select one or more sheets',
+      allowClear: true,
+      width: '100%'
+    });
+
+    // Add time zone when button is clicked
+    $('.timezone-btn').on('click', function() {
+      const textarea = $('#{{ form.phone_numbers.id_for_label }}');
+      const timezone = $(this).data('tz');
+      const currentVal = textarea.val();
+      const cursorPos = textarea[0].selectionStart;
+      
+      // Get the current line
+      const textBeforeCursor = currentVal.substring(0, cursorPos);
+      const lineStart = textBeforeCursor.lastIndexOf('\n') + 1;
+      const currentLine = textBeforeCursor.substring(lineStart);
+      
+      // If the current line has a phone number but no time zone, add it
+      if (currentLine.trim() && !currentLine.includes(',')) {
+        const newText = currentVal.substring(0, cursorPos) + ',' + timezone + currentVal.substring(cursorPos);
+        textarea.val(newText);
+        
+        // Set cursor position after the inserted time zone
+        textarea[0].setSelectionRange(cursorPos + timezone.length + 1, cursorPos + timezone.length + 1);
+      } else {
+        // Otherwise, just add a new line with the time zone as a hint
+        const newText = currentVal + (currentVal ? '\n' : '') + ',' + timezone;
+        textarea.val(newText);
+        textarea[0].setSelectionRange(newText.length - timezone.length - 1, newText.length - timezone.length - 1);
+      }
+      
+      textarea.focus();
+    });
+
+    // Auto-format on blur - add time zone if missing
+    // $('#{{ form.phone_numbers.id_for_label }}').on('blur', function() {
+    //   const lines = $(this).val().split('\n');
+    //   const formattedLines = lines.map(line => {
+    //     const trimmed = line.trim();
+    //     if (trimmed && !trimmed.includes(',')) {
+    //       return trimmed + ',UTC'; // Add default time zone
+    //     }
+    //     return trimmed;
+    //   });
+      
+      // $(this).val(formattedLines.join('\n'));
+    // });
+  });
+</script>
+
+<style>
+  .select2-container--default .select2-selection--multiple {
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    min-height: 38px;
+  }
+  
+  .select2-container--default.select2-container--focus .select2-selection--multiple {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
+  
+  .timezone-btn {
+    margin-bottom: 5px;
+  }
+</style>
+{% endblock %}

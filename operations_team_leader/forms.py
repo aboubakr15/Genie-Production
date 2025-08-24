@@ -27,28 +27,3 @@ class AssignLeadsToLeaderForm(forms.Form):
         label='Select Team Leader'
     )
 
-class LeadForm(forms.ModelForm):
-    sheets = forms.ModelMultipleChoiceField(
-        queryset=Sheet.objects.all(),
-        widget=forms.SelectMultiple(attrs={'class': 'form-control'}),
-        help_text='Select one or more sheets from the dropdown.',
-    )
-    phone_numbers = forms.CharField(
-        widget=forms.Textarea(attrs={'placeholder': 'Enter phone numbers separated by commas'}),
-        required=False,
-        help_text='Enter multiple phone numbers separated by commas.'
-    )
-    emails = forms.CharField(
-        widget=forms.Textarea(attrs={'placeholder': 'Enter emails separated by commas'}),
-        required=False,
-        help_text='Enter multiple emails separated by commas.'
-    )
-    contact_names = forms.CharField(
-        widget=forms.Textarea(attrs={'placeholder': 'Enter contact names separated by commas'}),
-        required=False,
-        help_text='Enter multiple contact names separated by commas.'
-    )
-
-    class Meta:
-        model = Lead
-        fields = ['name', 'time_zone', 'sheets', 'phone_numbers', 'emails', 'contact_names']

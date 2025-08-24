@@ -9,7 +9,7 @@ from main.custom_decorators import is_in_group
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from main.custom_decorators import is_in_group
 import logging
-from django.db.models import OuterRef, Subquery, Q
+from django.db.models import OuterRef, Subquery, Q, Count
 from django.utils import timezone
 from .forms import PriceRequestForm
 from django.http import HttpResponseRedirect
@@ -24,23 +24,25 @@ def index(request):
     
     # Get the most recent phone number, email, and contact name
     recent_phone_number = LeadPhoneNumbers.objects.filter(lead=OuterRef('pk')).order_by('-id').values('value')[:1]
+    recent_time_zone = LeadPhoneNumbers.objects.filter(lead=OuterRef('pk')).order_by('-id').values('time_zone')[:1]
     recent_email = LeadEmails.objects.filter(lead=OuterRef('pk')).order_by('-id').values('value')[:1]
     recent_contact_name = LeadContactNames.objects.filter(lead=OuterRef('pk')).order_by('-id').values('value')[:1]
 
     if query:
         leads = Lead.objects.filter(name__icontains=query).order_by("-id")
     else:
-        leads = Lead.objects.all().order_by("-id")
+        leads = Lead.objects.none()
     
     # Annotate leads with recent contact information
     leads = leads.annotate(
         recent_phone_number=Subquery(recent_phone_number),
+        recent_time_zone=Subquery(recent_time_zone),
         recent_email=Subquery(recent_email),
         recent_contact_name=Subquery(recent_contact_name)
     )
     
     page = request.GET.get('page', '')
-    paginator = Paginator(leads, 30)  
+    paginator = Paginator(leads[:10 * 30], 30)  
 
     try:
         leads_page = paginator.page(page)
@@ -139,8 +141,8 @@ def cut_ready_show_into_sales_shows(request, ready_show_id):
 
     # Check if the ReadyShow has a special label
     if ready_show.label.lower() in special_labels:
-        # Get all leads for the special label that have a time zone
-        all_leads = list(ready_show.leads.exclude(time_zone__isnull=True))
+        # Get all leads for the special label
+        all_leads = list(ready_show.leads.all())
         
         # Filter out leads that match the termination condition
         leads = []
@@ -201,22 +203,47 @@ def cut_ready_show_into_sales_shows(request, ready_show_id):
             sales_show.save()
 
     else:
-        # Original behavior for other labels
+        # For non-special labels, we need to determine time zones from phone numbers
         time_zones = ['cen', 'est', 'pac']
-        all_leads_by_zone = {tz: list(ready_show.leads.filter(time_zone=tz)) for tz in time_zones}
         
-        # Filter out leads that match the termination condition for each time zone
-        leads_by_zone = {}
+        # Prefetch phone numbers with time zones for all leads
+        from django.db.models import Prefetch
+        phone_numbers_prefetch = Prefetch(
+            'leadphonenumbers_set',
+            queryset=LeadPhoneNumbers.objects.filter(sheet=ready_show.sheet),
+            to_attr='phone_numbers'
+        )
+        all_leads = ready_show.leads.prefetch_related(phone_numbers_prefetch).all()
         
-        for tz, zone_leads in all_leads_by_zone.items():
-            filtered_leads = []
-            for lead in zone_leads:
-                if LeadTerminationHistory.objects.filter(lead=lead, termination_code__name__in=['show', 'CD']).exists():
-                    if LeadTerminationHistory.objects.filter(lead=lead, termination_code__name='CD').exists():
-                        leads_to_referral.append(lead)
-                    continue
-                filtered_leads.append(lead)
-            leads_by_zone[tz] = filtered_leads
+        # Group leads by time zone based on their phone numbers
+        leads_by_zone = {tz: [] for tz in time_zones}
+        
+        for lead in all_leads:
+            # Check termination first
+            if LeadTerminationHistory.objects.filter(lead=lead, termination_code__name__in=['show', 'CD']).exists():
+                if LeadTerminationHistory.objects.filter(lead=lead, termination_code__name='CD').exists():
+                    leads_to_referral.append(lead)
+                continue
+            
+            # Determine time zone from phone numbers
+            time_zone = None
+            phone_time_zones = []
+            
+            for pn in getattr(lead, 'phone_numbers', []):
+                if pn.time_zone:
+                    phone_time_zones.append(pn.time_zone.strip().lower())
+            
+            # Use the most common time zone, or first available
+            if phone_time_zones:
+                from collections import Counter
+                time_zone_counter = Counter(phone_time_zones)
+                time_zone = time_zone_counter.most_common(1)[0][0]
+            
+            # If we have a valid time zone, use it, otherwise default to 'est'
+            if time_zone and time_zone.lower() in time_zones:
+                leads_by_zone[time_zone.lower()].append(lead)
+            else:
+                leads_by_zone['est'].append(lead)  # Default to EST if no time zone found
 
         # Calculate the total number of leads and determine the number of SalesShows needed
         total_leads = sum(len(leads) for leads in leads_by_zone.values())
@@ -278,10 +305,6 @@ def process_all_ready_shows(request, ready_show_ids):
     """
     Loops through a list of ready_show_ids and processes each ReadyShow by
     calling the cut_ready_show_into_sales_shows function.
-
-    Args:
-        request (HttpRequest): The HTTP request object.
-        ready_show_ids (list): List of ReadyShow IDs to be processed.
     """
     for ready_show_id in ready_show_ids:
         cut_ready_show_into_sales_shows(request, ready_show_id)
@@ -437,20 +460,41 @@ def unassigned_sales_shows(request, label='EHUB'):
     paginator = Paginator(unassigned_shows, 60)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+    
     # Prefetch related leads and sheet data for just the current page
     page_shows = list(page_obj.object_list.prefetch_related('leads', 'sheet'))
 
     # Only calculate timezone counts for labels where it applies
     timezone_counts = {}
     if label not in ['UK', 'Europe', 'Asia']:
-        timezone_counts = {
-            show.id: {
-                'est': show.leads.filter(time_zone='EST').count(),
-                'cen': show.leads.filter(time_zone='CEN').count(),
-                'pac': show.leads.filter(time_zone='PAC').count()
+        # Get all show IDs for the current page
+        show_ids = [show.id for show in page_obj.object_list]
+        
+        # Get time zone counts from LeadPhoneNumbers for leads in each show
+        for show in page_obj.object_list:
+            # Get all lead IDs for this show
+            lead_ids = show.leads.values_list('id', flat=True)
+            
+            # Count time zones from LeadPhoneNumbers for these leads
+            timezone_data = LeadPhoneNumbers.objects.filter(
+                lead_id__in=lead_ids, sheet=show.sheet
+            ).values('time_zone').annotate(count=Count('id'))
+            
+            # Convert to the expected format
+            timezone_counts[show.id] = {
+                'est': 0,
+                'cen': 0,
+                'pac': 0
             }
-            for show in page_obj.object_list
-        }
+            
+            for tz_data in timezone_data:
+                time_zone = (tz_data['time_zone'] or '').upper()
+                if time_zone == 'EST':
+                    timezone_counts[show.id]['est'] = tz_data['count']
+                elif time_zone == 'CEN':
+                    timezone_counts[show.id]['cen'] = tz_data['count']
+                elif time_zone == 'PAC':
+                    timezone_counts[show.id]['pac'] = tz_data['count']
 
     blue_red_leads_counts = {
         show.id: LeadsColors.objects.filter(
@@ -471,7 +515,7 @@ def unassigned_sales_shows(request, label='EHUB'):
         'active_label': label,
         'blue_red_leads_counts': blue_red_leads_counts,
         'timezone_counts': timezone_counts,
-        'search_term': search_term,  # Already included, kept for clarity
+        'search_term': search_term,
         'labels': labels,
     }
 
@@ -491,7 +535,7 @@ def unassigned_x_sales_shows(request, label='EHUB'):
 
     if search_term:
         unassigned_shows = unassigned_shows.filter(
-            Q(name__icontains=search_term)  # Adjust 'name' to the relevant field(s)
+            Q(name__icontains=search_term)
         )
 
     unassigned_shows = unassigned_shows.order_by("-id")
@@ -500,16 +544,48 @@ def unassigned_x_sales_shows(request, label='EHUB'):
     paginator = Paginator(unassigned_shows, 60)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+    
+    # Get show IDs for the current page
+    show_ids = [show.id for show in page_obj]
 
-    # Create dictionaries for timezone counts and lead colors as before
-    timezone_counts = {
-        show.id: {
-            'est': show.leads.filter(time_zone='EST').count(),
-            'cen': show.leads.filter(time_zone='CEN').count(),
-            'pac': show.leads.filter(time_zone='PAC').count()
-        }
-        for show in page_obj
-    }
+    # Create dictionaries for timezone counts using the new LeadPhoneNumbers model
+    timezone_counts = {}
+    if show_ids:
+        # Prefetch timezone data for all shows in the page
+        from django.db.models import Count
+        
+        # Get all leads for these shows
+        show_leads = {}
+        for show in page_obj:
+            lead_ids = list(show.leads.values_list('id', flat=True))
+            show_leads[show.id] = lead_ids
+        
+        # Get all timezone data in one query
+        all_lead_ids = []
+        for lead_ids in show_leads.values():
+            all_lead_ids.extend(lead_ids)
+        
+        if all_lead_ids:
+            timezone_data = LeadPhoneNumbers.objects.filter(
+                lead_id__in=all_lead_ids, sheet=show.sheet
+            ).values('lead_id', 'time_zone').annotate(count=Count('id'))
+            
+            # Organize timezone data by show
+            for show in page_obj:
+                timezone_counts[show.id] = {'est': 0, 'cen': 0, 'pac': 0}
+                
+                # Filter timezone data for this show's leads
+                show_lead_ids = show_leads[show.id]
+                show_tz_data = [tz for tz in timezone_data if tz['lead_id'] in show_lead_ids]
+                
+                for tz_data in show_tz_data:
+                    time_zone = (tz_data['time_zone'] or '').upper()
+                    if time_zone == 'EST':
+                        timezone_counts[show.id]['est'] += tz_data['count']
+                    elif time_zone == 'CEN':
+                        timezone_counts[show.id]['cen'] += tz_data['count']
+                    elif time_zone == 'PAC':
+                        timezone_counts[show.id]['pac'] += tz_data['count']
 
     blue_red_leads_counts = {
         show.id: LeadsColors.objects.filter(
@@ -920,7 +996,7 @@ def view_ready_show(request, show_id):
     formatted_leads = []
     for lead in leads:
         phone_numbers = list(
-            LeadPhoneNumbers.objects.filter(lead=lead, sheet=sheet).values_list('value', flat=True)
+            LeadPhoneNumbers.objects.filter(lead=lead, sheet=sheet)
         )
         emails = list(
             LeadEmails.objects.filter(lead=lead, sheet=sheet).values_list('value', flat=True)
@@ -931,7 +1007,6 @@ def view_ready_show(request, show_id):
 
         formatted_leads.append({
             'company_name': lead.name,
-            'time_zone': lead.time_zone,
             'phone_numbers': phone_numbers,
             'emails': emails,
             'contact_names': contact_names,
@@ -943,4 +1018,5 @@ def view_ready_show(request, show_id):
     }
 
     return render(request, 'operations_manager/view_ready_show.html', context)
+
 
