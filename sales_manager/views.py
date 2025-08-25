@@ -304,7 +304,7 @@ def search(request):
         return render(request, template_path, context)
 
     # --- Case 2: Lead-based search (lead_name or phone_number) ---
-    leads_queryset = Lead.objects.filter(sales_shows__Agent__isnull=False)
+    leads_queryset = Lead.objects.none() 
 
     if query and search_by:
         if search_by == 'lead_name':

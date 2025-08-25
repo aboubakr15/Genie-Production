@@ -292,12 +292,12 @@ def download_auto_fill_result(request, notification_id):
 
             # Add rows from the latest sheet to the data
             for lead in latest_leads:
-                phone_number, email, contact_name = get_lead_related_data(lead)
+                phone_number, time_zone, email, contact_name = get_lead_related_data(lead)
                 data = data[data['Company Name'] != lead.name]
 
                 new_row = pd.DataFrame([{
                     'Company Name': lead.name,
-                    'Time Zone': lead.time_zone,
+                    'Time Zone': time_zone,
                     'Phone Number': phone_number,
                     'Email': email,
                     'DM Name': contact_name,
@@ -313,8 +313,8 @@ def download_auto_fill_result(request, notification_id):
         if company_name not in latest_leads_dict:
             lead = leads_dict.get(company_name)
             if lead:
-                phone_number, email, contact_name = get_lead_related_data(lead)
-                row['Time Zone'] = lead.time_zone
+                phone_number, time_zone, email, contact_name = get_lead_related_data(lead)
+                row['Time Zone'] = time_zone
                 row['Phone Number'] = phone_number
                 row['Email'] = email
                 row['DM Name'] = contact_name

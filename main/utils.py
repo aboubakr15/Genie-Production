@@ -108,10 +108,11 @@ def get_sheet_name(name: str) -> str:
 def get_lead_related_data(lead):
     # Returns the latest contact data 
     phone_number = LeadPhoneNumbers.objects.filter(lead=lead).order_by('id').values_list('value', flat=True).last()
+    time_zone = LeadPhoneNumbers.objects.filter(lead=lead).order_by('id').values_list('time_zone', flat=True).last()
     email = LeadEmails.objects.filter(lead=lead).order_by('id').values_list('value', flat=True).last()
     contact_name = LeadContactNames.objects.filter(lead=lead).order_by('id').values_list('value', flat=True).last()
 
-    return (phone_number, email, contact_name)
+    return (phone_number, time_zone, email, contact_name)
 
 
 def get_string_value(row, key):

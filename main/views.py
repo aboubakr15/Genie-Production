@@ -449,12 +449,12 @@ def auto_fill(request):
 
                     # Add new rows to the data from the latest sheet
                     for lead in latest_leads:
-                        phone_number, email, contact_name = get_lead_related_data(lead)
+                        phone_number, time_zone, email, contact_name = get_lead_related_data(lead)
                         data = data[data['Company Name'] != lead.name]
 
                         new_row = pd.DataFrame([{
                             'Company Name': lead.name,
-                            'Time Zone': lead.time_zone,
+                            'Time Zone': time_zone,
                             'Phone Number': phone_number,
                             'Email': email,
                             'DM Name': contact_name,
@@ -472,8 +472,8 @@ def auto_fill(request):
                     if company_name not in latest_leads_dict:
                         lead = leads_dict.get(company_name)
                         if lead:
-                            phone_number, email, contact_name = get_lead_related_data(lead)
-                            row['Time Zone'] = lead.time_zone
+                            phone_number, time_zone, email, contact_name = get_lead_related_data(lead)
+                            row['Time Zone'] = time_zone
                             row['Phone Number'] = phone_number
                             row['Email'] = email
                             row['DM Name'] = contact_name
@@ -646,14 +646,14 @@ def upload_sheet(request):
                 if created:
                     new_leads_count += 1
 
+                # Add the phone numbers if they're new
+                phone_number = get_string_value(row, 'Phone Number')
                 # Add the time zone
                 time_zone = get_string_value(row, 'Time Zone')
                 if time_zone:
-                    lead.time_zone = time_zone
+                    phone_time_zone = time_zone
                     lead.save()
 
-                # Add the phone numbers if they're new
-                phone_number = get_string_value(row, 'Phone Number')
                 direct_cell_number = get_string_value(row, 'Direct / Cell Number') if 'Direct / Cell Number' in data.columns else None
                 phone_numbers = ','.join(filter(None, [phone_number, direct_cell_number]))
 
@@ -664,7 +664,7 @@ def upload_sheet(request):
                             try:
                                 LeadPhoneNumbers.objects.get(lead=lead, sheet=sheet, value=phone_number)
                             except ObjectDoesNotExist:
-                                LeadPhoneNumbers.objects.create(lead=lead, sheet=sheet, value=phone_number)
+                                LeadPhoneNumbers.objects.create(lead=lead, sheet=sheet, value=phone_number, time_zone=phone_time_zone)
                         ## Add this part if u want to add org, gov, etc.. to the filter words automatically
                         # else:
                         #     # If the phone number is invalid & not ['nf', 'local'] add the company name to FilterWords
@@ -1110,13 +1110,14 @@ def import_folder(request):
                         company_name = ensure_str(row.get('Company Name', ''))
                         lead, created = Lead.objects.get_or_create(name=company_name)
                         if created:
-                            lead.time_zone = ensure_str(row.get('Time Zone', ''))
                             lead.save()
+                            
+                        time_zone = ensure_str(row.get('Time Zone', ''))
 
                         phone_numbers = filter(None, [ensure_str(row.get('Phone Number', '')).strip()])
                         for phone_number in phone_numbers:
                             if phone_number and is_valid_phone_number(phone_number):
-                                LeadPhoneNumbers.objects.get_or_create(lead=lead, sheet=sheet, value=phone_number)
+                                LeadPhoneNumbers.objects.get_or_create(lead=lead, sheet=sheet, value=phone_number, time_zone=time_zone)
 
                         email = ensure_str(row.get('Email', ''))
                         if email:
