@@ -307,6 +307,7 @@ def search(request):
     leads_queryset = Lead.objects.filter(sales_shows__Agent__isnull=False)
 
     if query and search_by:
+        leads_queryset = Lead.objects.filter(sales_shows_Agent_isnull=False)
         if search_by == 'lead_name':
             leads_queryset = leads_queryset.filter(name__icontains=query)
 
