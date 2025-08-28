@@ -20,7 +20,7 @@ class Lead(models.Model):
     # time_zone = models.CharField(max_length=30, blank=True, null=True)  # Moved to LeadPhoneNumbers
 
     def __str__(self) -> str:
-        return f"{self.name} --> {self.time_zone}"   
+        return f"{self.name}"   
 
 
 # The excel Sheet that the Leads team upload (the first source of data that gets cut and distributed)
@@ -328,35 +328,3 @@ class TaskLog(models.Model):
 
 
 
-################################################################################################################################
-###################################### Global Database For multiple clients to enrich ##########################################
-################################################################################################################################
-
-
-# class GlobalLead(models.Model):
-#     name = models.CharField(max_length=255, db_collation='utf8mb4_general_ci')
-
-#     def __str__(self) -> str:
-#         return f"{self.name} --> {self.time_zone}"
-    
-# class GlobalLeadPhoneNumbers(models.Model):
-#     lead = models.ForeignKey(GlobalLead, on_delete=models.CASCADE)
-#     time_zone = models.CharField(max_length=30, blank=True, null=True)
-#     value = models.CharField(max_length=255)
-
-#     class Meta:
-#         unique_together = ('lead', 'value')
-
-# class GlobalLeadEmails(models.Model):
-#     lead = models.ForeignKey(GlobalLead, on_delete=models.CASCADE)
-#     value = models.CharField(max_length=255)
-    
-#     class Meta:
-#         unique_together = ('lead', 'value')
-
-# class GlobalLeadContactNames(models.Model):
-#     lead = models.ForeignKey(GlobalLead, on_delete=models.CASCADE)
-#     value = models.CharField(max_length=255)
-
-#     class Meta:
-#         unique_together = ('lead', 'value')

@@ -359,7 +359,7 @@ def sales_team_leader_notifications(request):
 
 
 ## Used for search withtin the scope of the user's team but disabeled for now and using the sales_manager search instead
-
+{
 # @user_passes_test(lambda user: user.groups.filter(name__in=["sales_team_leader", "sales_manager"]).exists())
 # def search(request):
 #     if request.method == 'GET':
@@ -422,3 +422,4 @@ def sales_team_leader_notifications(request):
 #     }
 
 #     return render(request, "sales_team_leader/search.html", context)
+}

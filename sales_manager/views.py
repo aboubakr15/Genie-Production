@@ -237,6 +237,7 @@ def leads_inventory(request):
     })
 
 
+@user_passes_test(lambda user: user.groups.filter(name__in=["sales_manager", "operations_manager"]).exists())
 def lead_history_view(request, lead_id):
     lead_history = None
     page_number = request.GET.get('page', 1)  # Get the page number from the request

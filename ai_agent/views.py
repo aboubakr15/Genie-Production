@@ -3,45 +3,25 @@ from django.shortcuts import render
 from .forms import CompanyListForm
 from main.models import Lead, LeadEmails, LeadPhoneNumbers, LeadContactNames
 import requests
+from django.contrib.auth.decorators import user_passes_test
+from main.custom_decorators import is_in_group
 
 
 
+@user_passes_test(lambda user: is_in_group(user, "ai_agent"))
 def index(request):
-    results = []
-    not_found = []
-    if request.method == 'POST':
-        form = CompanyListForm(request.POST)
-        if form.is_valid():
-            company_list = form.cleaned_data['companies'].splitlines()
-            company_list = [c.strip() for c in company_list if c.strip()]
-            db_leads = Lead.objects.filter(name__in=company_list)
-            db_lead_names = set(lead.name for lead in db_leads)
-            # Get data from DB
-            for lead in db_leads:
-                email = LeadEmails.objects.filter(lead=lead).first()
-                phone = LeadPhoneNumbers.objects.filter(lead=lead).first()
-                contact = LeadContactNames.objects.filter(lead=lead).first()
-                results.append({
-                    'company': lead.name,
-                    'email': email.value if email else '',
-                    'phone': phone.value if phone else '',
-                    'contact_name': contact.value if contact else ''
-                })
-            # Companies not found in DB
-            not_found = [c for c in company_list if c not in db_lead_names]
-            # if not_found:
-                # deepseek_results = get_deepseek_data(not_found)
-                # for name in not_found:
-                    # info = deepseek_results.get(name, {})
-                    # results.append({
-                    #     'company': name,
-                    #     'email': info.get('email', ''),
-                    #     'phone': info.get('phone', ''),
-                    #     'contact_name': info.get('contact_name', '')
-                    # })
-    else:
-        form = CompanyListForm()
-    return render(request, 'ai_agent/index.html', {'form': form, 'results': results})
+    return render(request, 'ai_agent/index.html')
+
+@user_passes_test(lambda user: is_in_group(user, "ai_agent"))
+def search(request):
+    return render(request, 'ai_agent/search.html')
+
+@user_passes_test(lambda user: is_in_group(user, "ai_agent"))
+def enrich_data(request):
+    form = CompanyListForm()
+    return render(request, 'ai_agent/enrich.html', {'form': form})
+
+
 
 
 # ############################################################## AI's Part ##############################################################

@@ -19,6 +19,7 @@ from django.views.decorators.http import require_POST
 
 logger = logging.getLogger('custom')
 
+@user_passes_test(lambda user: is_in_group(user, "operations_manager"))
 def index(request):
     query = request.GET.get('q')
     
@@ -786,7 +787,7 @@ def archive_sales_show(request, show_id):
         
         return redirect(request.META.get('HTTP_REFERER', 'operations_manager:assigned-sales-shows'))
 
-
+@user_passes_test(lambda user: is_in_group(user, "operations_manager"))
 def archive_sales_show_bulk(request):
     if request.method == 'POST':
         select_all = request.POST.get('select_all') == 'true'
@@ -854,6 +855,7 @@ def unarchive_sales_show(request, show_id):
 
 @require_POST
 @transaction.atomic
+@user_passes_test(lambda user: is_in_group(user, "operations_manager"))
 def reassign_sales_show(request):
     show_id = request.POST.get('show_id')
     if not show_id:
@@ -987,7 +989,7 @@ def unarchive_ready_show(request, show_id):
     return redirect(referer_url)
 
 ##########################################################################################################################
-
+@user_passes_test(lambda user: is_in_group(user, "operations_manager"))
 def view_ready_show(request, show_id):
     show = get_object_or_404(ReadyShow, id=show_id)
     leads = show.leads.all()

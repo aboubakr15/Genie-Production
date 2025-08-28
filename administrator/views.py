@@ -618,7 +618,7 @@ def unarchive_sheet(request, sheet_id):
     return redirect(referer_url)
 
 
-
+@user_passes_test(lambda user: is_in_group(user, "administrator"))
 def view_sheet_admin(request, sheet_id):
     sheet = get_object_or_404(Sheet, id=sheet_id)
     leads = sheet.leads.all()
