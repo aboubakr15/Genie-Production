@@ -123,8 +123,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'railway',
         'USER': 'root',
-        'PASSWORD': 'KeImhTyLXCUfJUdIFZHEbdAzoDrMswHU',  # MySQL server pass is 'admin@ibh'
-        'HOST': 'tramway.proxy.rlwy.net',  # or the IP address of your MySQL server '192.168.0.200'
+        'PASSWORD': 'KeImhTyLXCUfJUdIFZHEbdAzoDrMswHU',
+        'HOST': 'tramway.proxy.rlwy.net',
         'PORT': '38352',
         'OPTIONS': {
             'charset': 'utf8mb4',

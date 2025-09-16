@@ -2,6 +2,8 @@
 
 <header id="header" class="header fixed-top d-flex align-items-center" style="background: linear-gradient(135deg, #4a2c7a, #8e44ad, #3498db); padding: 10px 20px; border-radius: 0 0 15px 15px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);">
   <div class="d-flex align-items-center justify-content-between w-100">
+    
+    <!-- Logo -->
     <a href="/" class="logo d-flex align-items-center" style="transition: all 0.3s ease;">
       <img src="{% static 'assets/Genie_logo.jpeg' %}" alt="Genie Logo" style="max-height: 40px; border-radius: 50%; box-shadow: 0 0 10px #fff; transition: transform 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 0 20px #ffd700';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0 10px #fff';">
       <span class="d-none d-lg-block ms-2" style="font-family: 'Poppins', sans-serif; font-size: 1.5rem; font-weight: 700; color: #ffd700; text-shadow: 0 0 5px #fff, 0 0 10px #ffd700; transition: text-shadow 0.3s ease;" onmouseover="this.style.textShadow='0 0 10px #fff, 0 0 20px #ffd700';" onmouseout="this.style.textShadow='0 0 5px #fff, 0 0 10px #ffd700';">The Genie</span>
@@ -10,13 +12,17 @@
 
     <nav class="header-nav ms-auto">
       <ul class="d-flex align-items-center">
+       
+        <!-- Search Icon-->
         <li class="nav-item d-block d-lg-none">
           <a class="nav-link nav-icon search-bar-toggle" href="#" style="color: #fff; transition: color 0.3s ease;" onmouseover="this.style.color='#ffd700';">
             <i class="bi bi-search"></i>
           </a>
         </li>
-        <!-- End Search Icon-->
+        <!-- End Search -->
 
+        
+        <!-- Notification -->
         <li class="nav-item dropdown">
           {% if request.user.is_authenticated %}
           {% with request.user.groups.first as user_group %}
@@ -45,10 +51,10 @@
           <span class="badge notification-badge bg-primary badge-number" style="display: none;"></span>
           {% endif %}
           </a>
-          <!-- End Notification Icon with Animation -->
         </li>
         <!-- End Notification Nav -->
 
+        <!-- Profile Nav -->
         <li class="nav-item dropdown pe-3">
           <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown" style="transition: all 0.3s ease;">
             <span class="d-none d-md-block dropdown-toggle px-2" style="font-size: 1.2rem; color: #fff; background: rgba(255, 255, 255, 0.1); padding: 5px 15px; border-radius: 20px; animation: pulse 2s infinite;">
@@ -63,18 +69,19 @@
             <li>
               <hr class="dropdown-divider" />
             </li>
-
+            
             <li>
-              <a class="dropdown-item d-flex align-items-center" href="{% url 'main:logout' %}" style="color: #4a2c7a; transition: color 0.3s ease;" onmouseover="this.style.color='#8e44ad';">
+              <a class="dropdown-item d-flex align-items-center logout-link" href="{% url 'main:logout' %}" style="color: #4a2c7a; transition: color 0.3s ease;">
                 <i class="bi bi-box-arrow-right"></i>
                 <span>Sign Out</span>
               </a>
             </li>
           </ul>
-          <!-- End Profile Dropdown Items -->
+
         </li>
         <!-- End Profile Nav -->
-      </ul>
+
+      </ul>      
     </nav>
   </div>
   <!-- End Icons Navigation -->

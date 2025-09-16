@@ -1,4 +1,3 @@
-# leads/forms.py
 from django import forms
 
 class CompanyListForm(forms.Form):
