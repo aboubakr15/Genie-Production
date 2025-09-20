@@ -20,7 +20,7 @@ SECRET_KEY = 'django-insecure-x0t)8qx9buoxxbiq#v4hmxdqt&$e(t%#c0=5jj$rthyb1!042@
 # Change it to True while Developing, to load your static files
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'ibhgenie.local']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
