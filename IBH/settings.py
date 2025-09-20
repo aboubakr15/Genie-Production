@@ -108,10 +108,10 @@ WSGI_APPLICATION = 'IBH.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'genie',
+        'NAME': 'railway',
         'USER': 'root',
-        'PASSWORD': 'Admin123',  # MySQL server pass is 'admin@ibh'
-        'HOST': 'localhost',  # or the IP address of your MySQL server '192.168.0.200'
+        'PASSWORD': 'QcieGmwVSuAnLuXBRLKpImOJhKIWSEjR',  # MySQL server pass is 'admin@ibh'
+        'HOST': 'mysql.railway.internal',  # or the IP address of your MySQL server '192.168.0.200'
         'PORT': '3306',
         'OPTIONS': {
             'charset': 'utf8mb4',
