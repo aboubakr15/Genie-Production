@@ -1,7 +1,6 @@
 {% extends "layout/base.html" %}
 
 {% block content %}
-
 <style>
     :root {
         --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -114,6 +113,7 @@
 
 <!-- Search Form Card -->
 <div class="card main-card shadow-sm border-0 mb-4">
+
     <div class="card-header card-header-custom text-white">
         <h4 class="card-title mb-0 d-flex align-items-center">
             <i class="fas fa-bolt me-3"></i>
@@ -155,7 +155,7 @@
             <div class="text-center mt-3">
                 <small class="text-muted">
                     <i class="fas fa-clock me-1"></i>
-                    Processing typically takes ~3 seconds per company
+                    Processing typically takes ~ 5-10 seconds per company
                 </small>
             </div>
         </form>
@@ -170,53 +170,16 @@
             </h4>
         </div>
         <div class="card-body p-4">
-            <div class="table-responsive">
-                <table class="table table-hover table-striped">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Company</th>
-                            <th>Source</th>
-                            <th>Phones</th>
-                            <th>Emails</th>
-                            <th>Contacts</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for result in results %}
-                            <tr>
-                                <td>{{ result.company }}</td>
-                                <td>{{ result.source|capfirst }}</td>
-                                <td>
-                                    {% for phone in result.phones %}
-                                        {{ phone.value }} {% if phone.time_zone %}({{ phone.time_zone }}){% endif %}<br>
-                                    {% empty %}
-                                        None
-                                    {% endfor %}
-                                </td>
-                                <td>
-                                    {% for email in result.emails %}
-                                        {{ email.value }}<br>
-                                    {% empty %}
-                                        None
-                                    {% endfor %}
-                                </td>
-                                <td>
-                                    {% for contact in result.contacts %}
-                                        {{ contact.value }}<br>
-                                    {% empty %}
-                                        None
-                                    {% endfor %}
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="results-content" style="white-space: pre-wrap; font-family: 'Courier New', Courier, monospace; background: #f8f9fa; padding: 1rem; border-radius: 10px; box-shadow: inset 0 0 5px rgba(0,0,0,0.1);">
+                {% for result in results %}
+                    {{ result }}
+                {% endfor %}
             </div>
         </div>
     </div>
     {% endif %}
-</div>
 
+</div>
 
 
 {% endblock %}
