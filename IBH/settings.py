@@ -118,11 +118,11 @@ WSGI_APPLICATION = 'IBH.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv('local-db.MYSQL_DATABASE'),
-        'USER': os.getenv('local-db.MYSQLUSER'),
-        'PASSWORD': os.getenv('local-db.MYSQL_ROOT_PASSWORD'),  # MySQL server pass is 'admin@ibh'
-        'HOST': os.getenv('local-db.HostName'),  # or the IP address of your MySQL server '192.168.0.200'
-        'PORT': os.getenv('local-db.MYSQLPORT'),
+        'NAME': os.getenv('MYSQL_DATABASE'),
+        'USER': os.getenv('MYSQLUSER'),
+        'PASSWORD': os.getenv('MYSQL_ROOT_PASSWORD'),  # MySQL server pass is 'admin@ibh'
+        'HOST': os.getenv('HostName'),  # or the IP address of your MySQL server '192.168.0.200'
+        'PORT': os.getenv('MYSQLPORT'),
         'OPTIONS': {
             'charset': 'utf8mb4',
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
