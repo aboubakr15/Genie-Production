@@ -2,6 +2,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.models import Group, User
 from django.contrib import messages
+from ai_agent.utils import *
 from main.models import (LeadEmails, LeadPhoneNumbers, LeadContactNames, Sheet, ReadyShow, Log, LeadTerminationHistory, FilterWords, Referral,
                         LeadTerminationCode, SalesShow, IncomingsCount, LeadsColors)
 from main.custom_decorators import is_in_group
@@ -648,3 +649,93 @@ def view_sheet_admin(request, sheet_id):
     }
 
     return render(request, 'administrator/view_sheet.html', context)
+
+
+############################################################## Credit Management part ##############################################################
+from django.views.decorators.http import require_http_methods
+
+def is_admin(user):
+    """Check if user is admin (adjust based on your admin criteria)"""
+    return user.is_staff or user.is_superuser
+
+# @user_passes_test(is_admin)
+@require_http_methods(["GET", "POST"])
+@user_passes_test(lambda user: is_in_group(user, "administrator"))
+def credit_management_view(request):
+    """Main credit management view"""
+    context = {}
+    
+    if request.method == 'POST':
+        
+        if request.user.is_staff:
+            action = request.POST.get('action')
+            
+            if action == 'add_credits':
+                return handle_add_credits(request)
+            elif action == 'reset_counters':
+                return handle_reset_counters(request)
+            elif action == 'expire_credits':
+                return handle_expire_credits(request)
+        else:
+            messages.error(request, "You do not have permission to perform this action.")
+    
+    # For GET requests or after POST processing
+    context.update({
+        'credit_stats': get_credit_stats(),
+        'recent_history': get_credit_history(days=7),
+        'monthly_summary': get_monthly_summary()
+    })
+    
+    return render(request, 'administrator/credit_management.html', context)
+
+def handle_add_credits(request):
+    """Handle adding credits"""
+    try:
+        amount = int(request.POST.get('amount', 0))
+        description = request.POST.get('description', '').strip()
+        
+        if amount <= 0:
+            messages.error(request, "Amount must be greater than 0")
+            return redirect('administrator:credit-management')
+        
+        if not description:
+            description = f"Credits added by {request.user.username}"
+        
+        new_balance = add_credits(
+            amount=amount, 
+            description=description, 
+            user=request.user
+        )
+        
+        messages.success(
+            request, 
+            f"Successfully added {amount} credits. New balance: {new_balance}"
+        )
+        
+    except (ValueError, ValidationError) as e:
+        messages.error(request, f"Error adding credits: {str(e)}")
+    
+    return redirect('administrator:credit-management')
+
+def handle_reset_counters(request):
+    """Handle resetting monthly counters"""
+    try:
+        reset_monthly_counters()
+        messages.success(request, "Monthly counters reset successfully")
+    except Exception as e:
+        messages.error(request, f"Error resetting counters: {str(e)}")
+    
+    return redirect('administrator:credit-management')
+
+def handle_expire_credits(request):
+    """Handle expiring all credits"""
+    try:
+        expired_amount = expire_old_credits()
+        messages.success(
+            request, 
+            f"Expired {expired_amount} credits and reset all counters"
+        )
+    except Exception as e:
+        messages.error(request, f"Error expiring credits: {str(e)}")
+    
+    return redirect('administrator:credit-management')

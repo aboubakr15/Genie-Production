@@ -1,119 +1,116 @@
+<!-- ai_agent/enrich.html -->
 {% extends "layout/base.html" %}
 
 {% block content %}
+<!-- Include the loading template -->
+{% include "ai_agent/loading.html" %}
+
 <style>
-    :root {
-        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        --card-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-        --card-shadow-hover: 0 20px 40px rgba(0, 0, 0, 0.15);
-    }
+.main-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: var(--card-shadow);
+    border: none;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
 
-    .main-card {
-        background: white;
-        border-radius: 20px;
-        box-shadow: var(--card-shadow);
-        border: none !important;
-        overflow: hidden;
-        transition: all 0.3s ease;
-    }
+.main-card:hover {
+    box-shadow: var(--card-shadow-hover);
+    transform: translateY(-5px);
+}
 
-    .main-card:hover {
-        box-shadow: var(--card-shadow-hover);
-        transform: translateY(-5px);
-    }
+.card-header-custom {
+    background: var(--success-gradient);
+    padding: 1.5rem 2rem;
+    border-bottom: none;
+}
 
-    .card-header-custom {
-        background: var(--success-gradient);
-        padding: 1.5rem 2rem;
-        border-bottom: none !important;
-    }
+.form-control, .form-textarea {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+    width: 100%;
+}
 
-    /* Form field styling */
-    #{{ form.company_names.id_for_label }}, 
-    textarea[name="{{ form.company_names.name }}"],
-    input[name="{{ form.company_names.name }}"] {
-        border: 2px solid #e9ecef !important;
-        border-radius: 12px !important;
-        padding: 1rem 1.5rem !important;
-        font-size: 1rem !important;
-        transition: all 0.3s ease !important;
-        resize: vertical !important;
-        min-height: 200px !important;
-        background: #f8f9fa !important;
-        width: 100% !important;
-    }
+.form-textarea {
+    resize: vertical;
+    min-height: 200px;
+}
 
-    #{{ form.company_names.id_for_label }}:focus, 
-    textarea[name="{{ form.company_names.name }}"]:focus,
-    input[name="{{ form.company_names.name }}"]:focus {
-        border-color: #667eea !important;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
-        transform: translateY(-2px) !important;
-        background: white !important;
-        outline: none !important;
-    }
+.form-control:focus, .form-textarea:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    transform: translateY(-2px);
+    background: white;
+    outline: none;
+}
 
-    .btn-primary-custom {
-        background: var(--primary-gradient);
-        border: none;
-        border-radius: 12px;
-        padding: 1rem 2rem;
-        font-weight: 600;
-        font-size: 1.1rem;
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-        width: 100%;
-    }
+.btn-primary-custom {
+    background: var(--primary-gradient);
+    border: none;
+    border-radius: 12px;
+    padding: 1rem 2rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+}
 
-    .btn-primary-custom::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 0;
-        height: 0;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 50%;
-        transition: all 0.3s ease;
-        transform: translate(-50%, -50%);
-    }
+.btn-primary-custom::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    transform: translate(-50%, -50%);
+}
 
-    .btn-primary-custom:hover::before {
-        width: 300px;
-        height: 300px;
-    }
+.btn-primary-custom:hover::before { width: 300px; height: 300px; }
+.btn-primary-custom:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3); }
 
-    .btn-primary-custom:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
-    }
+.form-label-custom { font-weight: 600; color: #495057; margin-bottom: 0.75rem; font-size: 1.1rem; }
+.form-text-custom { color: #6c757d; font-size: 0.9rem; margin-top: 0.5rem; font-style: italic; }
 
-    .form-label-custom {
-        font-weight: 600;
-        color: #495057;
-        margin-bottom: 0.75rem;
-        font-size: 1.1rem;
-    }
+.excel-settings-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
 
-    .form-text-custom {
-        color: #6c757d;
-        font-size: 0.9rem;
-        margin-top: 0.5rem;
-        font-style: italic;
-    }
+.excel-settings-card .form-label {
+    color: white;
+    font-weight: 600;
+}
 
-    @media (max-width: 768px) {
-        .main-card {
-            border-radius: 15px;
-        }
-    }
+.excel-settings-card .form-control {
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.excel-settings-card .form-control:focus {
+    background: white;
+    border-color: white;
+}
+
+@media (max-width: 768px) { 
+    .main-card { border-radius: 15px; } 
+    .excel-settings-card { padding: 1rem; }
+}
 </style>
 
 <!-- Search Form Card -->
 <div class="card main-card shadow-sm border-0 mb-4">
-
     <div class="card-header card-header-custom text-white">
         <h4 class="card-title mb-0 d-flex align-items-center">
             <i class="fas fa-bolt me-3"></i>
@@ -122,8 +119,22 @@
     </div>
 
     <div class="card-body p-4">
-        <form method="POST">
+        <form method="POST" id="enrichmentForm">
             {% csrf_token %}
+
+            <!-- Excel Settings Card -->
+            <div class="excel-settings-card text-white mb-4">
+                <div class="form-group mb-0">
+                    <label for="{{ form.excel_sheet_name.id_for_label }}" class="form-label d-flex align-items-center">
+                        <i class="fas fa-file-excel me-2"></i>Excel Sheet Name (show name):
+                    </label>
+                    {{ form.excel_sheet_name }}
+                    <div class="form-text text-white-50 mt-2">
+                        <i class="fas fa-info-circle me-1"></i>
+                        {{ form.excel_sheet_name.help_text }}
+                    </div>
+                </div>
+            </div>
 
             <!-- Enhanced Form Field -->
             <div class="form-group mb-4">
@@ -131,7 +142,6 @@
                     <i class="fas fa-building me-2 text-primary"></i>Company Names:
                 </label>
                 
-                <!-- Apply custom styling to the form field -->
                 <div class="position-relative">
                     {{ form.company_names }}
                 </div>
@@ -144,9 +154,9 @@
 
             <!-- Enhanced Submit Button -->
             <div class="d-grid gap-2 mt-4">
-                <button type="submit" class="btn btn-primary-custom">
+                <button type="submit" class="btn btn-primary-custom" id="submitBtn">
                     <span style="position: relative; z-index: 1;">
-                        <i class="fas fa-magic me-2"></i>Generate Lead Insights
+                        <i class="fas fa-file-excel me-2"></i>Generate Excel Report
                     </span>
                 </button>
             </div>
@@ -155,31 +165,87 @@
             <div class="text-center mt-3">
                 <small class="text-muted">
                     <i class="fas fa-clock me-1"></i>
-                    Processing typically takes ~ 5-10 seconds per company
+                    Processing typically takes ~30 seconds per batch (5 companies per batch)
                 </small>
             </div>
         </form>
     </div>
-
-    {% if results %}
-    <div class="card main-card shadow-sm border-0 mt-4">
-        <div class="card-header card-header-custom text-white">
-            <h4 class="card-title mb-0 d-flex align-items-center">
-                <i class="fas fa-chart-line me-3"></i>
-                Enrichment Results
-            </h4>
-        </div>
-        <div class="card-body p-4">
-            <div class="results-content" style="white-space: pre-wrap; font-family: 'Courier New', Courier, monospace; background: #f8f9fa; padding: 1rem; border-radius: 10px; box-shadow: inset 0 0 5px rgba(0,0,0,0.1);">
-                {% for result in results %}
-                    {{ result }}
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('enrichmentForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const companyInput = document.getElementById('{{ form.company_names.id_for_label }}');
+    const sheetNameInput = document.getElementById('{{ form.excel_sheet_name.id_for_label }}');
+    window.originalButtonHTML = submitBtn.innerHTML;
 
+    // Add character counter for sheet name
+    const sheetNameCounter = document.createElement('div');
+    sheetNameCounter.className = 'form-text text-end text-muted mt-1';
+    sheetNameInput.parentNode.appendChild(sheetNameCounter);
+    
+    function updateSheetNameCounter() {
+        const length = sheetNameInput.value.length;
+        sheetNameCounter.textContent = `${length}/31 characters`;
+        if (length > 31) {
+            sheetNameCounter.className = 'form-text text-end text-danger mt-1';
+        } else {
+            sheetNameCounter.className = 'form-text text-end text-muted mt-1';
+        }
+    }
+    
+    sheetNameInput.addEventListener('input', updateSheetNameCounter);
+    updateSheetNameCounter(); // Initialize counter
+
+    form.addEventListener('submit', function(e) {
+        const companyNames = companyInput.value.split('\n').filter(name => name.trim() !== '');
+        const companyCount = companyNames.length;
+        const sheetName = sheetNameInput.value.trim();
+        
+        if (companyCount === 0) {
+            e.preventDefault();
+            alert('Please enter at least one company name.');
+            return;
+        }
+        
+        if (sheetName.length > 31) {
+            e.preventDefault();
+            alert('Excel sheet name must be 31 characters or less.');
+            return;
+        }
+        
+        const batchSize = 5;
+        const totalBatches = Math.ceil(companyCount / batchSize);
+        const estimatedSecondsPerBatch = 30;
+        const totalEstimatedSeconds = totalBatches * estimatedSecondsPerBatch;
+        const minutes = Math.floor(totalEstimatedSeconds / 60);
+        const seconds = totalEstimatedSeconds % 60;
+        let timeText = minutes > 0 ? `${minutes} minute${minutes > 1 ? 's' : ''}` : '';
+        if (seconds > 0) timeText += (timeText ? ' ' : '') + `${seconds} second${seconds > 1 ? 's' : ''}`;
+        
+        LoadingManager.show({
+            text: 'Processing Companies',
+            subtext: `Enriching data for ${companyCount} companies... Estimated time: ${timeText}`,
+            totalCompanies: companyCount,
+            totalBatches: totalBatches
+        });
+        
+        submitBtn.disabled = true;
+        submitBtn.classList.add('btn-loading');
+        submitBtn.innerHTML = '<span style="position: relative; z-index: 1;"><i class="fas fa-spinner fa-spin me-2"></i>Processing...</span>';
+        
+        LoadingManager.startRealProgressTracking();
+    });
+    
+    window.addEventListener('load', () => {
+        LoadingManager.hide();
+        if (submitBtn && window.originalButtonHTML) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('btn-loading');
+            submitBtn.innerHTML = window.originalButtonHTML;
+        }
+    });
+});
+</script>
 {% endblock %}

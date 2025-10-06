@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import (add_user , delete_user, edit_user, index, done_sheets, archive_sheet, archived_sheets,
+from .views import (add_user , delete_user, edit_user, index, done_sheets, archive_sheet, archived_sheets, credit_management_view,
                      unarchive_sheet, manage_users, view_logs, cut_sheet_into_ready_show, manage_sheets,view_sheet_admin,
                      cut_multiple_sheets, manage_x_sheets, cut_x_multiple_sheets, done_x_sheets, archive_sheet_bulk)
 
@@ -22,5 +22,6 @@ urlpatterns = [
     path('archive-sheet-bulk/', archive_sheet_bulk, name='archive-sheet-bulk'),
     path('archived-sheets/', archived_sheets, name='archived-sheets'),
     path('unarchive-sheet/<int:sheet_id>/', unarchive_sheet, name='unarchive-sheet'),
-    path('administrator/sheet/<int:sheet_id>/', view_sheet_admin, name='view-sheet'),
+    path('sheet/<int:sheet_id>/', view_sheet_admin, name='view-sheet'),
+    path('credits/', credit_management_view, name='credit-management'),
 ]

@@ -62,8 +62,11 @@ class LeadEmails(models.Model):
 class LeadContactNames(models.Model):
     lead = models.ForeignKey(Lead, on_delete=models.CASCADE)
     sheet = models.ForeignKey(Sheet, on_delete=models.CASCADE)
-    value = models.CharField(max_length=255)
-
+    value = models.CharField(max_length=255) # name
+    title = models.CharField(max_length=255, null=True, blank=True)
+    phone_number = models.CharField(max_length=255, null=True, blank=True)
+    email = models.CharField(max_length=255, null=True, blank=True)
+    
     class Meta:
         unique_together = ('lead', 'sheet', 'value')
 
@@ -328,3 +331,60 @@ class TaskLog(models.Model):
 
 
 
+class Credits(models.Model):
+    # Remove current_balance from here since we'll calculate it dynamically
+    total_credits_added = models.IntegerField(default=0)  # This month
+    total_credits_used = models.IntegerField(default=0)   # This month
+    last_reset_date = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name_plural = "Credits"
+    
+    def save(self, *args, **kwargs):
+        if not self.pk and Credits.objects.exists():
+            raise ValidationError("Only one ProjectCredit instance allowed")
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"Project Credits: {self.get_current_balance()}"
+    
+    def get_current_balance(self):
+        """Calculate current balance from non-expired credit additions"""
+        from django.utils import timezone
+        from django.db.models import Sum
+        
+        # Sum all non-expired positive transactions
+        available_credits = CreditHistory.objects.filter(
+            transaction_type='purchase',
+            expires_at__gt=timezone.now()
+        ).aggregate(Sum('amount'))['amount__sum'] or 0
+        
+        return available_credits
+
+class CreditHistory(models.Model):
+    """History of all credit transactions with individual expiry"""
+    TRANSACTION_TYPES = [
+        ('purchase', 'Purchase'),
+        ('usage', 'Usage'),
+        ('refund', 'Refund'),
+        ('monthly_reset', 'Monthly Reset'),
+        ('expiration', 'Expiration'),
+    ]
+    
+    transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
+    amount = models.IntegerField()  # Positive for additions, negative for usage
+    description = models.CharField(max_length=255)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(null=True, blank=True)  # Individual expiry date
+    
+    def __str__(self):
+        user_info = f" by {self.user.username}" if self.user else ""
+        expiry_info = f" (expires: {self.expires_at.date()})" if self.expires_at else ""
+        return f"{self.transaction_type} - {self.amount}{user_info}{expiry_info}"
+    
+    def is_expired(self):
+        from django.utils import timezone
+        if self.expires_at:
+            return timezone.now() > self.expires_at
+        return False

@@ -38,10 +38,11 @@ def generate_random_string(length=5):
 logger = logging.getLogger('custom')
 
 def index(request):
-    if request.user.is_authenticated: 
-        return redirect(f"/{request.user.groups.first().name}")
+    if request.user.is_authenticated:
+        first_group = request.user.groups.first()
+        if first_group:
+            return redirect(f"/{first_group.name}")
     return redirect("main:login")
-
 
 def login_view(request):
     context = {"error": ""}

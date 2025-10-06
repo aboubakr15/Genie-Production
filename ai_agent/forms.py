@@ -5,8 +5,19 @@ class CompanyListForm(forms.Form):
         widget=forms.Textarea(attrs={
             'placeholder': 'Enter company names, one per line.\nExample:\nGoogle\nApple\nAmazon',
             'rows': 10,
-            'class': 'form-textarea' # We'll use this class for styling
+            'class': 'form-textarea'
         }),
-        label='', # We'll handle the label in the template for more control
-        help_text='' # We'll add help text manually in the template
+        label='Company Names'
+    )
+    
+    excel_sheet_name = forms.CharField(
+        initial='Enriched Leads',
+        max_length=200,  # Excel sheet name limit
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Enter Excel sheet name (max 200 characters)',
+            'class': 'form-control',
+            'maxlength': '200'
+        }),
+        label='Excel Sheet Name',
+        help_text='Maximum 200 characters.'
     )

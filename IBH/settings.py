@@ -10,6 +10,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import tempfile
 from pathlib import Path
 import os
+from django.contrib import messages
 # import wfastcgi
 
 
@@ -118,24 +119,24 @@ WSGI_APPLICATION = 'IBH.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': "railway",
+        'NAME': "genie",
         'USER': "root",
-        'PASSWORD': "TApxnYPsQxmlTrQYTRnkaXEOCIbGewaK",  # MySQL server pass is 'admin@ibh'
-        'HOST': "switchback.proxy.rlwy.net",  # or the IP address of your MySQL server '192.168.0.200'
-        'PORT': "29547",
+        'PASSWORD': "Admin123",  # MySQL server pass is 'admin@ibh'
+        'HOST': "localhost",  # or the IP address of your MySQL server '192.168.0.200'
+        'PORT': "3306",
         'OPTIONS': {
             'charset': 'utf8mb4',
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'connect_timeout': 60,
         }},
 
-    'railway': {
+    'global': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'railway',
+        'NAME': 'global',
         'USER': 'root',
-        'PASSWORD': 'KeImhTyLXCUfJUdIFZHEbdAzoDrMswHU',
-        'HOST': 'tramway.proxy.rlwy.net',
-        'PORT': '38352',
+        'PASSWORD': 'Admin123',
+        'HOST': 'localhost',
+        'PORT': '3306',
         'OPTIONS': {
             'charset': 'utf8mb4',
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
@@ -144,7 +145,7 @@ DATABASES = {
     }
 }
 
-DATABASE_ROUTERS = ['IBH.database_router.AppBasedRouter']
+DATABASE_ROUTERS = ['IBH.database_router.AppDatabaseRouter']
 
 
 # Password validation
@@ -233,3 +234,12 @@ LOGIN_URL='/login'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+MESSAGE_TAGS = {
+    messages.DEBUG: 'secondary',
+    messages.INFO: 'info',
+    messages.SUCCESS: 'success',
+    messages.WARNING: 'warning',
+    messages.ERROR: 'danger',
+}
