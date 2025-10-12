@@ -13,11 +13,12 @@ import google.genai as genai
 from google.genai import types
 import pandas as pd
 from io import BytesIO
-from django.http import HttpResponse
+from django.http import HttpResponse, FileResponse, Http404, JsonResponse
 from .utils import *
-from django.http import JsonResponse
-
-
+from .tasks import run_enrichment_task
+from celery.result import AsyncResult
+import uuid
+from .utils_progress import get_progress
 
 @user_passes_test(lambda user: is_in_group(user, "ai_agent"))
 def index(request):
@@ -61,9 +62,10 @@ enrichment_progress = {
     'is_complete': False
 }
 
-def get_enrichment_progress(request):
-    """API endpoint to get current progress"""
-    return JsonResponse(enrichment_progress)
+def get_enrichment_progress(request, job_id):
+    """Fetch progress from Redis for the given job ID"""
+    progress = get_progress(job_id)
+    return JsonResponse(progress)
 
 def reset_enrichment_progress():
     """Reset progress for new request"""
@@ -94,56 +96,69 @@ def mark_complete():
     global enrichment_progress
     enrichment_progress['is_complete'] = True
 
+def enrichment_status(request, task_id):
+    result = AsyncResult(task_id)
+    if result.state == 'PENDING':
+        response = {'status': 'pending'}
+    elif result.state == 'SUCCESS':
+        data = result.get()
+        response = {'status': 'completed', 'result': data}
+    elif result.state == 'FAILURE':
+        response = {'status': 'failed', 'error': str(result.info)}
+    else:
+        response = {'status': result.state}
+
+    return JsonResponse(response)
+
 
 @user_passes_test(lambda user: is_in_group(user, "ai_agent"))
 def data_enrichment_view(request):
     if request.method == 'POST':
         form = CompanyListForm(request.POST)
         if form.is_valid():
-            company_names = [name.strip() for name in form.cleaned_data['company_names'].splitlines() if name.strip()]
+            company_names = [n.strip() for n in form.cleaned_data['company_names'].splitlines() if n.strip()]
             excel_sheet_name = form.cleaned_data['excel_sheet_name'].strip() or 'Enriched Leads'
-            
-            # Validate sheet name length
-            if len(excel_sheet_name) > 200:
-                messages.error(request, "❌ Excel sheet name must be 200 characters or less.")
-                return render(request, 'ai_agent/enrich.html', {'form': form})
-            
-            # Check credits first
-            if not use_credits(amount=len(company_names), description="AI Enrichment", user=None):
-                messages.error(request, "❌ Insufficient credits to process the request.")
-                return render(request, 'ai_agent/enrich.html', {'form': form})
-            
-            GEMINI_API_KEY = "AIzaSyBuNSlfHDLXEWfr1GUCsHWoqeLKibEyT0E"
 
-            try:
-                # Main enrichment workflow
-                enriched_results = orchestrate_enrichment_workflow(company_names, GEMINI_API_KEY)
-                
-                if not enriched_results:
-                    messages.error(request, "❌ Failed to process the request.")
-                    return render(request, 'ai_agent/enrich.html', {'form': form})
-                
-                # Generate and return Excel file with custom sheet name
-                return generate_excel_response(enriched_results, excel_sheet_name)
-                
-            except Exception as e:
-                print(f"❌ Error in enrichment workflow: {str(e)}")
-                messages.error(request, f"❌ Error processing request: {str(e)}")
-                return render(request, 'ai_agent/enrich.html', {'form': form})
-    
-    else:
-        form = CompanyListForm()
+            if not use_credits(amount=len(company_names), description="AI Enrichment", user=request.user):
+                return JsonResponse({"error": "Insufficient credits."}, status=400)
 
-    return render(request, 'ai_agent/enrich.html', {'form': form})
+            GEMINI_API_KEY = "YOUR_API_KEY"
+
+            # Start the Celery task
+            job_id = str(uuid.uuid4())
+            task = run_enrichment_task.delay(company_names, GEMINI_API_KEY, excel_sheet_name, job_id)
+
+            return JsonResponse({
+                "task_id": task.id,
+                "job_id": job_id,
+                "message": "Enrichment started."
+            })
+
+    return render(request, 'ai_agent/enrich.html', {'form': CompanyListForm()})
 
 
-def orchestrate_enrichment_workflow(company_names, api_key):
+
+def orchestrate_enrichment_workflow(company_names, api_key, job_id=None):
     """
     Main workflow that orchestrates the entire enrichment process
     """
+    from .utils_progress import set_progress, get_progress  # <-- import here to avoid circular imports
+
     print(f"🚀 Starting enrichment workflow for {len(company_names)} companies")
-    reset_enrichment_progress()
-    
+
+    # Initialize or reset progress in Redis
+    if job_id:
+        set_progress(job_id, {
+            'current_batch': 0,
+            'total_batches': 0,
+            'companies_processed': 0,
+            'total_companies': len(company_names),
+            'current_phase': 'initial',
+            'is_complete': False
+        })
+    else:
+        reset_enrichment_progress()
+
     # # Step 1: Search in databases first
     # found_leads, not_found_leads = search_databases(company_names)
     # print(f"📊 Database results: {len(found_leads)} found, {len(not_found_leads)} not found")
@@ -156,14 +171,49 @@ def orchestrate_enrichment_workflow(company_names, api_key):
     found_leads = []
     not_found_leads = company_names
     print(f"📊 Database search disabled: {len(found_leads)} found, {len(not_found_leads)} not found")
-    update_progress(0, 0, len(found_leads), len(company_names), 'database_search')
+
+    # --- Progress update ---
+    if job_id:
+        progress = get_progress(job_id)
+        progress.update({
+            'current_phase': 'database_search',
+            'companies_processed': len(found_leads),
+            'total_companies': len(company_names)
+        })
+        set_progress(job_id, progress)
+    else:
+        update_progress(0, 0, len(found_leads), len(company_names), 'database_search')
     #######################################################################################################
 
     # Step 2: Enrich not found leads with AI
     ai_leads = []
     if not_found_leads:
         print(f"🤖 Enriching {len(not_found_leads)} companies with AI...")
-        ai_leads = enrich_with_ai(not_found_leads, api_key, batch_size=10)
+        
+        # You can enrich in batches and update progress per batch
+        batch_size = 10
+        total_batches = (len(not_found_leads) + batch_size - 1) // batch_size
+
+        for batch_num, start in enumerate(range(0, len(not_found_leads), batch_size), start=1):
+            batch = not_found_leads[start:start + batch_size]
+            print(f"🧩 Processing batch {batch_num}/{total_batches}: {len(batch)} companies")
+
+            # Call your enrichment logic
+            enriched_batch = enrich_with_ai(batch, api_key, batch_size=batch_size)
+            ai_leads.extend(enriched_batch)
+
+            # Update progress after each batch
+            if job_id:
+                progress = get_progress(job_id)
+                progress.update({
+                    'current_phase': 'ai_processing',
+                    'current_batch': batch_num,
+                    'total_batches': total_batches,
+                    'companies_processed': len(found_leads) + len(ai_leads),
+                })
+                set_progress(job_id, progress)
+            else:
+                update_progress(batch_num, total_batches, len(found_leads) + len(ai_leads), len(company_names), 'ai_processing')
         
         # Step 3: Save AI results to global database
         if ai_leads:
@@ -175,8 +225,14 @@ def orchestrate_enrichment_workflow(company_names, api_key):
     # Step 5: Retry companies missing phone numbers (single retry only)
     enriched_results = retry_missing_phones(enriched_results, api_key)
     
-    # Mark as complete
-    mark_complete()
+    # --- Mark as complete ---
+    if job_id:
+        progress = get_progress(job_id)
+        progress['is_complete'] = True
+        progress['current_phase'] = 'completed'
+        set_progress(job_id, progress)
+    else:
+        mark_complete()
     
     print(f"✅ Enrichment workflow completed. Processed {len(enriched_results)} companies")
     return enriched_results
@@ -745,6 +801,15 @@ def generate_excel_response(enriched_results, sheet_name="Enriched Leads"):
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     
     return response
+
+def download_excel(request, filename):
+    file_path = os.path.join("tmp", filename)
+    if not os.path.exists(file_path):
+        raise Http404("File not found. It may have been deleted.")
+    
+    response = FileResponse(open(file_path, "rb"), as_attachment=True, filename=filename)
+    return response
+
 
 
 def clean_sheet_name(name):

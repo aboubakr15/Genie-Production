@@ -62,89 +62,19 @@
     </div>
 </div>
 
-<style>
-/* Optimized CSS: Removed unused styles for batches/companies/phases/activity. Simplified layout. */
-.loading-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(10px);
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.loading-container {
-    max-width: 600px;
-    width: 90%;
-    animation: slideUp 0.5s ease-out;
-}
-
-.loading-card {
-    background: linear-gradient(135deg, #1e2a3a 0%, #2d3b4e 100%);
-    border-radius: 20px;
-    padding: 2rem;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: white;
-}
-
-@keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-
-/* Batch Processor Animation */
-.batch-processor { position: relative; width: 100px; height: 80px; margin: 0 auto; }
-.processor-core { width: 50px; height: 50px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 50%; margin: 0 auto; position: relative; animation: rotate 3s linear infinite; }
-.core-pulse { position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; background: white; border-radius: 50%; transform: translate(-50%, -50%); }
-.data-stream { position: absolute; inset: 0; }
-.data-point { position: absolute; width: 6px; height: 6px; background: #00f2fe; border-radius: 50%; animation: dataFlow 2s linear infinite; animation-delay: var(--delay); }
-.data-point:nth-child(1) { top: 10%; left: 20%; }
-.data-point:nth-child(2) { top: 30%; left: 80%; }
-.data-point:nth-child(3) { top: 70%; left: 10%; }
-.data-point:nth-child(4) { top: 90%; left: 70%; }
-@keyframes rotate { to { transform: rotate(360deg); } }
-@keyframes dataFlow { 0%, 100% { transform: scale(0.5); opacity: 0; } 50% { transform: scale(1); opacity: 1; } }
-
-/* Simplified Progress */
-.batch-progress-container { margin: 1.5rem 0; }
-.batch-header { display: flex; justify-content: center; align-items: center; margin-bottom: 1rem; }
-.time-estimate { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; opacity: 0.8; }
-.progress-container { margin: 1rem 0; }
-.progress-bar { height: 10px; background: rgba(255, 255, 255, 0.1); border-radius: 10px; overflow: hidden; }
-.progress-fill { height: 100%; background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%); border-radius: 10px; width: 0; transition: width 0.5s ease; position: relative; }
-.progress-fill::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); animation: shimmer 2s infinite; }
-.progress-percentage { text-align: right; margin-top: 0.5rem; font-weight: 600; }
-
-/* Completion Status */
-.completion-status { margin: 1rem 0; padding: 1rem; background: rgba(0, 217, 126, 0.1); border-radius: 10px; border-left: 3px solid #00d97e; animation: fadeIn 0.5s ease; }
-.status-success { display: flex; align-items: center; gap: 0.75rem; color: #00d97e; font-weight: 600; }
-.status-success i { font-size: 1.2rem; }
-
-/* Cancel Button */
-.cancel-section { text-align: center; margin-top: 1rem; }
-#cancelBtn { border-color: rgba(255, 255, 255, 0.3); color: rgba(255, 255, 255, 0.7); transition: all 0.3s ease; }
-#cancelBtn:hover { border-color: #ff6b6b; color: #ff6b6b; background: rgba(255, 107, 107, 0.1); }
-
-.loading-text { text-align: center; margin-bottom: 1.5rem; }
-.loading-text h3 { margin-bottom: 0.5rem; font-weight: 600; }
-
-@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } }
-@keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-</style>
-
 <script>
-/* Optimized JS: Removed batch/company/phase/activity logic. Kept progress bar and time estimate updates. */
+/* ✅ Updated JS: Now polls /ai_agent/enrichment_progress/<job_id>/ dynamically */
 const LoadingManager = {
     checkInterval: null,
     companiesProcessed: 0,
     totalCompanies: 0,
     isComplete: false,
+    jobId: null, // 🆕 added
     maxProgressChecks: 300,
     progressCheckCount: 0,
     errorCount: 0,
     maxErrors: 5,
-    
+
     show: function(options) {
         const overlay = document.getElementById('loadingOverlay');
         const title = document.getElementById('loadingTitle');
@@ -156,6 +86,7 @@ const LoadingManager = {
         completionStatus.style.display = 'none';
         
         this.totalCompanies = options.totalCompanies || 0;
+        this.jobId = options.jobId || null; // 🆕 store job ID
         
         title.textContent = options.text || 'Processing Companies';
         subtext.textContent = options.subtext || 'Initializing AI enrichment...';
@@ -189,11 +120,13 @@ const LoadingManager = {
         clearInterval(this.checkInterval);
     },
     
-    startRealProgressTracking: function() {
+    startRealProgressTracking: function(jobId) {
+        this.jobId = jobId;
         this.checkInterval = setInterval(() => this.checkServerProgress(), 2000);
     },
     
     async checkServerProgress() {
+        if (!this.jobId) return;
         this.progressCheckCount++;
         if (this.progressCheckCount > this.maxProgressChecks) {
             this.showCompletion(true);
@@ -201,7 +134,7 @@ const LoadingManager = {
         }
         
         try {
-            const response = await fetch('/ai_agent/enrichment_progress/');
+            const response = await fetch(`/ai_agent/enrichment_progress/${this.jobId}/`);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const progress = await response.json();
             
@@ -211,8 +144,40 @@ const LoadingManager = {
                 progress.companies_processed = this.totalCompanies;
             }
             
+            // ✅ Update progress display
             this.updateProgressDisplay(progress);
-            
+
+            // ✅ If the process is complete and a download link is provided
+            if (progress.is_complete && progress.download_url) {
+                this.isComplete = true;
+                clearInterval(this.checkInterval);
+
+                const completionStatus = document.getElementById('completionStatus');
+                completionStatus.style.display = 'block';
+                completionStatus.innerHTML = `
+                    <div class="status-success">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Processing complete! 
+                            <a href="${progress.download_url}" class="btn btn-sm btn-success ms-2">
+                                <i class="fas fa-download me-1"></i>Download Excel
+                            </a>
+                        </span>
+                    </div>
+                `;
+
+                document.getElementById('progressFill').style.width = '100%';
+                document.getElementById('progressPercentage').textContent = '100%';
+                document.getElementById('timeRemaining').textContent = 'Complete!';
+                
+                // Update cancel button to close overlay
+                const cancelBtn = document.getElementById('cancelBtn');
+                cancelBtn.innerHTML = '<i class="fas fa-times me-1"></i>Close';
+                cancelBtn.onclick = () => this.hide();
+                
+                return;
+            }
+
+            // ✅ Otherwise, check if it’s just finished without a download link
             if ((progress.is_complete || this.companiesProcessed >= this.totalCompanies) && !this.isComplete) {
                 this.isComplete = true;
                 clearInterval(this.checkInterval);
@@ -256,7 +221,6 @@ const LoadingManager = {
         const completionStatus = document.getElementById('completionStatus');
         const cancelBtn = document.getElementById('cancelBtn');
         
-        // Force 100%
         document.getElementById('progressFill').style.width = '100%';
         document.getElementById('progressPercentage').textContent = '100%';
         
@@ -277,7 +241,6 @@ const LoadingManager = {
             completionStatus.style.borderLeftColor = '#ffc107';
         }
         
-        // Reset submit button (if enrich.html context)
         const submitBtn = document.getElementById('submitBtn');
         if (submitBtn && window.originalButtonHTML) {
             submitBtn.disabled = false;
@@ -285,12 +248,10 @@ const LoadingManager = {
             submitBtn.innerHTML = window.originalButtonHTML;
         }
         
-        // Auto-hide after 5s
         setTimeout(() => this.hide(), 5000);
     }
 };
 
-// Hide on load/pageshow
 document.addEventListener('DOMContentLoaded', () => LoadingManager.hide());
 window.addEventListener('pageshow', event => { if (event.persisted) LoadingManager.hide(); });
 </script>
