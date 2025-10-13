@@ -12,7 +12,7 @@ from pathlib import Path
 import os
 from django.contrib import messages
 from dotenv import load_dotenv  # Added import for load_dotenv
-import dj_database_url  # Added import for dj_database_url
+# import dj_database_url  # Added import for dj_database_url
 # import wfastcgi
 
 
@@ -135,6 +135,7 @@ DATABASES = {
             'connect_timeout': 60,
         }},
 
+
     'global': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'railway',
@@ -248,16 +249,3 @@ MESSAGE_TAGS = {
     messages.WARNING: 'warning',
     messages.ERROR: 'danger',
 }
-
-
-
-# Redis URL from Railway environment variable
-CELERY_BROKER_URL = "redis://default:afbInyQmNWsZlDIdIQGJSOrjwYuNEFBJ@trolley.proxy.rlwy.net:26628"
-CELERY_RESULT_BACKEND = "redis://default:afbInyQmNWsZlDIdIQGJSOrjwYuNEFBJ@trolley.proxy.rlwy.net:26628"
-
-# Optional tuning
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TASK_TRACK_STARTED = True
-CELERY_TASK_TIME_LIMIT = 80000  # 22 hours
