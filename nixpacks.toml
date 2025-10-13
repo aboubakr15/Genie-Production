@@ -1,0 +1,6 @@
+# nixpacks.toml
+
+[phases.setup]
+# Add system packages required for building Python dependencies.
+# pkg-config and mariadb-connector-c are needed to compile the mysqlclient package.
+nixPkgs = ["pkg-config", "mariadb-connector-c"]
