@@ -253,8 +253,9 @@ MESSAGE_TAGS = {
 # Celery Configuration Options
 # Use the REDIS_URL from Railway's environment variables in production,
 # otherwise, fall back to a local Redis instance for development.
-CELERY_BROKER_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+
+CELERY_BROKER_URL = "redis://default:afbInyQmNWsZlDIdIQGJSOrjwYuNEFBJ@trolley.proxy.rlwy.net:26628"
+CELERY_RESULT_BACKEND = "redis://default:afbInyQmNWsZlDIdIQGJSOrjwYuNEFBJ@trolley.proxy.rlwy.net:26628"
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'

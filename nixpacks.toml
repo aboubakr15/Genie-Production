@@ -3,5 +3,5 @@
 [phases.setup]
 # Add system packages required for building Python dependencies.
 # We explicitly add Python here because providing a setup phase overrides the automatic language detection.
-# pkg-config and mariadb-connector-c are needed to compile the mysqlclient package.
-nixPkgs = ["python311", "pkg-config", "mariadb-connector-c"]
+# mariadb, openssl, and zlib provide a more complete set of libraries needed to compile mysqlclient.
+nixPkgs = ["python311", "pkg-config", "mariadb", "openssl", "zlib"]
