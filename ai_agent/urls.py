@@ -6,6 +6,6 @@ app_name = 'ai_agent'
 urlpatterns = [
     path('', index, name="index"),
     path('search/', index, name="search"),
-    path('enrich_data/', data_enrichment_view, name="enrich"),
+    path('enrich_data/', data_enrichment_view, name="data_enrichment"),
     path('enrichment_progress/', get_enrichment_progress, name='enrichment_progress'),
 ]
