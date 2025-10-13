@@ -2,7 +2,7 @@ from celery import shared_task
 from django.core.files.storage import default_storage
 import os
 
-from .views import orchestrate_enrichment_workflow, generate_excel_response
+from .workflows import orchestrate_enrichment_workflow, generate_excel_response
 from .utils_progress import set_progress, get_progress
 
 
