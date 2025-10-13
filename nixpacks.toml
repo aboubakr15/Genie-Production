@@ -1,7 +1,14 @@
 # nixpacks.toml
 
 [phases.setup]
-# Add system packages required for building Python dependencies.
-# We explicitly add Python here because providing a setup phase overrides the automatic language detection.
-# mariadb, openssl, and zlib provide a more complete set of libraries needed to compile mysqlclient.
-nixPkgs = ["python311", "pkg-config", "mariadb", "openssl", "zlib"]
+# Switch to Apt for system packages, as it can be more reliable for C-based Python libraries.
+# libmariadb-dev is the key package for compiling mysqlclient.
+# build-essential ensures all compiler tools (gcc, etc.) are available.
+aptPkgs = ["python3.11", "python3.11-venv", "pkg-config", "libmariadb-dev", "build-essential"]
+
+[phases.install]
+# We need to ensure the python command defaults to python3.11
+cmds = [
+    "update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1",
+    "python -m venv --copies /opt/venv && . /opt/venv/bin/activate && pip install -r requirements.txt"
+]
