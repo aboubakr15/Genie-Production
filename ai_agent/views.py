@@ -16,6 +16,7 @@ from io import BytesIO
 from django.http import HttpResponse
 from .utils import *
 from django.http import JsonResponse
+from .tasks import enrich_data_task
 
 
 
@@ -52,48 +53,6 @@ def search_view(request):
 
 
 ############################################################## Enrichment part ##############################################################
-enrichment_progress = {
-    'current_batch': 0,
-    'total_batches': 0,
-    'companies_processed': 0,
-    'total_companies': 0,
-    'current_phase': 'initial',
-    'is_complete': False
-}
-
-def get_enrichment_progress(request):
-    """API endpoint to get current progress"""
-    return JsonResponse(enrichment_progress)
-
-def reset_enrichment_progress():
-    """Reset progress for new request"""
-    global enrichment_progress
-    enrichment_progress = {
-        'current_batch': 0,
-        'total_batches': 0,
-        'companies_processed': 0,
-        'total_companies': 0,
-        'current_phase': 'initial',
-        'is_complete': False
-    }
-
-def update_progress(current_batch, total_batches, companies_processed, total_companies, current_phase):
-    """Update progress for frontend"""
-    global enrichment_progress
-    enrichment_progress.update({
-        'current_batch': current_batch,
-        'total_batches': total_batches,
-        'companies_processed': companies_processed,
-        'total_companies': total_companies,
-        'current_phase': current_phase,
-        'is_complete': False
-    })
-
-def mark_complete():
-    """Mark processing as complete"""
-    global enrichment_progress
-    enrichment_progress['is_complete'] = True
-
 
 @user_passes_test(lambda user: is_in_group(user, "ai_agent"))
 def data_enrichment_view(request):
@@ -113,23 +72,11 @@ def data_enrichment_view(request):
                 messages.error(request, "❌ Insufficient credits to process the request.")
                 return render(request, 'ai_agent/enrich.html', {'form': form})
             
-            GEMINI_API_KEY = "AIzaSyBuNSlfHDLXEWfr1GUCsHWoqeLKibEyT0E"
-
-            try:
-                # Main enrichment workflow
-                enriched_results = orchestrate_enrichment_workflow(company_names, GEMINI_API_KEY)
-                
-                if not enriched_results:
-                    messages.error(request, "❌ Failed to process the request.")
-                    return render(request, 'ai_agent/enrich.html', {'form': form})
-                
-                # Generate and return Excel file with custom sheet name
-                return generate_excel_response(enriched_results, excel_sheet_name)
-                
-            except Exception as e:
-                print(f"❌ Error in enrichment workflow: {str(e)}")
-                messages.error(request, f"❌ Error processing request: {str(e)}")
-                return render(request, 'ai_agent/enrich.html', {'form': form})
+            # Call the Celery task to run in the background
+            enrich_data_task.delay(company_names, excel_sheet_name)
+            
+            messages.success(request, f"✅ Your request to enrich {len(company_names)} companies has been submitted. The process will run in the background. You will be notified upon completion.")
+            return redirect('ai_agent:data_enrichment')
     
     else:
         form = CompanyListForm()
@@ -717,7 +664,7 @@ def generate_excel_response(enriched_results, sheet_name="Enriched Leads"):
             'font_name': 'Arial'
         })
         
-        summary_row = len(display_df) + 3
+        summary_row = len(display_df) + 3;
         
         # Calculate statistics
         total_companies = len(enriched_results)
@@ -822,9 +769,9 @@ def extract_final_json_array(text: str) -> Optional[List[Dict]]:
             if text[i] == '[':
                 bracket_count += 1
             elif text[i] == ']':
-                bracket_count -= 1
+                bracket_count -= 1;
                 if bracket_count == 0:
-                    end_idx = i
+                    end_idx = i;
                     break
         
         if end_idx != -1:

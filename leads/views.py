@@ -14,6 +14,7 @@ from django.contrib import messages
 from IBH import settings
 from django.core.files.storage import FileSystemStorage, default_storage
 from django.db.models import OuterRef, Subquery
+from .tasks import process_uploaded_sheet_for_leads
 
 
 logger = logging.getLogger('custom')
@@ -182,55 +183,26 @@ def upload_sheet(request):
         if 'file' in request.FILES:
             file = request.FILES['file']
 
-            # Define the upload directory within the project folder
-            upload_dir = os.path.join(settings.MEDIA_ROOT, 'upload')
-
-            # Create the directory if it does not exist
-            os.makedirs(upload_dir, exist_ok=True)
-
-            # Use FileSystemStorage to save the file
-            fs = FileSystemStorage(location=upload_dir)
-            filename = fs.save(file.name, file)
+            # Save the file to a temporary location
+            temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp_sheets')
+            os.makedirs(temp_dir, exist_ok=True)
+            file_path = os.path.join(temp_dir, file.name)
             
-            file_extension = str(file).split('.')[-1]
-            if file_extension == 'xlsx' or 'xls' or 'csv':
-                # Create or get the sheet
-                sheet, created = Sheet.objects.get_or_create(
-                name=filename,
-                defaults={'user': request.user, 'created_at': datetime.now()}
-                )   
+            with open(file_path, 'wb+') as destination:
+                for chunk in file.chunks():
+                    destination.write(chunk)
 
-            # Add a success message
-            messages.success(request, "Sheet imported successfully.")
+            # Call the Celery task
+            process_uploaded_sheet_for_leads.delay(file_path, file.name, request.user.id)
 
-            # Create a notification with the uploaded sheets
-            lead_user = request.user
-            ops_tl = lead_user.leader.leader
-            notification = Notification.objects.create(
-                sender=lead_user,
-                receiver=ops_tl,
-                message=f'sheet { sheet.name } uploaded',
-                notification_type=0,
-                read=False
-            )
-            notification.sheets.set([sheet])  # wrap sheet with [] to make it iter.
-            notification.save()
-
-            send_websocket_message(ops_tl.id, notification.id, notification.message,
-                                   notification.read,  NOTIFICATIONS_STATES['INFO'])
-
-            return render(request, "leads/upload_sheet.html", {
-                "form": form,
-            })
+            messages.success(request, "Sheet uploaded successfully and is awaiting approval.")
+            
+            return render(request, "leads/upload_sheet.html", {"form": form})
         else:
             messages.error(request, "Please upload a file.")
-            return render(request, "leads/upload_sheet.html", {
-                "form": form,
-            })
-    else:
-        return render(request, "leads/upload_sheet.html", {
-            "form": form,
-        })
+            return render(request, "leads/upload_sheet.html", {"form": form})
+    
+    return render(request, "leads/upload_sheet.html", {"form": form})
 
 
 @user_passes_test(lambda user: is_in_group(user, "leads"))

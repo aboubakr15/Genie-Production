@@ -1,0 +1,20 @@
+# railway.toml
+
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "gunicorn IBH.wsgi"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+[deploy.services]
+
+  [deploy.services.web]
+  startCommand = "gunicorn IBH.wsgi"
+  healthcheckPath = "/"
+  healthcheckTimeout = 100
+  
+  [deploy.services.worker]
+  startCommand = "celery -A IBH worker -l info"
+  

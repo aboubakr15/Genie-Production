@@ -29,6 +29,9 @@ import json, pytz
 import random, string
 from concurrent.futures import ThreadPoolExecutor
 from django.db import transaction
+from .tasks import process_sheet_task
+from django.conf import settings
+import os
 
 def generate_random_string(length=5):
     """Generate a random string of fixed length."""
@@ -558,176 +561,27 @@ def upload_sheet(request):
         form = UploadSheetsForm(request.POST, request.FILES)
         if 'file' in request.FILES:
             file = request.FILES['file']
-
-            if file.name.endswith('.xlsx'):
-                data = pd.read_excel(file, engine='openpyxl', header=None)
-            elif file.name.endswith('.xls'):
-                data = pd.read_excel(file, header=None)
-            elif file.name.endswith('.csv'):
-                data = pd.read_csv(file, header=None)
-            else:
-                return HttpResponse("Unsupported file format.", status=400)
-
-            # Check if the DataFrame is empty
-            if data.empty:
-                messages.error(request, "The uploaded file is empty.")
-                return render(request, template_name, {"form": form})
-
-            offset = timedelta(hours=3)  # Egypt is UTC+3
-            egypt_timezone = pytz.timezone('Africa/Cairo')
-            current_time_with_offset = datetime.now(egypt_timezone)
-
-            # Ensure all headers are strings to avoid AttributeError
             
-            def ensure_str(value):
-                return str(value) if pd.notna(value) else ''
+            # Save the file to a temporary location
+            temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp_sheets')
+            os.makedirs(temp_dir, exist_ok=True)
+            file_path = os.path.join(temp_dir, file.name)
+            
+            with open(file_path, 'wb+') as destination:
+                for chunk in file.chunks():
+                    destination.write(chunk)
 
-            # Determine if header row is present
-            expected_headers = ['Company Name', 'Phone Number', 'Time Zone', 'Email', 'DM Name']
-            extended_expected_headers = ['Company Name', 'Phone Number', 'Time Zone', 'Direct / Cell Number', 'Email', 'DM Name']
+            # Call the Celery task
+            process_sheet_task.delay(file_path, file.name, request.user.id)
 
-            first_row_as_str = data.iloc[0].apply(ensure_str) if not data.empty else pd.Series()
-
-            # Check for headers using two possible expected formats
-            has_header = all(header.lower() in [col.lower() for col in first_row_as_str if col] for header in expected_headers)
-            has_extended_header = all(header.lower() in [col.lower() for col in first_row_as_str if col] for header in extended_expected_headers)
-
-            if has_header or has_extended_header:
-                # Use the first row as headers
-                data.columns = data.iloc[0].apply(ensure_str).tolist()
-                data = data[1:]  # Skip the header row
-
-                # Handle missing headers by assigning names based on expected order
-                if has_extended_header:
-                    # Fill in missing extended headers
-                    for i, header in enumerate(extended_expected_headers):
-                        if i >= len(data.columns) or data.columns[i] == '' or data.columns[i].lower() not in [h.lower() for h in extended_expected_headers]:
-                            data.columns[i] = header
-                else:
-                    # Fill in missing headers for default set
-                    for i, header in enumerate(expected_headers):
-                        if i >= len(data.columns) or data.columns[i] == '' or data.columns[i].lower() not in [h.lower() for h in expected_headers]:
-                            data.columns[i] = header
-            else:
-                # Assign default column names based on order
-                num_cols = data.shape[1]
-                default_columns = ['Company Name', 'Phone Number', 'Time Zone', 'Direct / Cell Number', 'Email', 'DM Name']
-                # Trim or extend default columns to match the actual number of columns in the DataFrame
-                data.columns = default_columns[:num_cols] + [f"Column_{i}" for i in range(num_cols - len(default_columns))]
-
-            # Clean & Filter company names
-            if 'Company Name' in data.columns:
-                data['Company Name'] = data['Company Name'].map(clean_company_name)
-                data = data[data['Company Name'].apply(filter_companies)]
-
-
-            random_suffix = generate_random_string(5)  # Generate a random suffix
-            unique_sheet_name = f"{file.name}_{random_suffix}"  # Create a unique name
-
-            # Create or get the sheet
-            sheet, created = Sheet.objects.get_or_create(
-                name=unique_sheet_name,
-                defaults={'user': request.user, 'created_at': current_time_with_offset}
-            )
-
-            # Count new leads added
-            new_leads_count = 0
-
-            # Read leads and save to the database
-            for _, row in data.iterrows():
-                if not has_valid_contact(row):
-                    continue
-
-                company_name = row.get('Company Name', '')
-
-                # Check if the lead already exists
-                lead, created = Lead.objects.get_or_create(name=company_name)
-
-                # If a new lead was created, increase the counter
-                if created:
-                    new_leads_count += 1
-
-                # Add the phone numbers if they're new
-                phone_number = get_string_value(row, 'Phone Number')
-                # Add the time zone
-                time_zone = get_string_value(row, 'Time Zone')
-                if time_zone:
-                    phone_time_zone = time_zone
-                    lead.save()
-
-                direct_cell_number = get_string_value(row, 'Direct / Cell Number') if 'Direct / Cell Number' in data.columns else None
-                phone_numbers = ','.join(filter(None, [phone_number, direct_cell_number]))
-
-                if phone_numbers:
-                    for phone_number in phone_numbers.split(','):
-                        phone_number = phone_number.strip()
-                        if phone_number and is_valid_phone_number(phone_number):
-                            try:
-                                LeadPhoneNumbers.objects.get(lead=lead, sheet=sheet, value=phone_number)
-                            except ObjectDoesNotExist:
-                                LeadPhoneNumbers.objects.create(lead=lead, sheet=sheet, value=phone_number, time_zone=phone_time_zone)
-                        ## Add this part if u want to add org, gov, etc.. to the filter words automatically
-                        # else:
-                        #     # If the phone number is invalid & not ['nf', 'local'] add the company name to FilterWords
-                        #     if company_name.lower() not in ['nf', 'local']:
-                        #         phone_filter_type = FilterType.objects.get(name='phone_number')
-                        #         filter_word, created = FilterWords.objects.get_or_create(word=company_name)
-
-                        #         # Assign the existing filter type to the FilterWords instance
-                        #         filter_word.filter_types.add(phone_filter_type)
-
-                # Add the email if it's new
-                email = get_string_value(row, 'Email')
-                if email:
-                    try:
-                        LeadEmails.objects.get(lead=lead, sheet=sheet, value=email)
-                    except ObjectDoesNotExist:
-                        LeadEmails.objects.create(lead=lead, sheet=sheet, value=email)
-
-                # Add the contact name if it's new
-                contact_name = get_string_value(row, 'DM Name')
-                if contact_name:
-                    try:
-                        LeadContactNames.objects.get(lead=lead, sheet=sheet, value=contact_name)
-                    except ObjectDoesNotExist:
-                        LeadContactNames.objects.create(lead=lead, sheet=sheet, value=contact_name)
-
-                # Handle color if the 'Color' column exists
-                if 'Color' in data.columns:
-                    color = get_string_value(row, 'Color')
-                    if color and color.lower() in ['white', 'green', 'blue', 'red']:
-                        LeadsColors.objects.create(lead=lead, sheet=sheet, color=color.lower())
-
-
-                # Link the lead to the sheet
-                sheet.leads.add(lead)
-
-            # Mark sheet as approved
-            sheet.is_approved = True
-            sheet.save()
-
-            # If there are new leads, save the count in LeadsAverage
-            if new_leads_count > 0:
-                LeadsAverage.objects.create(
-                    user=request.user,
-                    sheet=sheet,
-                    count=new_leads_count,
-                    created_at=current_time_with_offset
-                )
-
-            # Add a success message
-            messages.success(request, "Sheet imported successfully.")
-
-            logger.info(f"{request.user.username} uploaded a sheet into the database containing {new_leads_count} new leads.")
-            Log.objects.create(message=f"{request.user.username} uploaded a sheet into the database containing {new_leads_count} new leads.")
-
+            messages.success(request, "Your sheet has been uploaded and is being processed in the background. You will be notified upon completion.")
+            
             return render(request, template_name, {"form": form})
         else:
             messages.error(request, "Please upload a file.")
             return render(request, template_name, {"form": form})
-    else:
-        logger.error("The specified file does not exist.")
-        return render(request, template_name, {"form": form})
+    
+    return render(request, template_name, {"form": form})
 
 
 @user_passes_test(lambda user: is_in_group(user, "leads") or is_in_group(user, "operations_team_leader"))
