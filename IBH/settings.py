@@ -11,6 +11,8 @@ import tempfile
 from pathlib import Path
 import os
 from django.contrib import messages
+from dotenv import load_dotenv  # Added import for load_dotenv
+# import dj_database_url  # Added import for dj_database_url
 # import wfastcgi
 
 
@@ -116,33 +118,37 @@ WSGI_APPLICATION = 'IBH.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+
+load_dotenv()  # must be before DATABASES
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': "genie",
+        'NAME': "railway",
         'USER': "root",
-        'PASSWORD': "Admin123",  # MySQL server pass is 'admin@ibh'
-        'HOST': "localhost",  # or the IP address of your MySQL server '192.168.0.200'
-        'PORT': "3306",
+        'PASSWORD': "nJkjXobZCpCylOnTUqNhKfehmNPuXwxC",  # MySQL server pass is 'admin@ibh'
+        'HOST': "yamanote.proxy.rlwy.net",
+        'PORT': "13120",
         'OPTIONS': {
             'charset': 'utf8mb4',
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'connect_timeout': 60,
         }},
 
+
     'global': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'global',
+        'NAME': 'railway',
         'USER': 'root',
-        'PASSWORD': 'Admin123',
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'PASSWORD': 'gOwOCCHfDVbbazMFqxOXISIFzExBGsvV',
+        'HOST': 'yamanote.proxy.rlwy.net',
+        'PORT': '38178',
         'OPTIONS': {
             'charset': 'utf8mb4',
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'connect_timeout': 60,
         },
-    }
+        }
 }
 
 DATABASE_ROUTERS = ['IBH.database_router.AppDatabaseRouter']
@@ -243,3 +249,14 @@ MESSAGE_TAGS = {
     messages.WARNING: 'warning',
     messages.ERROR: 'danger',
 }
+
+# Celery Configuration Options
+# Use the REDIS_URL from Railway's environment variables in production,
+# otherwise, fall back to a local Redis instance for development.
+
+CELERY_BROKER_URL = "redis://default:afbInyQmNWsZlDIdIQGJSOrjwYuNEFBJ@trolley.proxy.rlwy.net:26628"
+CELERY_RESULT_BACKEND = "redis://default:afbInyQmNWsZlDIdIQGJSOrjwYuNEFBJ@trolley.proxy.rlwy.net:26628"
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Africa/Cairo'

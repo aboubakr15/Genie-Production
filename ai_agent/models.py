@@ -19,47 +19,48 @@ class GlobalOrganization(models.Model):
         return self.name
 
 class GlobalPhoneNumbers(models.Model):
-        
-    class Meta:
-        app_label = 'ai_agent'
-        
     organization = models.ForeignKey(GlobalOrganization, on_delete=models.CASCADE, related_name='phone_numbers')
     value = models.CharField(max_length=255)
     time_zone = models.CharField(max_length=30, blank=True, null=True)
 
     class Meta:
+        app_label = 'ai_agent'
         unique_together = ('organization', 'value')
 
     def __str__(self):
         return self.value
 
 class GlobalEmails(models.Model):
-      
-    class Meta:
-        app_label = 'ai_agent'
-        
     organization = models.ForeignKey(GlobalOrganization, on_delete=models.CASCADE, related_name='emails')
     value = models.CharField(max_length=255)
 
     class Meta:
+        app_label = 'ai_agent'
         unique_together = ('organization', 'value')
 
     def __str__(self):
         return self.value
 
 class GlobalContactNames(models.Model):
-         
-    class Meta:
-        app_label = 'ai_agent'
-        
     organization = models.ForeignKey(GlobalOrganization, on_delete=models.CASCADE, related_name='contact_names')
     name = models.CharField(max_length=255)
     title = models.CharField(max_length=255, blank=True, null=True)
     phone_number = models.CharField(max_length=255, blank=True, null=True)
-    email = models.CharField(max_length=255, blank=True, null=True)
+    email = models.EmailField(max_length=255, null=True, blank=True)
 
     class Meta:
+        app_label = 'ai_agent'
         unique_together = ('organization', 'name')
 
     def __str__(self):
-        return self.value
+        return self.name
+
+class EnrichmentTask(models.Model):
+    task_id = models.CharField(max_length=255, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=50, default='PENDING')
+    results = models.TextField(null=True, blank=True)
+    excel_sheet_name = models.CharField(max_length=255, null=True, blank=True)
+
+    def __str__(self):
+        return self.task_id

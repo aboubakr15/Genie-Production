@@ -119,54 +119,28 @@
     </div>
 
     <div class="card-body p-4">
-        <form method="POST" id="enrichmentForm">
+        <form id="enrichmentForm">
             {% csrf_token %}
-
-            <!-- Excel Settings Card -->
             <div class="excel-settings-card text-white mb-4">
                 <div class="form-group mb-0">
                     <label for="{{ form.excel_sheet_name.id_for_label }}" class="form-label d-flex align-items-center">
                         <i class="fas fa-file-excel me-2"></i>Excel Sheet Name (show name):
                     </label>
                     {{ form.excel_sheet_name }}
-                    <div class="form-text text-white-50 mt-2">
-                        <i class="fas fa-info-circle me-1"></i>
-                        {{ form.excel_sheet_name.help_text }}
-                    </div>
                 </div>
             </div>
 
-            <!-- Enhanced Form Field -->
             <div class="form-group mb-4">
                 <label for="{{ form.company_names.id_for_label }}" class="form-label form-label-custom">
                     <i class="fas fa-building me-2 text-primary"></i>Company Names:
                 </label>
-                
-                <div class="position-relative">
-                    {{ form.company_names }}
-                </div>
-                
-                <div class="form-text form-text-custom">
-                    <i class="fas fa-info-circle me-1"></i>
-                    Enter one company name per line. Our AI will process each company and provide detailed insights.
-                </div>
+                {{ form.company_names }}
             </div>
 
-            <!-- Enhanced Submit Button -->
             <div class="d-grid gap-2 mt-4">
                 <button type="submit" class="btn btn-primary-custom" id="submitBtn">
-                    <span style="position: relative; z-index: 1;">
-                        <i class="fas fa-file-excel me-2"></i>Generate Excel Report
-                    </span>
+                    <span><i class="fas fa-file-excel me-2"></i>Generate Excel Report</span>
                 </button>
-            </div>
-            
-            <!-- Additional Info -->
-            <div class="text-center mt-3">
-                <small class="text-muted">
-                    <i class="fas fa-clock me-1"></i>
-                    Processing typically takes ~30 seconds per batch (5 companies per batch)
-                </small>
             </div>
         </form>
     </div>
@@ -176,76 +150,91 @@
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('enrichmentForm');
     const submitBtn = document.getElementById('submitBtn');
-    const companyInput = document.getElementById('{{ form.company_names.id_for_label }}');
-    const sheetNameInput = document.getElementById('{{ form.excel_sheet_name.id_for_label }}');
     window.originalButtonHTML = submitBtn.innerHTML;
 
-    // Add character counter for sheet name
-    const sheetNameCounter = document.createElement('div');
-    sheetNameCounter.className = 'form-text text-end text-muted mt-1';
-    sheetNameInput.parentNode.appendChild(sheetNameCounter);
-    
-    function updateSheetNameCounter() {
-        const length = sheetNameInput.value.length;
-        sheetNameCounter.textContent = `${length}/31 characters`;
-        if (length > 31) {
-            sheetNameCounter.className = 'form-text text-end text-danger mt-1';
-        } else {
-            sheetNameCounter.className = 'form-text text-end text-muted mt-1';
-        }
-    }
-    
-    sheetNameInput.addEventListener('input', updateSheetNameCounter);
-    updateSheetNameCounter(); // Initialize counter
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
 
-    form.addEventListener('submit', function(e) {
-        const companyNames = companyInput.value.split('\n').filter(name => name.trim() !== '');
+        const formData = new FormData(form);
+        const companyNames = formData.get('company_names').trim().split('\n').filter(x => x);
         const companyCount = companyNames.length;
-        const sheetName = sheetNameInput.value.trim();
-        
+
         if (companyCount === 0) {
-            e.preventDefault();
             alert('Please enter at least one company name.');
             return;
         }
-        
-        if (sheetName.length > 31) {
-            e.preventDefault();
-            alert('Excel sheet name must be 31 characters or less.');
-            return;
-        }
-        
-        const batchSize = 5;
-        const totalBatches = Math.ceil(companyCount / batchSize);
-        const estimatedSecondsPerBatch = 30;
-        const totalEstimatedSeconds = totalBatches * estimatedSecondsPerBatch;
-        const minutes = Math.floor(totalEstimatedSeconds / 60);
-        const seconds = totalEstimatedSeconds % 60;
-        let timeText = minutes > 0 ? `${minutes} minute${minutes > 1 ? 's' : ''}` : '';
-        if (seconds > 0) timeText += (timeText ? ' ' : '') + `${seconds} second${seconds > 1 ? 's' : ''}`;
-        
-        LoadingManager.show({
-            text: 'Processing Companies',
-            subtext: `Enriching data for ${companyCount} companies... Estimated time: ${timeText}`,
-            totalCompanies: companyCount,
-            totalBatches: totalBatches
-        });
-        
+
         submitBtn.disabled = true;
         submitBtn.classList.add('btn-loading');
-        submitBtn.innerHTML = '<span style="position: relative; z-index: 1;"><i class="fas fa-spinner fa-spin me-2"></i>Processing...</span>';
-        
-        LoadingManager.startRealProgressTracking();
-    });
-    
-    window.addEventListener('load', () => {
-        LoadingManager.hide();
-        if (submitBtn && window.originalButtonHTML) {
+        submitBtn.innerHTML = '<span><i class="fas fa-spinner fa-spin me-2"></i>Processing...</span>';
+
+        LoadingManager.show({
+            text: 'Processing Companies',
+            subtext: `Enriching ${companyCount} companies...`,
+            totalCompanies: companyCount
+        });
+
+        try {
+            const response = await fetch(window.location.pathname, {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || `An error occurred on the server (status: ${response.status}).`);
+            }
+
+            // ✅ Start polling using job_id
+            if (data.job_id) {
+                pollTaskStatus(data.job_id);
+            } else {
+                throw new Error(data.error || 'No job_id returned from server.');
+            }
+
+        } catch (error) {
+            console.error(error);
+            alert('An error occurred: ' + error.message);
+            LoadingManager.hide();
             submitBtn.disabled = false;
-            submitBtn.classList.remove('btn-loading');
             submitBtn.innerHTML = window.originalButtonHTML;
         }
     });
+
+    function pollTaskStatus(taskId) {
+        const interval = setInterval(async () => {
+            try {
+                const response = await fetch(`/ai_agent/enrichment_status/${taskId}/`);
+                const data = await response.json();
+
+                if (data.status === 'SUCCESS') {
+                    clearInterval(interval);
+                    window.location.href = `/ai_agent/download_results/${taskId}/`;
+                    LoadingManager.hide();
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('btn-loading');
+                    submitBtn.innerHTML = window.originalButtonHTML;
+                } else if (data.status === 'FAILURE') {
+                    clearInterval(interval);
+                    alert('Enrichment task failed.');
+                    LoadingManager.hide();
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('btn-loading');
+                    submitBtn.innerHTML = window.originalButtonHTML;
+                }
+            } catch (error) {
+                clearInterval(interval);
+                console.error('Error polling task status:', error);
+                alert('An error occurred while checking the task status.');
+                LoadingManager.hide();
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('btn-loading');
+                submitBtn.innerHTML = window.originalButtonHTML;
+            }
+        }, 5000); // Poll every 5 seconds
+    }
 });
 </script>
 {% endblock %}
