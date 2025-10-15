@@ -98,9 +98,9 @@ def download_enrichment_results(request, task_id):
             results = json.loads(task.results)
             return generate_excel_response(results, task.excel_sheet_name)
         else:
-            return JsonResponse({'status': 'error', 'message': 'Task is not complete or failed.'}, status=400)
+            return HttpResponse("The task is not yet complete, or it has failed.", status=404)
     except EnrichmentTask.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Task not found.'}, status=404)
+        return HttpResponse("Task not found.", status=404)
 
 
 

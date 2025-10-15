@@ -187,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(data.error || `An error occurred on the server (status: ${response.status}).`);
             }
 
-            // ✅ Start polling using job_id
+            // Start polling using job_id
             if (data.job_id) {
                 pollTaskStatus(data.job_id);
             } else {

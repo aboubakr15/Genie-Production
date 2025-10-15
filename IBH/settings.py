@@ -26,11 +26,13 @@ DEBUG = True
 
 CSRF_TRUSTED_ORIGINS = [
     'https://genie-production-production.up.railway.app',
+    'https://genie-production-x8952.sevalla.app',
     'http://127.0.0.1:8000',  # Keep localhost for development
 ]
 
 ALLOWED_HOSTS = [
     'genie-production-production.up.railway.app',
+    'genie-production-x8952.sevalla.app',
     '127.0.0.1',
     'localhost',
 ]
@@ -260,3 +262,6 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Africa/Cairo'
+
+# Gemini API Key
+GEMINI_API_KEY = "AIzaSyBuNSlfHDLXEWfr1GUCsHWoqeLKibEyT0E"
