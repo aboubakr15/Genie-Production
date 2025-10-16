@@ -8,6 +8,8 @@ from django.http import HttpResponse
 from .utils import *
 from django.http import JsonResponse
 from .tasks import enrich_data_task
+from django.contrib import messages
+from django.utils import timezone
 
 
 
@@ -52,19 +54,27 @@ def data_enrichment_view(request):
             
             # Validate sheet name length
             if len(excel_sheet_name) > 200:
-                return JsonResponse({'status': 'error', 'message': 'Excel sheet name must be 200 characters or less.'}, status=400)
+                messages.error(request, 'Excel sheet name must be 200 characters or less.')
+                return render(request, 'ai_agent/enrich.html', {'form': form})
             
             # Check credits first
             if not use_credits(amount=len(company_names), description="AI Enrichment", user=None):
-                return JsonResponse({'status': 'error', 'message': 'Insufficient credits to process the request.'}, status=400)
+                messages.error(request, 'Insufficient credits to process the request.')
+                return render(request, 'ai_agent/enrich.html', {'form': form})
             
             # Call the Celery task to run in the background
             task = enrich_data_task.delay(company_names, excel_sheet_name)
             
             return JsonResponse({'status': 'success', 'message': f"Enrichment for {len(company_names)} companies has started.", 'job_id': task.id})
         else:
-            # Return form errors as JSON
-            return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+            # Return form errors as messages
+            for field, errors in form.errors.items():
+                for error in errors:
+                    if field == '__all__':
+                        messages.error(request, error)
+                    else:
+                        messages.error(request, f"{form.fields[field].label}: {error}")
+            return render(request, 'ai_agent/enrich.html', {'form': form})
     
     else:
         form = CompanyListForm()
@@ -87,7 +97,9 @@ def download_enrichment_results(request, task_id):
             results = json.loads(task.results)
             return generate_excel_response(results, task.excel_sheet_name)
         else:
-            return HttpResponse("The task is not yet complete, or it has failed.", status=404)
+            messages.error(request, "The task is not yet complete, or it has failed.")
+            return redirect('ai_agent:data_enrichment')
     except EnrichmentTask.DoesNotExist:
-        return HttpResponse("Task not found.", status=404)
+        messages.error(request, "Task not found.")
+        return redirect('ai_agent:data_enrichment')
 

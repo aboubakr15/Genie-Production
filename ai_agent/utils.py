@@ -207,7 +207,7 @@ def get_monthly_summary():
 
 ############################################################## Enrichment part ##############################################################
 import json, time, re
-from typing import Optional, Dict, List, Tuple
+from typing import Optional, Dict, List
 import google.genai as genai
 from google.genai import types
 import pandas as pd
@@ -284,7 +284,7 @@ def orchestrate_enrichment_workflow(company_names, api_key):
     # Step 2: Enrich not found leads with AI
     ai_leads = []
     if not_found_leads:
-        ai_leads = enrich_with_ai(not_found_leads, api_key, batch_size=3)
+        ai_leads = enrich_with_ai(not_found_leads, api_key, batch_size=6)
         
         # Step 3: Save AI results to global database
         if ai_leads:
@@ -294,7 +294,7 @@ def orchestrate_enrichment_workflow(company_names, api_key):
     enriched_results = merge_results(company_names, found_leads, ai_leads)
     
     # Step 5: Retry companies missing phone numbers (single retry only)
-    enriched_results = retry_missing_phones(enriched_results, api_key)
+    enriched_results = retry_missing_phones(enriched_results, api_key, batch_size=3)
     
     # Mark as complete
     mark_complete()
@@ -534,7 +534,7 @@ def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, re
 
 def save_to_global_database(enriched_results):
     """
-    Save AI-enriched results to global database
+    Save AI-enriched results to global database, skipping entries with no contact info.
     """
     organizations_created = 0
     phones_created = 0
@@ -544,6 +544,26 @@ def save_to_global_database(enriched_results):
     for result in enriched_results:
         company_name = result.get('company_name')
         if not company_name:
+            continue
+
+        # Extract contact info
+        phone_number = result.get('phone')
+        email = result.get('email')
+        key_personnel = result.get("key_personnel", {})
+        contact_phone = key_personnel.get("phone")
+        contact_email = key_personnel.get("email")
+
+        # Check for any valid contact information
+        has_contact_info = any([
+            phone_number and str(phone_number).strip(),
+            email and str(email).strip(),
+            contact_phone and str(contact_phone).strip(),
+            contact_email and str(contact_email).strip()
+        ])
+
+        # If no contact info, skip saving this record
+        if not has_contact_info:
+            print(f"🚫 Skipping {company_name} due to no contact information.")
             continue
         
         try:
@@ -561,7 +581,6 @@ def save_to_global_database(enriched_results):
                 organization.save()
             
             # Store phone numbers
-            phone_number = result.get('phone')
             if phone_number and str(phone_number).strip():
                 phone_obj, phone_created = GlobalPhoneNumbers.objects.get_or_create(
                     organization=organization,
@@ -572,7 +591,6 @@ def save_to_global_database(enriched_results):
                     phones_created += 1
             
             # Store emails
-            email = result.get('email')
             if email and str(email).strip():
                 email_obj, email_created = GlobalEmails.objects.get_or_create(
                     organization=organization,
@@ -582,7 +600,6 @@ def save_to_global_database(enriched_results):
                     emails_created += 1
             
             # Store contact names
-            key_personnel = result.get("key_personnel", {})
             contact_name = key_personnel.get("name")
             if contact_name and str(contact_name).strip():
                 contact_obj, contact_created = GlobalContactNames.objects.get_or_create(
@@ -590,8 +607,8 @@ def save_to_global_database(enriched_results):
                     name=contact_name,
                     defaults={
                         'title': key_personnel.get("title"),
-                        'phone_number': key_personnel.get("phone"),
-                        'email': key_personnel.get("email")
+                        'phone_number': contact_phone,
+                        'email': contact_email
                     }
                 )
                 if contact_created:
@@ -631,7 +648,7 @@ def merge_results(company_names, found_leads, ai_leads):
     return enriched_results
 
 
-def retry_missing_phones(enriched_results, api_key, batch_size=2):
+def retry_missing_phones(enriched_results, api_key, batch_size):
     """
     Retry companies that are missing phone numbers using AI in batches.
     """
