@@ -264,7 +264,6 @@ def orchestrate_enrichment_workflow(company_names, api_key):
     """
     Main workflow that orchestrates the entire enrichment process
     """
-    print(f"🚀 Starting enrichment workflow for {len(company_names)} companies")
     reset_enrichment_progress()
     
     # # Step 1: Search in databases first
@@ -285,7 +284,6 @@ def orchestrate_enrichment_workflow(company_names, api_key):
     # Step 2: Enrich not found leads with AI
     ai_leads = []
     if not_found_leads:
-        print(f"🤖 Enriching {len(not_found_leads)} companies with AI...")
         ai_leads = enrich_with_ai(not_found_leads, api_key, batch_size=2)
         
         # Step 3: Save AI results to global database
@@ -301,7 +299,6 @@ def orchestrate_enrichment_workflow(company_names, api_key):
     # Mark as complete
     mark_complete()
     
-    print(f"✅ Enrichment workflow completed. Processed {len(enriched_results)} companies")
     return enriched_results
 
 
@@ -436,8 +433,6 @@ def enrich_with_ai(company_names, api_key, batch_size):
 
 def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, retry_round: int, company_mapping: Dict[str, str]) -> Optional[List[Dict]]:
     
-    request_start_time = time.time()
-    
     # Use original company names for the prompt
     original_company_list = [company_mapping.get(comp.lower().strip(), comp) for comp in company_list]
     company_list_str = "\n".join([f"- {company}" for company in original_company_list])
@@ -508,14 +503,9 @@ def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, re
         Ensure the array has exactly {len(company_list)} objects in the exact same order as the input companies."""
 
     try:
-        client_init_start = time.time()
         client = genai.Client(api_key=api_key)
-        client_init_time = time.time() - client_init_start
-        print(f"🔧 Client initialized in {client_init_time:.3f} seconds")
         
     except Exception as e:
-        init_time = time.time() - request_start_time
-        print(f"❌ Failed to initialize client after {init_time:.2f} seconds: {e}")
         return None
 
     # Define the grounding tool for web search
@@ -529,33 +519,16 @@ def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, re
     )
 
     try:
-        api_call_start = time.time()
-        print(f"🚀 Sending API request to Gemini...")
-        
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=prompt,
             config=config
         )
 
-        api_call_time = time.time() - api_call_start
-        total_request_time = time.time() - request_start_time
-        
-        print(f"📡 API call completed in {api_call_time:.2f} seconds")
-        print(f"🔄 Total request processing time: {total_request_time:.2f} seconds")
-
-        print("======================================================================")
-        print(f"Response for batch {batch_number} (Retry {retry_round}):")
-        print("------------------------------------------------------")
-        print(response.text)
-        print("======================================================================")
-
         # Enhanced JSON parsing that handles cumulative responses
         return parse_gemini_response_cumulative_fix(response.text, company_list, company_mapping, batch_number, retry_round)
             
     except Exception as e:
-        request_time = time.time() - request_start_time
-        print(f"❌ Error during API call after {request_time:.2f} seconds: {e}")
         return None
 
 
@@ -563,8 +536,6 @@ def save_to_global_database(enriched_results):
     """
     Save AI-enriched results to global database
     """
-    print("\n💾 Storing AI-enriched data in global database...")
-    
     organizations_created = 0
     phones_created = 0
     emails_created = 0
@@ -629,12 +600,6 @@ def save_to_global_database(enriched_results):
         except Exception as e:
             print(f"❌ Error storing data for {company_name}: {str(e)}")
             continue
-    
-    print(f"📊 Database Storage Summary:")
-    print(f"   🏢 Organizations: {organizations_created}")
-    print(f"   📞 Phone numbers: {phones_created}")
-    print(f"   📧 Emails: {emails_created}")
-    print(f"   👤 Contacts: {contacts_created}")
 
 
 def merge_results(company_names, found_leads, ai_leads):
@@ -705,7 +670,6 @@ def retry_missing_phones(enriched_results, api_key, batch_size=5):
             retry_phone = retry_map[company_name].get('phone')
             if retry_phone and str(retry_phone).strip():
                 enriched_results[i]['phone'] = retry_phone
-                print(f"✅ Updated phone for {company_name}: {retry_phone}")
             
             retry_email = retry_map[company_name].get('email')
             if retry_email and str(retry_email).strip():
@@ -893,7 +857,6 @@ def parse_gemini_response_cumulative_fix(response_text: str, expected_companies:
     # Method 1: Look for the LARGEST complete JSON array (the final one)
     final_json_array = extract_final_json_array(response_text)
     if final_json_array:
-        print(f"✅ Found final JSON array with {len(final_json_array)} items")
         return validate_and_fix_results(final_json_array, expected_companies, company_mapping, batch_number, retry_round)
     
     # Method 2: Fallback to individual object extraction
@@ -902,7 +865,6 @@ def parse_gemini_response_cumulative_fix(response_text: str, expected_companies:
         return validate_and_fix_results(json_objects, expected_companies, company_mapping, batch_number, retry_round)
     
     # Method 3: Emergency fallback
-    print("⚠️ All JSON parsing methods failed, creating emergency structure")
     return create_emergency_results(expected_companies, company_mapping)
 
 
@@ -916,7 +878,6 @@ def extract_final_json_array(text: str) -> Optional[List[Dict]]:
     code_blocks = re.findall(r'```json\s*(.*?)\s*```', text, re.DOTALL)
     
     if code_blocks:
-        print(f"🔍 Found {len(code_blocks)} code blocks, checking for final complete array")
         
         # Try each code block from last to first (most recent first)
         for code_block in reversed(code_blocks):
@@ -993,9 +954,6 @@ def extract_json_objects(text: str) -> List[Dict]:
         except:
             continue
     
-    if objects:
-        print(f"✅ Extracted {len(objects)} individual JSON objects")
-    
     return objects
 
 
@@ -1018,7 +976,6 @@ def validate_and_fix_results(parsed_results: List[Dict], expected_companies: Lis
         
         # Check if this is a duplicate
         if normalized_name in seen_companies:
-            print(f"⚠️ Skipping duplicate company: {company_name}")
             continue
             
         seen_companies.add(normalized_name)
@@ -1026,7 +983,6 @@ def validate_and_fix_results(parsed_results: List[Dict], expected_companies: Lis
     
     # Check if we have the right number of results
     if len(valid_results) != len(expected_companies):
-        print(f"⚠️ Result count mismatch: got {len(valid_results)}, expected {len(expected_companies)}")
         
         # Create results for missing companies
         missing_companies = []
@@ -1037,7 +993,6 @@ def validate_and_fix_results(parsed_results: List[Dict], expected_companies: Lis
                 missing_companies.append(expected)
         
         if missing_companies:
-            print(f"⚠️ Creating results for {len(missing_companies)} missing companies")
             for company in missing_companies:
                 original_name = company_mapping.get(company, company)
                 valid_results.append({
@@ -1076,5 +1031,4 @@ def create_emergency_results(companies: List[str], company_mapping: Dict[str, st
             "key_personnel": {"name": None, "phone": None, "title": None, "email": None}
         })
     
-    print(f"🔄 Created emergency structure for {len(results)} companies")
     return results

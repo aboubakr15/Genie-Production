@@ -1,18 +1,9 @@
 from django.shortcuts import render, redirect
-from django.contrib import messages
 from .forms import CompanyListForm
-from main.models import Lead, LeadEmails, LeadPhoneNumbers, LeadContactNames
-from .models import GlobalOrganization, GlobalPhoneNumbers, GlobalEmails, GlobalContactNames, EnrichmentTask
-import requests
-from datetime import timedelta, datetime
+from .models import EnrichmentTask
+from datetime import timedelta
 from django.contrib.auth.decorators import user_passes_test
 from main.custom_decorators import is_in_group
-import json, time, re
-from typing import Optional, Dict, List, Tuple
-import google.genai as genai
-from google.genai import types
-import pandas as pd
-from io import BytesIO
 from django.http import HttpResponse
 from .utils import *
 from django.http import JsonResponse
@@ -51,9 +42,6 @@ def search_view(request):
     return render(request, 'ai_agent/search.html')
 
 
-
-############################################################## Enrichment part ##############################################################
-
 @user_passes_test(lambda user: is_in_group(user, "ai_agent"))
 def data_enrichment_view(request):
     if request.method == 'POST':
@@ -90,6 +78,7 @@ def get_enrichment_status(request, task_id):
         return JsonResponse({'status': task.status, 'progress': task.progress})
     except EnrichmentTask.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Task not found.'}, status=404)
+
 
 def download_enrichment_results(request, task_id):
     try:

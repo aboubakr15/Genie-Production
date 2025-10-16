@@ -128,7 +128,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': "railway",
         'USER': "root",
-        'PASSWORD': "nJkjXobZCpCylOnTUqNhKfehmNPuXwxC",  # MySQL server pass is 'admin@ibh'
+        'PASSWORD': "nJkjXobZCpCylOnTUqNhKfehmNPuXwxC",
         'HOST': "yamanote.proxy.rlwy.net",
         'PORT': "13120",
         'OPTIONS': {
