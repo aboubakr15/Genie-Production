@@ -3,6 +3,7 @@ from .utils import orchestrate_enrichment_workflow
 from .models import EnrichmentTask
 import json
 from django.conf import settings
+from django.utils import timezone
 
 @shared_task(bind=True)
 def enrich_data_task(self, company_names, excel_sheet_name):
@@ -29,13 +30,16 @@ def enrich_data_task(self, company_names, excel_sheet_name):
             task.results = json.dumps(enriched_results)
             task.status = 'SUCCESS'
             task.progress = 100
+            task.completed_at = timezone.now()
             task.save()
         else:
             task.status = 'FAILURE'
+            task.completed_at = timezone.now()
             task.save()
     except Exception as e:
         task.status = 'FAILURE'
         task.results = json.dumps({'error': str(e)})
+        task.completed_at = timezone.now()
         task.save()
 
     return f"Enrichment complete for {excel_sheet_name}"
