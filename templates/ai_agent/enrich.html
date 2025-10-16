@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const companyCount = companyNames.length;
 
         if (companyCount === 0) {
-            alert('Please enter at least one company name.');
+            displayMessage('Please enter at least one company name.', 'warning');
             return;
         }
 
@@ -189,22 +189,44 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const data = await response.json();
 
-            if (!response.ok) {
-                throw new Error(data.error || `An error occurred on the server (status: ${response.status}).`);
+            // Handle error responses
+            if (!response.ok || data.status === 'error') {
+                LoadingManager.hide();
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('btn-loading');
+                submitBtn.innerHTML = window.originalButtonHTML;
+
+                let message = data.message || 'An unexpected error occurred.';
+
+                // Handle field-specific errors if they exist
+                if (data.errors) {
+                    const errorList = Object.entries(data.errors)
+                        .map(([field, msgs]) => {
+                            const fieldName = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                            return `<strong>${fieldName}:</strong> ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`;
+                        })
+                        .join('<br>');
+                    message += `<br><br>${errorList}`;
+                }
+
+                displayMessage(message, 'danger');
+                return;
             }
 
-            // Start polling using job_id
+            // Handle success
             if (data.job_id) {
+                displayMessage(data.message || 'Task started successfully.', 'success');
                 pollTaskStatus(data.job_id);
             } else {
-                throw new Error(data.error || 'No job_id returned from server.');
+                throw new Error('No job ID returned from the server.');
             }
 
         } catch (error) {
-            console.error(error);
-            alert('An error occurred: ' + error.message);
+            console.error('Fetch error:', error);
+            displayMessage('An error occurred: ' + error.message, 'danger');
             LoadingManager.hide();
             submitBtn.disabled = false;
+            submitBtn.classList.remove('btn-loading');
             submitBtn.innerHTML = window.originalButtonHTML;
         }
     });
@@ -222,6 +244,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     if (data.status === 'SUCCESS') {
                         clearInterval(interval);
+                        displayMessage('Enrichment complete! Downloading results...', 'success');
                         window.location.href = `/ai_agent/download_results/${taskId}/`;
                         LoadingManager.hide();
                         submitBtn.disabled = false;
@@ -229,7 +252,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         submitBtn.innerHTML = window.originalButtonHTML;
                     } else if (data.status === 'FAILURE') {
                         clearInterval(interval);
-                        alert('Enrichment task failed.');
+                        displayMessage('Enrichment task failed. Please try again.', 'danger');
                         LoadingManager.hide();
                         submitBtn.disabled = false;
                         submitBtn.classList.remove('btn-loading');
@@ -238,24 +261,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 } catch (error) {
                     clearInterval(interval);
                     console.error('Error polling task status:', error);
-                    alert('An error occurred while checking the task status.');
+                    displayMessage('An error occurred while checking the task status.', 'danger');
                     LoadingManager.hide();
                     submitBtn.disabled = false;
                     submitBtn.classList.remove('btn-loading');
                     submitBtn.innerHTML = window.originalButtonHTML;
                 }
             }, 5000); // Poll every 5 seconds
-        }, 2000); // Initial delay of 2 seconds
+        }, 2000); // Initial delay before polling
     }
 
     function displayMessage(message, type) {
+        const alertClass = type === 'danger' ? 'alert-danger' : 
+                          type === 'warning' ? 'alert-warning' : 
+                          type === 'success' ? 'alert-success' : 
+                          'alert-info';
+        
         const alert = `
-            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
                 ${message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         `;
-        messageContainer.innerHTML += alert;
+        messageContainer.innerHTML = alert;
+        
+        // Scroll to the top of the page to show the message
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 });
 </script>

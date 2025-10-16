@@ -48,30 +48,66 @@ def search_view(request):
 def data_enrichment_view(request):
     if request.method == 'POST':
         form = CompanyListForm(request.POST)
-        if form.is_valid():
-            company_names = [name.strip() for name in form.cleaned_data['company_names'].splitlines() if name.strip()]
-            excel_sheet_name = form.cleaned_data['excel_sheet_name'].strip() or 'Enriched Leads'
-            
-            # Validate sheet name length
-            if len(excel_sheet_name) > 200:
-                return JsonResponse({'status': 'error', 'message': 'Excel sheet name must be 200 characters or less.'}, status=400)
-            
-            # Check credits first
-            if not use_credits(amount=len(company_names), description="AI Enrichment", user=None):
-                return JsonResponse({'status': 'error', 'message': 'Insufficient credits to process the request.'}, status=400)
-            
-            # Call the Celery task to run in the background
-            task = enrich_data_task.delay(company_names, excel_sheet_name)
-            
-            return JsonResponse({'status': 'success', 'message': f"Enrichment for {len(company_names)} companies has started.", 'job_id': task.id})
+        
+        # Check if it's an AJAX request
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            if form.is_valid():
+                company_names = [name.strip() for name in form.cleaned_data['company_names'].splitlines() if name.strip()]
+                
+                # Additional validation: check if list is empty
+                if not company_names:
+                    return JsonResponse({
+                        'status': 'error', 
+                        'message': 'Please enter at least one company name.'
+                    }, status=400)
+                
+                excel_sheet_name = form.cleaned_data['excel_sheet_name'].strip() or 'Enriched Leads'
+                
+                # Validate sheet name length
+                if len(excel_sheet_name) > 200:
+                    return JsonResponse({
+                        'status': 'error', 
+                        'message': 'Excel sheet name must be 200 characters or less.'
+                    }, status=400)
+                
+                # Check credits first
+                if not use_credits(amount=len(company_names), description="AI Enrichment", user=None):
+                    return JsonResponse({
+                        'status': 'error', 
+                        'message': 'Insufficient credits to process the request.'
+                    }, status=400)
+                
+                # Call the Celery task to run in the background
+                task = enrich_data_task.delay(company_names, excel_sheet_name)
+                
+                return JsonResponse({
+                    'status': 'success', 
+                    'message': f"Enrichment for {len(company_names)} companies has started.", 
+                    'job_id': task.id
+                })
+            else:
+                # Return form errors as JSON for AJAX requests
+                error_messages = []
+                for field, error_list in form.errors.items():
+                    field_name = form.fields[field].label or field
+                    for error in error_list:
+                        error_messages.append(f"{field_name}: {error}")
+                
+                return JsonResponse({
+                    'status': 'error', 
+                    'message': '<br>'.join(error_messages)
+                }, status=400)
         else:
-            # Return form errors as JSON
-            return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
-    
+            # For non-AJAX POST requests, process normally
+            if form.is_valid():
+                # Handle if needed
+                pass
     else:
         form = CompanyListForm()
-
+    
+    # Render the template for GET requests
     return render(request, 'ai_agent/enrich.html', {'form': form})
+
 
 
 def get_enrichment_status(request, task_id):
