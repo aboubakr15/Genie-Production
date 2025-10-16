@@ -12,12 +12,12 @@ class CompanyListForm(forms.Form):
     
     excel_sheet_name = forms.CharField(
         initial='Enriched Leads',
-        max_length=200,  # Excel sheet name limit
+        max_length=31,  # Excel sheet name limit
         widget=forms.TextInput(attrs={
-            'placeholder': 'Enter Excel sheet name (max 200 characters)',
+            'placeholder': 'Enter Excel sheet name (max 31 characters)',
             'class': 'form-control',
-            'maxlength': '200'
+            'maxlength': '31'
         }),
         label='Excel Sheet Name',
-        help_text='Maximum 200 characters.'
+        help_text='Maximum 31 characters.'
     )

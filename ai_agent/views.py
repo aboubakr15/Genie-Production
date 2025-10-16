@@ -64,10 +64,10 @@ def data_enrichment_view(request):
                 excel_sheet_name = form.cleaned_data['excel_sheet_name'].strip() or 'Enriched Leads'
                 
                 # Validate sheet name length
-                if len(excel_sheet_name) > 200:
+                if len(excel_sheet_name) > 31:
                     return JsonResponse({
                         'status': 'error', 
-                        'message': 'Excel sheet name must be 200 characters or less.'
+                        'message': 'Excel sheet name must be 31 characters or less.'
                     }, status=400)
                 
                 # Check credits first
