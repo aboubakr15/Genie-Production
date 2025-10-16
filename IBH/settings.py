@@ -252,16 +252,16 @@ MESSAGE_TAGS = {
     messages.ERROR: 'danger',
 }
 
-# Celery Configuration Options
-# Use the REDIS_URL from Railway's environment variables in production,
-# otherwise, fall back to a local Redis instance for development.
 
-CELERY_BROKER_URL = "redis://default:afbInyQmNWsZlDIdIQGJSOrjwYuNEFBJ@trolley.proxy.rlwy.net:26628"
-CELERY_RESULT_BACKEND = "redis://default:afbInyQmNWsZlDIdIQGJSOrjwYuNEFBJ@trolley.proxy.rlwy.net:26628"
+# Gemini API Key
+GEMINI_API_KEY = "AIzaSyBuNSlfHDLXEWfr1GUCsHWoqeLKibEyT0E"
+
+External_REDIS_URL = "redis://:wE2_uS1=tO6=fZ1-jS9=@europe-north1-001.proxy.kinsta.app:30816/0"
+
+CELERY_BROKER_URL = External_REDIS_URL #os.environ.get('REDIS_URL', 'redis://localhost:6379')
+CELERY_RESULT_BACKEND = External_REDIS_URL# os.environ.get('REDIS_URL', 'redis://localhost:6379')
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Africa/Cairo'
 
-# Gemini API Key
-GEMINI_API_KEY = "AIzaSyBuNSlfHDLXEWfr1GUCsHWoqeLKibEyT0E"

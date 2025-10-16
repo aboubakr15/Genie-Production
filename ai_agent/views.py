@@ -87,7 +87,7 @@ def data_enrichment_view(request):
 def get_enrichment_status(request, task_id):
     try:
         task = EnrichmentTask.objects.using('global').get(task_id=task_id)
-        return JsonResponse({'status': task.status})
+        return JsonResponse({'status': task.status, 'progress': task.progress})
     except EnrichmentTask.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Task not found.'}, status=404)
 
@@ -101,6 +101,4 @@ def download_enrichment_results(request, task_id):
             return HttpResponse("The task is not yet complete, or it has failed.", status=404)
     except EnrichmentTask.DoesNotExist:
         return HttpResponse("Task not found.", status=404)
-
-
 

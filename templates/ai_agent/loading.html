@@ -1,257 +1,119 @@
-<!-- ai_agent/loading.html -->
+<!-- templates/ai_agent/loading.html -->
 <div id="loadingOverlay" class="loading-overlay" style="display: none;">
-    <div class="loading-container">
-        <div class="loading-card">
-            <!-- Animated Icon -->
-            <div class="loading-icon">
-                <div class="batch-processor">
-                    <div class="processor-core">
-                        <div class="core-pulse"></div>
-                    </div>
-                    <div class="data-stream">
-                        <div class="data-point" style="--delay: 0s"></div>
-                        <div class="data-point" style="--delay: 0.5s"></div>
-                        <div class="data-point" style="--delay: 1s"></div>
-                        <div class="data-point" style="--delay: 1.5s"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Loading Text -->
-            <div class="loading-text">
-                <h3 id="loadingTitle">Processing Companies</h3>
-                <p id="loadingSubtext" class="text-muted">Initializing AI enrichment...</p>
-            </div>
-
-            <!-- Simplified Progress (only bar and time estimate) -->
-            <div class="batch-progress-container">
-                <div class="batch-header">
-                    <div class="time-estimate" style="margin: 0 auto;">
-                        <i class="fas fa-clock"></i>
-                        <span id="timeRemaining">Calculating...</span>
-                    </div>
-                </div>
-                
-                <!-- Main Progress Bar -->
-                <div class="progress-container">
-                    <div class="progress-bar">
-                        <div id="progressFill" class="progress-fill"></div>
-                    </div>
-                    <div class="progress-percentage">
-                        <span id="progressPercentage">0%</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Status Messages -->
-            <div id="completionStatus" class="completion-status" style="display: none;">
-                <div class="status-success">
-                    <i class="fas fa-check-circle"></i>
-                    <span>Processing complete! Preparing download...</span>
-                </div>
-            </div>
-
-            <!-- Cancel Button -->
-            <div class="cancel-section">
-                <button id="cancelBtn" class="btn btn-outline-secondary btn-sm">
-                    <i class="fas fa-times me-1"></i>
-                    Cancel Processing
-                </button>
-            </div>
+    <div class="loading-card">
+        <div class="loading-spinner"></div>
+        <h3 id="loadingTitle" class="loading-title">Processing...</h3>
+        <p id="loadingSubtext" class="loading-subtext">Please wait while we enrich your data.</p>
+        <div class="progress-container">
+            <div id="progressBar" class="progress-bar"></div>
         </div>
+        <p id="progressText" class="progress-text">0%</p>
     </div>
 </div>
 
-<script>
-/* ✅ Updated JS: Now polls /ai_agent/enrichment_progress/<job_id>/ dynamically */
-const LoadingManager = {
-    checkInterval: null,
-    companiesProcessed: 0,
-    totalCompanies: 0,
-    isComplete: false,
-    jobId: null, // 🆕 added
-    maxProgressChecks: 300,
-    progressCheckCount: 0,
-    errorCount: 0,
-    maxErrors: 5,
+<style>
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(5px);
+}
 
+.loading-card {
+    background-color: white;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 90%;
+    max-width: 400px;
+}
+
+.loading-spinner {
+    border: 6px solid #f3f3f3;
+    border-top: 6px solid #3498db;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.loading-subtext {
+    font-size: 1rem;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.progress-container {
+    width: 100%;
+    background-color: #f3f3f3;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.progress-bar {
+    width: 0%;
+    height: 20px;
+    background-color: #3498db;
+    border-radius: 5px;
+    transition: width 0.3s ease-in-out;
+}
+
+.progress-text {
+    font-size: 1rem;
+    color: #333;
+    font-weight: 600;
+}
+</style>
+
+<script>
+const LoadingManager = {
     show: function(options) {
         const overlay = document.getElementById('loadingOverlay');
         const title = document.getElementById('loadingTitle');
         const subtext = document.getElementById('loadingSubtext');
-        const cancelBtn = document.getElementById('cancelBtn');
-        const completionStatus = document.getElementById('completionStatus');
-        
-        this.reset();
-        completionStatus.style.display = 'none';
-        
-        this.totalCompanies = options.totalCompanies || 0;
-        this.jobId = options.jobId || null; // 🆕 store job ID
-        
-        title.textContent = options.text || 'Processing Companies';
-        subtext.textContent = options.subtext || 'Initializing AI enrichment...';
-        
-        document.getElementById('progressFill').style.width = '0%';
-        document.getElementById('progressPercentage').textContent = '0%';
-        
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+
+        title.textContent = options.text || 'Processing...';
+        subtext.textContent = options.subtext || 'Please wait while we enrich your data.';
+        progressBar.style.width = '0%';
+        progressText.textContent = '0%';
+
         overlay.style.display = 'flex';
-        
-        cancelBtn.onclick = () => {
-            if (confirm('Are you sure you want to cancel the data enrichment process?')) {
-                this.hide();
-                window.location.reload();
-            }
-        };
-        
-        overlay.onclick = e => { if (e.target === overlay) e.stopPropagation(); };
     },
-    
+
     hide: function() {
-        document.getElementById('loadingOverlay').style.display = 'none';
-        this.reset();
+        const overlay = document.getElementById('loadingOverlay');
+        overlay.style.display = 'none';
     },
-    
-    reset: function() {
-        this.companiesProcessed = 0;
-        this.totalCompanies = 0;
-        this.isComplete = false;
-        this.progressCheckCount = 0;
-        this.errorCount = 0;
-        clearInterval(this.checkInterval);
-    },
-    
-    startRealProgressTracking: function(jobId) {
-        this.jobId = jobId;
-        this.checkInterval = setInterval(() => this.checkServerProgress(), 2000);
-    },
-    
-    async checkServerProgress() {
-        if (!this.jobId) return;
-        this.progressCheckCount++;
-        if (this.progressCheckCount > this.maxProgressChecks) {
-            this.showCompletion(true);
-            return;
-        }
-        
-        try {
-            const response = await fetch(`/ai_agent/enrichment_progress/${this.jobId}/`);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const progress = await response.json();
-            
-            this.errorCount = 0;
-            
-            if (progress.is_complete) {
-                progress.companies_processed = this.totalCompanies;
-            }
-            
-            // ✅ Update progress display
-            this.updateProgressDisplay(progress);
 
-            // ✅ If the process is complete and a download link is provided
-            if (progress.is_complete && progress.download_url) {
-                this.isComplete = true;
-                clearInterval(this.checkInterval);
+    updateProgress: function(progress) {
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
 
-                const completionStatus = document.getElementById('completionStatus');
-                completionStatus.style.display = 'block';
-                completionStatus.innerHTML = `
-                    <div class="status-success">
-                        <i class="fas fa-check-circle"></i>
-                        <span>Processing complete! 
-                            <a href="${progress.download_url}" class="btn btn-sm btn-success ms-2">
-                                <i class="fas fa-download me-1"></i>Download Excel
-                            </a>
-                        </span>
-                    </div>
-                `;
-
-                document.getElementById('progressFill').style.width = '100%';
-                document.getElementById('progressPercentage').textContent = '100%';
-                document.getElementById('timeRemaining').textContent = 'Complete!';
-                
-                // Update cancel button to close overlay
-                const cancelBtn = document.getElementById('cancelBtn');
-                cancelBtn.innerHTML = '<i class="fas fa-times me-1"></i>Close';
-                cancelBtn.onclick = () => this.hide();
-                
-                return;
-            }
-
-            // ✅ Otherwise, check if it’s just finished without a download link
-            if ((progress.is_complete || this.companiesProcessed >= this.totalCompanies) && !this.isComplete) {
-                this.isComplete = true;
-                clearInterval(this.checkInterval);
-                this.showCompletion();
-            }
-        } catch (error) {
-            this.errorCount++;
-            if (this.errorCount >= this.maxErrors) {
-                this.showCompletion(true);
-            }
-        }
-    },
-    
-    updateProgressDisplay: function(progress) {
-        const progressFill = document.getElementById('progressFill');
-        const progressPercentage = document.getElementById('progressPercentage');
-        const timeRemaining = document.getElementById('timeRemaining');
-        
-        this.companiesProcessed = progress.companies_processed || 0;
-        this.totalCompanies = progress.total_companies || 1;
-        
-        const percentage = Math.min(100, (this.companiesProcessed / this.totalCompanies) * 100);
-        
-        progressFill.style.width = `${percentage}%`;
-        progressPercentage.textContent = `${Math.round(percentage)}%`;
-        
-        this.updateTimeEstimate(timeRemaining, percentage);
-    },
-    
-    updateTimeEstimate: function(timeRemainingEl, percentage) {
-        if (percentage >= 100) timeRemainingEl.textContent = 'Complete!';
-        else if (percentage >= 95) timeRemainingEl.textContent = 'Almost done...';
-        else if (percentage >= 80) timeRemainingEl.textContent = 'Less than 1 minute remaining';
-        else if (percentage >= 50) timeRemainingEl.textContent = 'About 2 minutes remaining';
-        else if (percentage >= 25) timeRemainingEl.textContent = 'About 4 minutes remaining';
-        else timeRemainingEl.textContent = 'Calculating...';
-    },
-    
-    showCompletion: function(isTimeout = false) {
-        const timeRemaining = document.getElementById('timeRemaining');
-        const completionStatus = document.getElementById('completionStatus');
-        const cancelBtn = document.getElementById('cancelBtn');
-        
-        document.getElementById('progressFill').style.width = '100%';
-        document.getElementById('progressPercentage').textContent = '100%';
-        
-        timeRemaining.textContent = 'Complete!';
-        completionStatus.style.display = 'block';
-        
-        cancelBtn.innerHTML = '<i class="fas fa-times me-1"></i>Close';
-        cancelBtn.onclick = () => this.hide();
-        
-        if (isTimeout) {
-            completionStatus.innerHTML = `
-                <div class="status-warning">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span>Process taking longer than expected. The download may appear shortly.</span>
-                </div>
-            `;
-            completionStatus.style.background = 'rgba(255, 193, 7, 0.1)';
-            completionStatus.style.borderLeftColor = '#ffc107';
-        }
-        
-        const submitBtn = document.getElementById('submitBtn');
-        if (submitBtn && window.originalButtonHTML) {
-            submitBtn.disabled = false;
-            submitBtn.classList.remove('btn-loading');
-            submitBtn.innerHTML = window.originalButtonHTML;
-        }
-        
-        setTimeout(() => this.hide(), 5000);
+        progressBar.style.width = `${progress}%`;
+        progressText.textContent = `${progress}%`;
     }
 };
-
-document.addEventListener('DOMContentLoaded', () => LoadingManager.hide());
-window.addEventListener('pageshow', event => { if (event.persisted) LoadingManager.hide(); });
 </script>

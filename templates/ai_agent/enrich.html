@@ -204,36 +204,42 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function pollTaskStatus(taskId) {
-        const interval = setInterval(async () => {
-            try {
-                const response = await fetch(`/ai_agent/enrichment_status/${taskId}/`);
-                const data = await response.json();
+        setTimeout(() => {
+            const interval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/ai_agent/enrichment_status/${taskId}/`);
+                    const data = await response.json();
 
-                if (data.status === 'SUCCESS') {
+                    if (data.progress !== undefined) {
+                        LoadingManager.updateProgress(data.progress);
+                    }
+
+                    if (data.status === 'SUCCESS') {
+                        clearInterval(interval);
+                        window.location.href = `/ai_agent/download_results/${taskId}/`;
+                        LoadingManager.hide();
+                        submitBtn.disabled = false;
+                        submitBtn.classList.remove('btn-loading');
+                        submitBtn.innerHTML = window.originalButtonHTML;
+                    } else if (data.status === 'FAILURE') {
+                        clearInterval(interval);
+                        alert('Enrichment task failed.');
+                        LoadingManager.hide();
+                        submitBtn.disabled = false;
+                        submitBtn.classList.remove('btn-loading');
+                        submitBtn.innerHTML = window.originalButtonHTML;
+                    }
+                } catch (error) {
                     clearInterval(interval);
-                    window.location.href = `/ai_agent/download_results/${taskId}/`;
-                    LoadingManager.hide();
-                    submitBtn.disabled = false;
-                    submitBtn.classList.remove('btn-loading');
-                    submitBtn.innerHTML = window.originalButtonHTML;
-                } else if (data.status === 'FAILURE') {
-                    clearInterval(interval);
-                    alert('Enrichment task failed.');
+                    console.error('Error polling task status:', error);
+                    alert('An error occurred while checking the task status.');
                     LoadingManager.hide();
                     submitBtn.disabled = false;
                     submitBtn.classList.remove('btn-loading');
                     submitBtn.innerHTML = window.originalButtonHTML;
                 }
-            } catch (error) {
-                clearInterval(interval);
-                console.error('Error polling task status:', error);
-                alert('An error occurred while checking the task status.');
-                LoadingManager.hide();
-                submitBtn.disabled = false;
-                submitBtn.classList.remove('btn-loading');
-                submitBtn.innerHTML = window.originalButtonHTML;
-            }
-        }, 5000); // Poll every 5 seconds
+            }, 5000); // Poll every 5 seconds
+        }, 2000); // Initial delay of 2 seconds
     }
 });
 </script>

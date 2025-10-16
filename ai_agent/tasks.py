@@ -16,12 +16,19 @@ def enrich_data_task(self, company_names, excel_sheet_name):
         status='IN_PROGRESS'
     )
 
+    total_companies = len(company_names)
+    enriched_results = []
+
     try:
-        enriched_results = orchestrate_enrichment_workflow(company_names, settings.GEMINI_API_KEY)
-        
+        for i, company_name in enumerate(company_names):
+            enriched_results.extend(orchestrate_enrichment_workflow([company_name], settings.GEMINI_API_KEY))
+            task.progress = int(((i + 1) / total_companies) * 100)
+            task.save()
+
         if enriched_results:
             task.results = json.dumps(enriched_results)
             task.status = 'SUCCESS'
+            task.progress = 100
             task.save()
         else:
             task.status = 'FAILURE'

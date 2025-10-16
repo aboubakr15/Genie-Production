@@ -286,7 +286,7 @@ def orchestrate_enrichment_workflow(company_names, api_key):
     ai_leads = []
     if not_found_leads:
         print(f"🤖 Enriching {len(not_found_leads)} companies with AI...")
-        ai_leads = enrich_with_ai(not_found_leads, api_key, batch_size=10)
+        ai_leads = enrich_with_ai(not_found_leads, api_key, batch_size=2)
         
         # Step 3: Save AI results to global database
         if ai_leads:
