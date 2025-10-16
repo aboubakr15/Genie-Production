@@ -2,17 +2,8 @@
 {% extends "layout/base.html" %}
 
 {% block content %}
-<!-- Message Display -->
-{% if messages %}
-    <div class="container mt-4">
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        {% endfor %}
-    </div>
-{% endif %}
+<!-- Message Container -->
+<div id="message-container" class="container mt-4"></div>
 
 <!-- Include the loading template -->
 {% include "ai_agent/loading.html" %}
@@ -131,7 +122,7 @@
     </div>
 
     <div class="card-body p-4">
-        <form id="enrichmentForm">
+        <form id="enrichment-form">
             {% csrf_token %}
             <div class="excel-settings-card text-white mb-4">
                 <div class="form-group mb-0">
@@ -158,14 +149,17 @@
     </div>
 </div>
 
+{% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('enrichmentForm');
+    const form = document.getElementById('enrichment-form');
+    const messageContainer = document.getElementById('message-container');
     const submitBtn = document.getElementById('submitBtn');
     window.originalButtonHTML = submitBtn.innerHTML;
 
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
+        messageContainer.innerHTML = ''; // Clear previous messages
 
         const formData = new FormData(form);
         const companyNames = formData.get('company_names').trim().split('\n').filter(x => x);
@@ -253,6 +247,17 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 5000); // Poll every 5 seconds
         }, 2000); // Initial delay of 2 seconds
     }
+
+    function displayMessage(message, type) {
+        const alert = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+        messageContainer.innerHTML += alert;
+    }
 });
 </script>
+{% endblock %}
 {% endblock %}
