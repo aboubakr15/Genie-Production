@@ -256,10 +256,10 @@ MESSAGE_TAGS = {
 # Gemini API Key
 GEMINI_API_KEY = "AIzaSyBuNSlfHDLXEWfr1GUCsHWoqeLKibEyT0E"
 
-External_REDIS_URL = "redis://:wE2_uS1=tO6=fZ1-jS9=@europe-north1-001.proxy.kinsta.app:30816/0"
+External_REDIS_URL = "redis://default:riercOvPFfeeXIGpKsMnfpgPEDltqVjf@metro.proxy.rlwy.net:45042"
 
-CELERY_BROKER_URL = External_REDIS_URL #os.environ.get('REDIS_URL', 'redis://localhost:6379')
-CELERY_RESULT_BACKEND = External_REDIS_URL# os.environ.get('REDIS_URL', 'redis://localhost:6379')
+CELERY_BROKER_URL = External_REDIS_URL
+CELERY_RESULT_BACKEND = External_REDIS_URL
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'

@@ -11,8 +11,6 @@ from .tasks import enrich_data_task
 from django.contrib import messages
 from django.utils import timezone
 
-
-
 @user_passes_test(lambda user: is_in_group(user, "ai_agent"))
 def index(request):
     # Get credit information
@@ -37,7 +35,6 @@ def index(request):
     }
     
     return render(request, 'ai_agent/index.html', context)
-
 
 @user_passes_test(lambda user: is_in_group(user, "ai_agent"))
 def search_view(request):
