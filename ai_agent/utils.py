@@ -260,7 +260,7 @@ def mark_complete():
     enrichment_progress['is_complete'] = True
 
 
-def orchestrate_enrichment_workflow(company_names, api_key):
+def orchestrate_enrichment_workflow(company_names, api_key, task):
     """
     Main workflow that orchestrates the entire enrichment process
     """
@@ -284,7 +284,7 @@ def orchestrate_enrichment_workflow(company_names, api_key):
     # Step 2: Enrich not found leads with AI
     ai_leads = []
     if not_found_leads:
-        ai_leads = enrich_with_ai(not_found_leads, api_key, batch_size=6)
+        ai_leads = enrich_with_ai(not_found_leads, api_key, batch_size=2, task=task)
         
         # Step 3: Save AI results to global database
         if ai_leads:
@@ -294,7 +294,7 @@ def orchestrate_enrichment_workflow(company_names, api_key):
     enriched_results = merge_results(company_names, found_leads, ai_leads)
     
     # Step 5: Retry companies missing phone numbers (single retry only)
-    enriched_results = retry_missing_phones(enriched_results, api_key, batch_size=3)
+    enriched_results = retry_missing_phones(enriched_results, api_key, task=task)
     
     # Mark as complete
     mark_complete()
@@ -376,7 +376,7 @@ def search_global_database(company_name):
     }
 
 
-def enrich_with_ai(company_names, api_key, batch_size):
+def enrich_with_ai(company_names, api_key, batch_size, task):
     """
     Enrich companies using AI in batches
     """
@@ -400,6 +400,10 @@ def enrich_with_ai(company_names, api_key, batch_size):
         
         print(f"🔍 Processing AI batch {current_batch} with {len(batch)} companies")
         
+        # Increment request count for the task
+        task.request_count += 1
+        task.save()
+
         ai_batch = ai_search_batch(
             batch,
             api_key,
@@ -648,7 +652,7 @@ def merge_results(company_names, found_leads, ai_leads):
     return enriched_results
 
 
-def retry_missing_phones(enriched_results, api_key, batch_size):
+def retry_missing_phones(enriched_results, api_key, task, batch_size=5):
     """
     Retry companies that are missing phone numbers using AI in batches.
     """
@@ -669,6 +673,11 @@ def retry_missing_phones(enriched_results, api_key, batch_size):
     for i in range(0, len(companies_to_retry), batch_size):
         batch = companies_to_retry[i:i + batch_size]
         batch_mapping = {name.lower().strip(): name for name in batch}
+        
+        # Increment request count for the task
+        task.request_count += 1
+        task.save()
+
         ai_batch = ai_search_batch(
             batch,
             api_key,

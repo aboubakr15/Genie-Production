@@ -22,7 +22,7 @@ def enrich_data_task(self, company_names, excel_sheet_name):
 
     try:
         for i, company_name in enumerate(company_names):
-            enriched_results.extend(orchestrate_enrichment_workflow([company_name], settings.GEMINI_API_KEY))
+            enriched_results.extend(orchestrate_enrichment_workflow([company_name], settings.GEMINI_API_KEY, task))
             task.progress = int(((i + 1) / total_companies) * 100)
             task.save()
 
