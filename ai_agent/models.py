@@ -1,6 +1,6 @@
 from django.db import models
-from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
+from django.conf import settings
+import os
 
 
 ################################################################################################################################
@@ -64,6 +64,12 @@ class EnrichmentTask(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     request_count = models.IntegerField(default=0)
+
+    # Dynamically set owner to Django project name
+    owner = models.CharField(
+        max_length=255,
+        default=os.path.basename(os.path.dirname(settings.BASE_DIR))
+    )
 
     def __str__(self):
         return self.task_id

@@ -242,17 +242,27 @@ def reset_enrichment_progress():
         'is_complete': False
     }
 
-def update_progress(current_batch, total_batches, companies_processed, total_companies, current_phase):
-    """Update progress for frontend"""
+def update_progress(current_batch, total_batches, companies_processed, total_companies, current_phase, task=None):
+    """Update progress for frontend and task model"""
     global enrichment_progress
+    progress_percentage = 0
+    if total_companies > 0:
+        progress_percentage = int((companies_processed / total_companies) * 100)
+
     enrichment_progress.update({
         'current_batch': current_batch,
         'total_batches': total_batches,
         'companies_processed': companies_processed,
         'total_companies': total_companies,
         'current_phase': current_phase,
-        'is_complete': False
+        'is_complete': False,
+        'progress': progress_percentage
     })
+
+    # Also update the task in the database if provided
+    if task:
+        task.progress = progress_percentage
+        task.save()
 
 def mark_complete():
     """Mark processing as complete"""
@@ -278,13 +288,13 @@ def orchestrate_enrichment_workflow(company_names, api_key, task):
     found_leads = []
     not_found_leads = company_names
     print(f"📊 Database search disabled: {len(found_leads)} found, {len(not_found_leads)} not found")
-    update_progress(0, 0, len(found_leads), len(company_names), 'database_search')
+    update_progress(0, 0, len(found_leads), len(company_names), 'database_search', task=task)
     #######################################################################################################
 
     # Step 2: Enrich not found leads with AI
     ai_leads = []
     if not_found_leads:
-        ai_leads = enrich_with_ai(not_found_leads, api_key, batch_size=2, task=task)
+        ai_leads = enrich_with_ai(not_found_leads, api_key, batch_size=8, task=task)
         
         # Step 3: Save AI results to global database
         if ai_leads:
@@ -294,7 +304,7 @@ def orchestrate_enrichment_workflow(company_names, api_key, task):
     enriched_results = merge_results(company_names, found_leads, ai_leads)
     
     # Step 5: Retry companies missing phone numbers (single retry only)
-    enriched_results = retry_missing_phones(enriched_results, api_key, task=task)
+    enriched_results = retry_missing_phones(enriched_results, api_key, batch_size=2, task=task)
     
     # Mark as complete
     mark_complete()
@@ -395,7 +405,8 @@ def enrich_with_ai(company_names, api_key, batch_size, task):
             total_batches=total_batches,
             companies_processed=len(results),
             total_companies=len(company_names),
-            current_phase='ai_processing'
+            current_phase='ai_processing',
+            task=task
         )
         
         print(f"🔍 Processing AI batch {current_batch} with {len(batch)} companies")
@@ -652,7 +663,7 @@ def merge_results(company_names, found_leads, ai_leads):
     return enriched_results
 
 
-def retry_missing_phones(enriched_results, api_key, task, batch_size=5):
+def retry_missing_phones(enriched_results, api_key, batch_size, task):
     """
     Retry companies that are missing phone numbers using AI in batches.
     """
@@ -687,6 +698,8 @@ def retry_missing_phones(enriched_results, api_key, task, batch_size=5):
         )
         if ai_batch:
             retry_results.extend(ai_batch)
+            # Save the results from the retry batch to the global database
+            save_to_global_database(ai_batch)
 
     # Update the original results with retry data
     retry_map = {result['company_name']: result for result in retry_results}

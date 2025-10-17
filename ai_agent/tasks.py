@@ -18,27 +18,27 @@ def enrich_data_task(self, company_names, excel_sheet_name):
     )
 
     total_companies = len(company_names)
-    enriched_results = []
-
+    
     try:
-        for i, company_name in enumerate(company_names):
-            enriched_results.extend(orchestrate_enrichment_workflow([company_name], settings.GEMINI_API_KEY, task))
-            task.progress = int(((i + 1) / total_companies) * 100)
-            task.save()
-
+        # The entire list is passed to the workflow, which handles batching internally.
+        enriched_results = orchestrate_enrichment_workflow(company_names, settings.GEMINI_API_KEY, task)
+        
+        # Progress is now updated inside the workflow, but we'll set it to 100 at the end.
+        task.progress = 100
+        
         if enriched_results:
             task.results = json.dumps(enriched_results)
             task.status = 'SUCCESS'
-            task.progress = 100
-            task.completed_at = timezone.now()
-            task.save()
         else:
+            # If no results are returned, but no exception was thrown, it's still a failure.
             task.status = 'FAILURE'
-            task.completed_at = timezone.now()
-            task.save()
+            
     except Exception as e:
         task.status = 'FAILURE'
         task.results = json.dumps({'error': str(e)})
+        
+    finally:
+        # Ensure completion time is always set.
         task.completed_at = timezone.now()
         task.save()
 
