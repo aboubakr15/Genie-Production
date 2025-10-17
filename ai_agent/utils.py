@@ -458,7 +458,7 @@ def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, re
     prompt = f"""You are a business intelligence agent tasked with retrieving verified contact data for {len(company_list)} companies.
 
     === NON-NEGOTIABLE RULES ===
-    1. Process companies SEQUENTIALLY using web_search tool
+    1. Process companies SEQUENTIALLY using grounding_with_google_search tool
     2. Return company names EXACTLY as provided - zero modifications
     3. Return ONE JSON object per company in INPUT ORDER
     4. Missing data = null (never guess, infer, or fabricate)
@@ -471,14 +471,14 @@ def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, re
 
     Search order:
     1. Company website (all pages, not just contact)
-    2. Company Facebook page (thoroughly check posts/about section)
+    2. Company Facebook page (thoroughly check about section)
     3. Google Knowledge Panel (map location sidebar)
     4. LinkedIn, Crunchbase
 
     === TIME ZONE RULES ===
-    - US numbers: Return ONLY 'est', 'cen', or 'pac' (map mst→cen, akst→pac, hst→pac)
-    - Non-US: Country name only (use 'UK' for United Kingdom)
-    - No phone = null timezone
+    - US numbers: Return ONLY 'est', 'cen', or 'pac' (map mst→cen, akst→pac, hst→pac) and also 
+    - Non-US: Country name only (use 'UK' for United Kingdom and for Canada use the same format for US numbers (est/cen/pac))
+    - No phone = null timezone, but if there is a phone number, timezone *MUST* be provided
 
     === DATA VALIDATION ===
        Never return: fake LinkedIn profiles, guessed emails, fabricated phones, assumed domains
