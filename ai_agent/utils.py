@@ -463,7 +463,10 @@ def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, re
     3. Return ONE JSON object per company in INPUT ORDER
     4. Missing data = null (never guess, infer, or fabricate)
     5. Return ONLY final JSON array - no progress updates, explanations, or markdown
-    6. Array must contain exactly {len(company_list)} objects
+    6. Timezone *MUST* be provided if phone number exists, return the closest time zone from the list you are instructed to return from it based on area code or country
+    7. Watch for similar company names - ensure correct matching using grounding tool
+    8. return only one value per field - no arrays or multiple entries seperated by commas
+    9. Array must contain exactly {len(company_list)} objects
 
     === PHONE NUMBER PRIORITY (CRITICAL) ===
     **DIRECT US LINES FIRST**: Prioritize standard geographic numbers (216-xxx-xxxx, 515-xxx-xxxx, 310-xxx-xxxx, etc.)
@@ -476,8 +479,8 @@ def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, re
     4. LinkedIn, Crunchbase
 
     === TIME ZONE RULES ===
-    - US numbers: Return ONLY 'est', 'cen', or 'pac' (map mst→cen, akst→pac, hst→pac) and also 
-    - Non-US: Country name only (use 'UK' for United Kingdom and for Canada use the same format for US numbers (est/cen/pac))
+    - US numbers: Return ONLY 'est', 'cen', or 'pac' (map mst→cen, akst→pac, hst→pac) and also any other US territories to 'cen'
+    - Non-US: Country name only nothing else (use 'UK' for United Kingdom and for Canada use the same format for US numbers (est/cen/pac))
     - No phone = null timezone, but if there is a phone number, timezone *MUST* be provided
 
     === DATA VALIDATION ===
