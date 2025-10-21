@@ -294,7 +294,7 @@ def orchestrate_enrichment_workflow(company_names, api_key, task):
     # Step 2: Enrich not found leads with AI
     ai_leads = []
     if not_found_leads:
-        ai_leads = enrich_with_ai(not_found_leads, api_key, batch_size=8, task=task)
+        ai_leads = enrich_with_ai(not_found_leads, api_key, batch_size=5, task=task)
         
         # Step 3: Save AI results to global database
         if ai_leads:
@@ -304,7 +304,7 @@ def orchestrate_enrichment_workflow(company_names, api_key, task):
     enriched_results = merge_results(company_names, found_leads, ai_leads)
     
     # Step 5: Retry companies missing phone numbers (single retry only)
-    enriched_results = retry_missing_phones(enriched_results, api_key, batch_size=5, task=task)
+    enriched_results = retry_missing_phones(enriched_results, api_key, batch_size=8, task=task)
     
     # Mark as complete
     mark_complete()
