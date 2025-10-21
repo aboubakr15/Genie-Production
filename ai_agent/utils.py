@@ -304,7 +304,7 @@ def orchestrate_enrichment_workflow(company_names, api_key, task):
     enriched_results = merge_results(company_names, found_leads, ai_leads)
     
     # Step 5: Retry companies missing phone numbers (single retry only)
-    enriched_results = retry_missing_phones(enriched_results, api_key, batch_size=2, task=task)
+    enriched_results = retry_missing_phones(enriched_results, api_key, batch_size=5, task=task)
     
     # Mark as complete
     mark_complete()
@@ -453,7 +453,67 @@ def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, re
     company_list_str = "\n".join([f"- {company}" for company in original_company_list])
     
     print(f"🔍 Preparing API request for batch {batch_number} (Retry round {retry_round})...")
-    
+
+#     prompt = f"""You are a precise business intelligence agent.
+#         Your task is to retrieve verified contact information for exactly {len(company_list)} companies provided below.
+
+#         ### CRITICAL RULES
+#         2. You MUST return each company names EXACTLY as provided - do not modify them
+#         3. You MUST return one JSON object per company in the same order as the input list
+#         4. If you cannot find information for a company, still return a JSON object with null values but preserve the company name
+#         5. Make sure there are no US based phone numbers exist online for the compny you are searching before getting any other country's phone number.
+#         6. if you find Google Knowledge Panel which usually has the map location, phnoe number and website of the searched organization
+#           you must search for information in it and return them if they exist.
+#         8. if you return a phone number do not put the time zone as NULL, you must return a time zone as instructed and if there is no phone number do not return any time zone.
+#         9. **IMPORTANT: Search the company's facebook page for emails and phone numbers.**
+#         10. **IMPORTANT: Return only the final complete JSON array. Do NOT show incremental progress or multiple JSON arrays.**
+
+#         ### Primary Directive
+#         You will USE THE GOOGLE SEARCH TOOL to search the internet and process each company **sequentially and independently**.
+#         You must complete the entire research and data structuring process for one company before starting the next.
+
+#         ### Input Companies (Process these EXACTLY in this order):
+#         {company_list_str}
+
+#         ### Data Collection Rules
+#         1. Return only data verified from credible, current sources (company website, LinkedIn, company's Facebook page, Crunchbase)
+#         2. Never guess or infer data or return common formats of data searched, only return real data. Mark missing/unverifiable fields as NULL
+#         3. You are strictly prohibited from returning fake linkedin profiles, fake emails, fake phone numbers, or guessed domains
+#         4. If domain exists, Mandatory website check for contact information
+#         5. Check Google search result sidebar for phone/website
+#         6. Prioritize US and direct phone numbers
+#         7. Search deeply in the website and company facebook page for emails and phone numbers,
+#         not just the contact us page and make sure to look at the facebook page of the company that is referenced on the website.
+
+#         ### Time Zone Rules
+#         8. For US phone numbers: use 'est', 'cen', or 'pac' based on state, you must return a time zone from the following list if you find a US based phone number: ('est', 'cen', 'pac')
+#          even if you find others like ('mst', 'akst', 'hst') or any other time zone, you must return the nearest time zone only from the list which is ('est', 'cen', 'pac').
+#         9. For non-US phone numbers: use country name only (use 'UK' for United Kingdom)
+#         10. If no phone number, time zone should be NULL
+
+#         ### Output Format Requirements
+#         You MUST return a SINGLE JSON array with exactly {len(company_list)} objects, one for each company in the input order.
+
+#         Each object must follow this exact structure:
+#         {{
+#             "company_name": "EXACT COMPANY NAME AS PROVIDED",
+#             "domain": "domain or null",
+#             "phone": "phone or null",
+#             "time_zone": "time zone or null",
+#             "email": "email or null",
+#             "key_personnel": {{
+#                 "name": "name or null",
+#                 "phone": "phone or null", 
+#                 "title": "title or null",
+#                 "email": "email or null"
+#             }}
+#         }}
+
+#         ### Final Output Requirement
+#         Return ONLY the final JSON array with no additional text, explanations, mutliple values at one field or markdown formatting.
+#         Ensure the array has exactly {len(company_list)} objects in the exact same order as the input companies.
+# """
+
     # Enhanced prompt with stricter instructions to prevent cumulative responses
     prompt = f"""You are a business intelligence agent tasked with retrieving verified contact data for {len(company_list)} companies.
 
@@ -463,31 +523,46 @@ def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, re
     3. Return ONE JSON object per company in INPUT ORDER
     4. Missing data = null (never guess, infer, or fabricate)
     5. Return ONLY final JSON array - no progress updates, explanations, or markdown
-    6. Timezone *MUST* be provided if phone number exists, return the closest time zone from the list you are instructed to return from it based on area code or country
-    7. Watch for similar company names - ensure correct matching using grounding tool
-    8. return only one value per field - no arrays or multiple entries seperated by commas
-    9. Array must contain exactly {len(company_list)} objects
+    6. Watch for similar company names - ensure correct matching using grounding tool
+    7. Return only one value per field - no arrays or multiple entries separated by commas
+    8. Array must contain exactly {len(company_list)} objects
 
     === PHONE NUMBER PRIORITY (CRITICAL) ===
     **DIRECT US LINES FIRST**: Prioritize standard geographic numbers (216-xxx-xxxx, 515-xxx-xxxx, 310-xxx-xxxx, etc.)
     Toll-free (800/888/877/866/855/844/833) are LAST RESORT ONLY if no direct line exists.
 
     Search order:
-    1. Company website (all pages, not just contact)
-    2. Company Facebook page (thoroughly check about section)
-    3. Google Knowledge Panel (map location sidebar)
-    4. LinkedIn, Crunchbase
+    1. Company website (all pages, not just contact, find address)
+    2. Google Knowledge Panel (map location sidebar, find address)
+    3. Company Facebook page (thoroughly check about section for address)
+    4. LinkedIn, Crunchbase (find HQ address)
 
-    === TIME ZONE RULES ===
-    - US numbers: Return ONLY 'est', 'cen', or 'pac' (map mst→cen, akst→pac, hst→pac) and also any other US territories to 'cen'
-    - Non-US: Country name only nothing else (use 'UK' for United Kingdom and for Canada use the same format for US numbers (est/cen/pac))
-    - No phone = null timezone, but if there is a phone number, timezone *MUST* be provided
+    === TIME ZONE RULES (REVISED) ===
+    1.  **ADDRESS IS KEY**: The timezone MUST be determined from the company's **primary physical address** (e.g., Headquarters, "Contact Us" address).
+    2.  **MANDATORY**: If a `phone` is found, you *must* also find a physical address to determine the `time_zone`.
+    3.  **NO PHONE, NO TIMEZONE**: If `phone` is `null`, `time_zone` MUST be `null`.
+    4.  **PHONE BUT NO ADDRESS**: If a `phone` is found but NO verifiable physical address can be found, `time_zone` MUST be `null`. (This handles cases with only a toll-free number and no location).
+    5.  **US MAPPING (Strict)**:
+        * If address is in **Eastern Time Zone** (e.g., NY, FL, OH, PA, GA, ME): return **"est"**
+        * If address is in **Central Time Zone** (e.g., TX, IL, MN, AL, MO): return **"cen"**
+        * If address is in **Mountain Time Zone** (e.g., CO, AZ, UT, MT): return **"cen"** (Per your MST->CEN rule)
+        * If address is in **Pacific Time Zone** (e.g., CA, WA, OR, NV): return **"pac"**
+        * If address is in **Alaska (AKST)** or **Hawaii (HST)**: return **"pac"** (Per your AKST/HST->PAC rule)
+        * If address is in **any other US territory** (e.g., Puerto Rico): return **"cen"**
+    6.  **CANADA MAPPING (Strict)**:
+        * If address is in **British Columbia (BC)**: return **"pac"**
+        * If address is in **Alberta (AB), Saskatchewan (SK), Manitoba (MB)**: return **"cen"**
+        * If address is in **Ontario (ON), Quebec (QC), or Atlantic provinces**: return **"est"**
+    7.  **UK MAPPING (Strict)**:
+        * If address is in the **United Kingdom** (England, Scotland, Wales, N. Ireland): return **"UK"**
+    8.  **OTHER COUNTRIES**:
+        * For any other country, return the **full country name** (e.g., "Australia", "Germany", "India").
 
     === DATA VALIDATION ===
-       Never return: fake LinkedIn profiles, guessed emails, fabricated phones, assumed domains
-       Only return: verified data from credible current sources
-       If domain exists: mandatory deep website check
-       Check Facebook pages referenced on company websites
+    * Never return: fake LinkedIn profiles, guessed emails, fabricated phones, assumed domains.
+    * Only return: verified data from credible current sources.
+    * If domain exists: mandatory deep website check for address, phone, and email.
+    * **Timezone Validation**: A `time_zone` (e.g., "est", "cen", "pac", "UK") may ONLY be present if a `phone` is present AND a verifiable physical address was found to justify that timezone.
 
     === INPUT COMPANIES (process in this exact order) ===
     {company_list_str}
