@@ -66,6 +66,8 @@ class EnrichmentTask(models.Model):
     completed_at = models.DateTimeField(null=True, blank=True)
     request_count = models.IntegerField(default=0)
     company_count = models.IntegerField(default=0)
+    total_chunks = models.IntegerField(default=0)
+    chunks_completed = models.IntegerField(default=0)
 
     # Dynamically set owner to Django project name
     owner = models.CharField(max_length=255)

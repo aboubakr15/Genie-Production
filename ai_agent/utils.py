@@ -1,4 +1,4 @@
-from django.db import transaction
+from django.db import transaction, F
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from datetime import timedelta
@@ -245,25 +245,17 @@ def reset_enrichment_progress():
 
 def update_progress(current_batch, total_batches, companies_processed, total_companies, current_phase, task=None):
     """Update progress for frontend and task model"""
-    global enrichment_progress
-    progress_percentage = 0
-    if total_companies > 0:
-        progress_percentage = int((companies_processed / total_companies) * 100)
-
-    enrichment_progress.update({
-        'current_batch': current_batch,
-        'total_batches': total_batches,
-        'companies_processed': companies_processed,
-        'total_companies': total_companies,
-        'current_phase': current_phase,
-        'is_complete': False,
-        'progress': progress_percentage
-    })
-
-    # Also update the task in the database if provided
     if task:
-        task.progress = progress_percentage
-        task.save()
+        # Increment the chunks_completed count and calculate progress
+        task.chunks_completed = F('chunks_completed') + 1
+        task.save(update_fields=['chunks_completed'])
+        task.refresh_from_db()  # Get the latest value
+
+        # Calculate progress as a percentage of chunks completed
+        if task.total_chunks > 0:
+            progress_percentage = int((task.chunks_completed / task.total_chunks) * 100)
+            task.progress = progress_percentage
+            task.save(update_fields=['progress'])
 
 def mark_complete():
     """Mark processing as complete"""

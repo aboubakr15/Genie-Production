@@ -1,18 +1,59 @@
-from celery import shared_task
+from celery import shared_task, group, chain
 from .utils import orchestrate_enrichment_workflow, save_excel_for_task
 from .models import EnrichmentTask
 import json
 from django.conf import settings
 from django.utils import timezone
+import math
+
+# Define the size of each chunk
+CHUNK_SIZE = 20
+
+@shared_task(bind=True)
+def enrich_chunk_task(self, company_names, task_id):
+    """
+    Celery task to process a small chunk of companies.
+    """
+    task = EnrichmentTask.objects.get(task_id=task_id)
+    enriched_results = orchestrate_enrichment_workflow(company_names, settings.GEMINI_API_KEY, task)
+    return enriched_results
+
+@shared_task(bind=True)
+def collect_results_task(self, results, task_id):
+    """
+    Celery task to collect results from all chunks, generate the Excel file,
+    and finalize the main task.
+    """
+    task = EnrichmentTask.objects.get(task_id=task_id)
+    
+    # Flatten the list of lists into a single list of results
+    final_results = [item for sublist in results for item in sublist]
+    
+    try:
+        # Generate the Excel file in memory
+        excel_content = save_excel_for_task(task, final_results, sheet_name=task.excel_sheet_name)
+        # Save the binary content to the database
+        task.results_file_content = excel_content
+        task.status = 'SUCCESS'
+        task.progress = 100
+    except Exception as e:
+        print(f"Error generating or saving Excel content for task {task.task_id}: {e}")
+        task.status = 'FAILURE'
+    finally:
+        task.completed_at = timezone.now()
+        task.save()
+
+    return f"Enrichment complete for {task.excel_sheet_name}"
 
 @shared_task(bind=True)
 def enrich_data_task(self, company_names, excel_sheet_name):
     """
-    Celery task to perform data enrichment in the background.
+    Celery task to manage the data enrichment process by breaking it into chunks.
     """
     task_id = self.request.id
-    # Ensure required DB fields that may not have DB defaults are set explicitly
     owner_name = 'IBH'
+    total_companies = len(company_names)
+    total_chunks = math.ceil(total_companies / CHUNK_SIZE)
 
     task = EnrichmentTask.objects.create(
         task_id=task_id,
@@ -20,65 +61,21 @@ def enrich_data_task(self, company_names, excel_sheet_name):
         status='IN_PROGRESS',
         is_result_downloaded=False,
         owner=owner_name,
-        company_count=len(company_names),
+        company_count=total_companies,
+        total_chunks=total_chunks,
     )
 
-    total_companies = len(company_names)
+    # Create a group of parallel chunk processing tasks
+    chunk_tasks = group(
+        enrich_chunk_task.s(company_names[i:i + CHUNK_SIZE], task_id)
+        for i in range(0, total_companies, CHUNK_SIZE)
+    )
 
-    enriched_results = None
+    # Define a chain: run all chunk tasks in parallel, then run the collector task
+    # with the results of the chunk tasks.
+    workflow = chain(chunk_tasks, collect_results_task.s(task_id=task_id))
+    
+    # Start the workflow
+    workflow.apply_async()
 
-    try:
-        # The entire list is passed to the workflow, which handles batching internally.
-        enriched_results = orchestrate_enrichment_workflow(company_names, settings.GEMINI_API_KEY, task)
-
-        # Progress is now updated inside the workflow, but we'll set it to 100 at the end.
-        task.progress = 100
-
-        if enriched_results:
-            try:
-                # Generate the Excel file in memory
-                excel_content = save_excel_for_task(task, enriched_results, sheet_name=excel_sheet_name)
-                # Save the binary content to the database
-                task.results_file_content = excel_content
-                task.status = 'SUCCESS'
-            except Exception as e:
-                print(f"Error generating or saving Excel content for task {task.task_id}: {e}")
-                task.status = 'FAILURE'
-        else:
-            task.status = 'FAILURE'
-
-    except Exception as e:
-        # Attempt to preserve partial results (if any) and always try to write an Excel
-        task.status = 'FAILURE'
-
-        # If orchestrate_enrichment_workflow returned partial results before crashing, use them
-        if enriched_results and isinstance(enriched_results, list) and len(enriched_results) > 0:
-            results_to_save = enriched_results
-            task.results = json.dumps(results_to_save)
-        else:
-            # No partial results - create a small sheet containing the error message
-            results_to_save = [{
-                'company_name': 'ENRICHMENT_ERROR',
-                'domain': None,
-                'phone': None,
-                'time_zone': None,
-                'email': None,
-                'key_personnel': {'name': None, 'phone': None, 'title': None, 'email': None},
-                'error': str(e)
-            }]
-            task.results = json.dumps({'error': str(e)})
-
-        # Try to save whatever we have to an Excel file so users can download diagnostics
-        try:
-            saved_path = save_excel_for_task(task, results_to_save, sheet_name=excel_sheet_name)
-            print(f"Saved fallback excel for task {task.task_id} -> {saved_path}")
-        except Exception as save_exc:
-            # Log but continue; we don't want the worker to crash here
-            print(f"Error saving fallback excel for task {task.task_id}: {save_exc}")
-
-    finally:
-        # Ensure completion time is always set.
-        task.completed_at = timezone.now()
-        task.save()
-
-    return f"Enrichment complete for {excel_sheet_name}"
+    return f"Enrichment started for {excel_sheet_name}"
