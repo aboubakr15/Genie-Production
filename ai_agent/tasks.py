@@ -45,8 +45,8 @@ def collect_results_task(self, results, task_id):
     """
     task = EnrichmentTask.objects.get(task_id=task_id)
     
-    # Flatten the list of lists into a single list of results
-    final_results = [item for sublist in results for item in sublist]
+    # Flatten the list of lists, filtering out any None values from failed chunks
+    final_results = [item for sublist in results if sublist for item in sublist]
     
     try:
         # Generate the Excel file in memory
