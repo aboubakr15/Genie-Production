@@ -66,10 +66,10 @@ class EnrichmentTask(models.Model):
     request_count = models.IntegerField(default=0)
 
     # Dynamically set owner to Django project name
-    owner = models.CharField(
-        max_length=255,
-        default=os.path.basename(os.path.dirname(settings.BASE_DIR))
-    )
+    owner = models.CharField(max_length=255)
+
+    results_file = models.FileField(upload_to='enrichment_results/', null=True, blank=True)
+    is_result_downloaded = models.BooleanField(default=False)
 
     def __str__(self):
         return self.task_id

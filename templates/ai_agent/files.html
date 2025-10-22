@@ -1,0 +1,29 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>Ready Enrichment Files</h2>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Task ID</th>
+        <th>Sheet Name</th>
+        <th>Completed At</th>
+        <th>Download</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for task in tasks %}
+      <tr>
+        <td>{{ task.task_id }}</td>
+        <td>{{ task.excel_sheet_name }}</td>
+        <td>{{ task.completed_at }}</td>
+        <td><a class="btn btn-primary" href="{% url 'ai_agent:download_file' task.task_id %}">Download</a></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4">No files ready</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

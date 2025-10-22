@@ -10,6 +10,9 @@ from django.http import JsonResponse
 from .tasks import enrich_data_task
 from django.contrib import messages
 from django.utils import timezone
+from django.conf import settings
+from django.http import FileResponse, Http404
+import os
 
 @user_passes_test(lambda user: is_in_group(user, "ai_agent"))
 def index(request):
@@ -110,21 +113,91 @@ def data_enrichment_view(request):
 def get_enrichment_status(request, task_id):
     try:
         task = EnrichmentTask.objects.using('global').get(task_id=task_id)
-        return JsonResponse({'status': task.status, 'progress': task.progress})
+        data = {'status': task.status, 'progress': task.progress}
+        if task.status == 'SUCCESS':
+            # Provide a URL to the results page, not a direct download link.
+            data['results_url'] = request.build_absolute_uri(f"/ai_agent/results/{task.task_id}/")
+        return JsonResponse(data)
     except EnrichmentTask.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Task not found.'}, status=404)
 
 
-def download_enrichment_results(request, task_id):
+def enrichment_results_page(request, task_id):
+    """
+    This view no longer generates files on-demand. It simply checks the task
+    status and redirects to the appropriate page. The file is generated
+    by the Celery task itself.
+    """
     try:
         task = EnrichmentTask.objects.get(task_id=task_id)
         if task.status == 'SUCCESS':
-            results = json.loads(task.results)
-            return generate_excel_response(results, task.excel_sheet_name)
+            # The file should already exist, so we just redirect to the files page.
+            messages.success(request, "Enrichment complete. Your file is ready for download.")
+            return redirect('ai_agent:files')
+        elif task.status == 'FAILURE':
+            messages.error(request, "The enrichment task failed. Please check the logs or try again.")
+            return redirect('ai_agent:data_enrichment')
         else:
-            messages.error(request, "The task is not yet complete, or it has failed.")
+            # Task is still in progress or in another state.
+            messages.info(request, "The task is not yet complete. Please wait for it to finish.")
             return redirect('ai_agent:data_enrichment')
     except EnrichmentTask.DoesNotExist:
         messages.error(request, "Task not found.")
         return redirect('ai_agent:data_enrichment')
+
+
+@user_passes_test(lambda user: is_in_group(user, "ai_agent"))
+def list_enrichment_files(request):
+    """List enrichment tasks that have saved result files."""
+    tasks = EnrichmentTask.objects.filter(status='SUCCESS',is_result_downloaded=False).order_by('-completed_at')
+    return render(request, 'ai_agent/files.html', {'tasks': tasks})
+
+
+@user_passes_test(lambda user: is_in_group(user, "ai_agent"))
+def download_enrichment_file(request, task_id):
+    try:
+        task = EnrichmentTask.objects.get(task_id=task_id)
+        if not task.results_file:
+            messages.error(request, "This task has no associated file to download.")
+            return redirect('ai_agent:files')
+
+        media_root = getattr(settings, 'MEDIA_ROOT', None)
+        if not media_root:
+            messages.error(request, "Server error: MEDIA_ROOT is not configured.")
+            return redirect('ai_agent:files')
+
+        file_path = os.path.join(media_root, str(task.results_file))
+        if not os.path.exists(file_path):
+            messages.error(request, f"File not found on disk for task {task_id}. It may have been deleted or moved.")
+            return redirect('ai_agent:files')
+
+        # Read file content into memory first
+        with open(file_path, 'rb') as f:
+            file_content = f.read()
+
+        # Now that file is closed, we can safely delete it
+        try:
+            os.remove(file_path)
+            task.results_file = None
+            task.is_result_downloaded = True
+            task.save()
+        except Exception as e:
+            print(f"Error deleting file {file_path}: {e}")
+            # Even if deletion fails, we'll continue with the download
+
+        # Create response from memory
+        filename = f"enrichment_results_{task.excel_sheet_name}.xlsx"
+        response = HttpResponse(
+            file_content,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+
+    except EnrichmentTask.DoesNotExist:
+        messages.error(request, "The specified task does not exist.")
+        return redirect('ai_agent:files')
+    except Exception as e:
+        messages.error(request, f"An unexpected error occurred: {e}")
+        return redirect('ai_agent:files')
 

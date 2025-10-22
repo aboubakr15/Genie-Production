@@ -213,6 +213,7 @@ from google.genai import types
 import pandas as pd
 from io import BytesIO
 from django.http import HttpResponse, JsonResponse
+from django.core.files.base import ContentFile
 from .models import GlobalOrganization, GlobalPhoneNumbers, GlobalEmails, GlobalContactNames
 from main.models import Lead, LeadEmails, LeadPhoneNumbers, LeadContactNames
 from datetime import datetime
@@ -468,6 +469,8 @@ def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, re
     8. Array must contain exactly {len(company_list)} objects
 
     === PHONE NUMBER PRIORITY (CRITICAL) ===
+    **MANDATORY**: If phone field contains any value (including toll-free), time_zone MUST NOT be null
+
     **DIRECT US LINES FIRST**: Prioritize standard geographic numbers (216-xxx-xxxx, 515-xxx-xxxx, 310-xxx-xxxx, etc.)
     Toll-free (800/888/877/866/855/844/833) are LAST RESORT ONLY if no direct line exists.
 
@@ -478,31 +481,28 @@ def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, re
     4. LinkedIn, Crunchbase (find HQ address)
 
     === TIME ZONE RULES (REVISED) ===
-    1.  **ADDRESS IS KEY**: The timezone MUST be determined from the company's **primary physical address** (e.g., Headquarters, "Contact Us" address).
-    2.  **MANDATORY**: If a `phone` is found, you *must* also find a physical address to determine the `time_zone`.
-    3.  **NO PHONE, NO TIMEZONE**: If `phone` is `null`, `time_zone` MUST be `null`.
-    4.  **PHONE BUT NO ADDRESS**: If a `phone` is found but NO verifiable physical address can be found, Then get the closest time zones using the area codes, but you **MUST** return a time zone associated with each Phone number.
-    5.  **US MAPPING (Strict)**:
-        * If address is in **Eastern Time Zone** (e.g., NY, FL, OH, PA, GA, ME): return **"est"**
-        * If address is in **Central Time Zone** (e.g., TX, IL, MN, AL, MO): return **"cen"**
-        * If address is in **Mountain Time Zone** (e.g., CO, AZ, UT, MT): return **"cen"** (Per your MST->CEN rule)
-        * If address is in **Pacific Time Zone** (e.g., CA, WA, OR, NV): return **"pac"**
-        * If address is in **Alaska (AKST)** or **Hawaii (HST)**: return **"pac"** (Per your AKST/HST->PAC rule)
-        * If address is in **any other US territory** (e.g., Puerto Rico): return **"cen"**
-    6.  **CANADA MAPPING (Strict)**:
-        * If address is in **British Columbia (BC)**: return **"pac"**
-        * If address is in **Alberta (AB), Saskatchewan (SK), Manitoba (MB)**: return **"cen"**
-        * If address is in **Ontario (ON), Quebec (QC), or Atlantic provinces**: return **"est"**
-    7.  **UK MAPPING (Strict)**:
-        * If address is in the **United Kingdom** (England, Scotland, Wales, N. Ireland): return **"UK"**
-    8.  **OTHER COUNTRIES**:
-        * For any other country, return the **full country name** (e.g., "Australia", "Germany", "India").
+    **US PHONE NUMBERS** (including +1 numbers):
+    - Area codes 201, 202, 203, 212, 215, 216, 217, 218, 219, 224, 225, 228, 229, 231, 234, 239, 240, 248, 251, 252, 253, 254, 256, 260, 262, 267, 269, 270, 272, 274, 276, 281, 283, 301, 302, 303, 304, 305, 307, 308, 309, 310, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 323, 325, 330, 331, 332, 334, 336, 337, 339, 340, 346, 347, 351, 352, 360, 361, 364, 380, 385, 386, 401, 402, 404, 405, 406, 407, 408, 409, 410, 412, 413, 414, 415, 417, 419, 423, 424, 425, 434, 435, 440, 442, 443, 445, 447, 448, 458, 463, 464, 469, 470, 475, 478, 479, 480, 484, 501, 502, 503, 504, 505, 507, 508, 509, 510, 512, 513, 515, 516, 517, 518, 520, 530, 531, 534, 539, 540, 541, 551, 557, 559, 561, 562, 563, 564, 567, 570, 571, 573, 574, 575, 580, 585, 586, 601, 602, 603, 605, 606, 607, 608, 609, 610, 612, 614, 615, 616, 617, 618, 619, 620, 623, 626, 627, 628, 629, 630, 631, 636, 640, 641, 646, 650, 651, 657, 659, 660, 661, 662, 667, 669, 670, 671, 678, 679, 680, 681, 682, 684, 689, 701, 702, 703, 704, 706, 707, 708, 712, 713, 714, 715, 716, 717, 718, 719, 720, 724, 725, 726, 727, 730, 731, 732, 734, 737, 740, 743, 747, 754, 757, 760, 762, 763, 764, 765, 769, 770, 772, 773, 774, 775, 779, 781, 785, 786, 787, 801, 802, 803, 804, 805, 806, 808, 810, 812, 813, 814, 815, 816, 817, 818, 820, 826, 828, 830, 831, 832, 835, 838, 839, 840, 843, 845, 847, 848, 850, 854, 856, 857, 858, 859, 860, 862, 863, 864, 865, 870, 872, 878, 901, 903, 904, 906, 907, 908, 909, 910, 912, 913, 914, 915, 916, 917, 918, 919, 920, 925, 927, 928, 929, 930, 931, 934, 936, 937, 938, 939, 940, 941, 943, 945, 947, 948, 949, 951, 952, 954, 956, 957, 959, 970, 971, 972, 973, 975, 978, 979, 980, 984, 985, 986, 989 → 'est'
+    - Area codes 205, 210, 214, 217, 219, 224, 225, 228, 229, 251, 256, 260, 262, 270, 272, 281, 309, 312, 314, 316, 317, 318, 319, 320, 321, 325, 331, 337, 346, 347, 351, 352, 361, 364, 385, 402, 404, 405, 406, 407, 408, 409, 410, 412, 413, 414, 417, 419, 423, 424, 425, 430, 432, 434, 435, 440, 443, 445, 447, 458, 463, 464, 469, 470, 475, 478, 479, 480, 484, 501, 502, 503, 504, 505, 507, 508, 509, 510, 512, 513, 515, 516, 517, 518, 520, 530, 531, 534, 539, 540, 541, 551, 557, 559, 561, 562, 563, 564, 567, 570, 571, 573, 574, 575, 580, 585, 586, 601, 602, 603, 605, 606, 607, 608, 609, 610, 612, 614, 615, 616, 617, 618, 619, 620, 623, 626, 627, 628, 629, 630, 631, 636, 640, 641, 646, 650, 651, 657, 659, 660, 661, 662, 667, 669, 670, 671, 678, 679, 680, 681, 682, 684, 689, 701, 702, 703, 704, 706, 707, 708, 712, 713, 714, 715, 716, 717, 718, 719, 720, 724, 725, 726, 727, 730, 731, 732, 734, 737, 740, 743, 747, 754, 757, 760, 762, 763, 764, 765, 769, 770, 772, 773, 774, 775, 779, 781, 785, 786, 787, 801, 802, 803, 804, 805, 806, 808, 810, 812, 813, 814, 815, 816, 817, 818, 820, 826, 828, 830, 831, 832, 835, 838, 839, 840, 843, 845, 847, 848, 850, 854, 856, 857, 858, 859, 860, 862, 863, 864, 865, 870, 872, 878, 901, 903, 904, 906, 907, 908, 909, 910, 912, 913, 914, 915, 916, 917, 918, 919, 920, 925, 927, 928, 929, 930, 931, 934, 936, 937, 938, 939, 940, 941, 943, 945, 947, 948, 949, 951, 952, 954, 956, 957, 959, 970, 971, 972, 973, 975, 978, 979, 980, 984, 985, 986, 989 → 'cen'
+    - Area codes 206, 208, 209, 213, 253, 310, 323, 360, 408, 415, 424, 425, 442, 458, 503, 509, 510, 530, 559, 562, 619, 626, 627, 628, 650, 657, 661, 669, 678, 707, 714, 747, 760, 764, 769, 775, 778, 805, 818, 831, 858, 909, 916, 925, 935, 949, 951, 971 → 'pac'
+
+    **CANADA PHONE NUMBERS** (+1 numbers):
+    - Area codes 204, 226, 236, 249, 250, 263, 289, 306, 343, 365, 367, 368, 403, 416, 418, 431, 437, 438, 450, 467, 474, 506, 514, 519, 548, 579, 581, 587, 600, 604, 613, 639, 647, 672, 678, 705, 709, 742, 753, 778, 780, 782, 807, 819, 825, 867, 873, 902, 905 → Use US mapping above
+
+    **TOLL-FREE NUMBERS** (800, 888, 877, 866, 855, 844, 833):
+    - If company has US presence → 'est' (default)
+    - If company is Canada-only → 'cen' 
+    - If international → use country name
+
+    **NON-US/NON-CANADA PHONE NUMBERS**:
+    - Return country name only (e.g., 'UK', 'Australia', 'Germany')
+    - Use 'UK' for United Kingdom
 
     === DATA VALIDATION ===
     * Never return: fake LinkedIn profiles, guessed emails, fabricated phones, assumed domains.
     * Only return: verified data from credible current sources.
     * If domain exists: mandatory deep website check for address, phone, and email.
-    * **Timezone Validation**: A `time_zone` (e.g., "est", "cen", "pac", "UK") may ONLY be present if a `phone` is present AND a verifiable physical address was found to justify that timezone.
+    * **Timezone Validation**: A `time_zone` (e.g., "est", "cen", "pac", "UK") may ONLY be present if a `phone` is present.
 
     === INPUT COMPANIES (process in this exact order) ===
     {company_list_str}
@@ -725,49 +725,66 @@ def retry_missing_phones(enriched_results, api_key, batch_size, task):
     return enriched_results
 
 
-def generate_excel_response(enriched_results, sheet_name="Enriched Leads"):
-    """
-    Generate styled Excel file from enriched results with custom sheet name
-    """
-    # Validate and clean sheet name
-    sheet_name = clean_sheet_name(sheet_name) if sheet_name else "Enriched Leads"
-    
-    # Build output data for Excel
-    output_data = []
-    for result in enriched_results:
-        key_personnel = result.get("key_personnel", {})
-        phone_number = result.get("phone", "")
-        email = result.get("email", "")
-        
-        output_data.append({
-            "Company Name": result.get("company_name"),
-            # "Domain": result.get("domain", ""),
-            "Phone Number": phone_number,
-            "Time Zone": result.get("time_zone", ""),
-            "Email": email,
-            "DM Name": key_personnel.get("name", ""),
-            "Direct / Cell Number": key_personnel.get("phone", ""),
-            "Contact Title": key_personnel.get("title", ""),
-            "Contact Email": key_personnel.get("email", ""),
-            "_MissingPhone": "MISSING" if not phone_number else "",
-            "_MissingEmail": "MISSING" if not email else ""
-        })
+def save_excel_for_task(task, enriched_results, sheet_name="Enriched Leads"):
+    """Save the generated Excel to MEDIA_ROOT/enrichment_results/<task_id>.xlsx and attach to task.results_file"""
+    from django.conf import settings
+    import os
 
-    output_df = pd.DataFrame(output_data)
+    print(f"Debug: Starting save_excel_for_task for task_id={task.task_id}")
+
+    # Ensure the folder exists
+    media_dir = getattr(settings, 'MEDIA_ROOT', None)
+    if not media_dir:
+        raise RuntimeError('MEDIA_ROOT is not configured. Set MEDIA_ROOT in settings.py')
     
-    # Create Excel file
+    print(f"Debug: MEDIA_ROOT={media_dir}")
+
+    target_dir = os.path.join(media_dir, 'enrichment_results')
+    print(f"Debug: target_dir={target_dir}")
+    os.makedirs(target_dir, exist_ok=True)
+
+    # Build filename
+    safe_name = f"{task.task_id}.xlsx" if task and task.task_id else "default.xlsx"
+    print(f"Debug: safe_name={safe_name}")
+    file_path = os.path.join(target_dir, safe_name)
+    print(f"Debug: file_path={file_path}")
+
+    # Use the Excel generation logic with proper formatting
     buffer = BytesIO()
     with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+        # Build output data for Excel
+        output_data = []
+        for result in enriched_results:
+            key_personnel = result.get("key_personnel", {})
+            phone_number = result.get("phone", "")
+            email = result.get("email", "")
+            
+            dm_name_parts = [
+                str(key_personnel.get("name", "") or ""),
+                str(key_personnel.get("title", "") or "")
+            ]
+            dm_name = "/".join(part for part in dm_name_parts if part)
+
+            output_data.append({
+                "Company Name": result.get("company_name"),
+                "Phone Number": phone_number,
+                "Time Zone": result.get("time_zone", ""),
+                "Direct / Cell Number": key_personnel.get("phone", ""),
+                "Email": email,
+                "DM Name": dm_name,
+                "Contact Email": key_personnel.get("email", ""),
+                "_MissingPhone": "MISSING" if not phone_number else "",
+                "_MissingEmail": "MISSING" if not email else ""
+            })
+
+        output_df = pd.DataFrame(output_data)
+
         # Remove flag columns for display
         columns_to_drop = ['_MissingPhone', '_MissingEmail']
-        existing_columns_to_drop = [col for col in columns_to_drop if col in output_df.columns]
+        display_df = output_df.drop(columns=[col for col in columns_to_drop if col in output_df.columns])
         
-        if existing_columns_to_drop:
-            display_df = output_df.drop(columns=existing_columns_to_drop)
-        else:
-            display_df = output_df
-        
-        # Write data to Excel
+        # Write data to Excel with proper sheet name
+        sheet_name = clean_sheet_name(task.excel_sheet_name or sheet_name)
         display_df.to_excel(writer, sheet_name=sheet_name, index=False, startrow=1, header=False)
         
         workbook = writer.book
@@ -778,7 +795,7 @@ def generate_excel_response(enriched_results, sheet_name="Enriched Leads"):
             'bold': True,
             'text_wrap': True,
             'valign': 'top',
-            'fg_color': '#366092',  # Dark blue background
+            'fg_color': '#366092',
             'font_color': 'white',
             'border': 1,
             'font_size': 12,
@@ -799,86 +816,134 @@ def generate_excel_response(enriched_results, sheet_name="Enriched Leads"):
             'border': 1,
             'font_size': 10,
             'font_name': 'Arial',
-            'font_color': '#FF0000',  # Red color for missing data
-            'bg_color': '#FFE6E6'     # Light red background
+            'font_color': '#FF0000',
+            'bg_color': '#FFE6E6'
         })
         
         # Set column widths
         column_widths = {
             'Company Name': 30,
-            # 'Domain': 25,
             'Phone Number': 20,
             'Time Zone': 15,
             'Email': 30,
             'DM Name': 25,
             'Direct / Cell Number': 20,
-            'Contact Title': 25,
             'Contact Email': 30
         }
         
         # Write headers with formatting
+        print("Debug: Writing headers and formatting...")
         for col_num, column_name in enumerate(display_df.columns):
+            print(f"Debug: Writing header column {col_num}: {column_name}")
             worksheet.write(0, col_num, column_name, header_format)
-            # Set column width
-            width = column_widths.get(column_name, 15)
-            worksheet.set_column(col_num, col_num, width)
-        
-        # Write data rows with conditional formatting for empty cells
+            worksheet.set_column(col_num, col_num, column_widths.get(column_name, 15))
+            
+        # Write data rows with conditional formatting
+        print("Debug: Writing data rows...")
         for row_num, (index, row) in enumerate(display_df.iterrows(), start=1):
             for col_num, value in enumerate(row):
-                # Use missing format for empty phone/email fields
                 if (display_df.columns[col_num] in ['Phone Number', 'Email', 'Direct / Cell Number', 'Contact Email'] 
                     and not value):
+                    print(f"Debug: Writing row {row_num} col {col_num}: {value} (missing)")
                     worksheet.write(row_num, col_num, value, missing_format)
                 else:
+                    print(f"Debug: Writing row {row_num} col {col_num}: {value}")
                     worksheet.write(row_num, col_num, value, cell_format)
         
-        # Add autofilter
+        # Add autofilter and freeze header
         worksheet.autofilter(0, 0, len(display_df), len(display_df.columns) - 1)
-        
-        # Freeze header row
         worksheet.freeze_panes(1, 0)
         
-        # Add summary with improved formatting
-        summary_format = workbook.add_format({
-            'bold': True,
-            'font_size': 11,
-            'font_name': 'Arial'
-        })
-        
-        normal_format = workbook.add_format({
-            'font_size': 10,
-            'font_name': 'Arial'
-        })
-        
-        summary_row = len(display_df) + 3
-        
-        # Calculate statistics
+        # Add summary section
         total_companies = len(enriched_results)
         companies_with_phone = len([r for r in enriched_results if r.get('phone')])
         companies_with_email = len([r for r in enriched_results if r.get('email')])
-        # companies_with_domain = len([r for r in enriched_results if r.get('domain')])
         
-        # Write summary
+        summary_format = workbook.add_format({'bold': True, 'font_size': 11, 'font_name': 'Arial'})
+        normal_format = workbook.add_format({'font_size': 10, 'font_name': 'Arial'})
+        
+        summary_row = len(display_df) + 3
         worksheet.write(summary_row, 0, "Data Enrichment Summary:", summary_format)
         worksheet.write(summary_row + 1, 0, f"Total Companies Processed: {total_companies}", normal_format)
         worksheet.write(summary_row + 2, 0, f"Companies with Phone: {companies_with_phone} ({companies_with_phone/total_companies*100:.1f}%)", normal_format)
         worksheet.write(summary_row + 3, 0, f"Companies with Email: {companies_with_email} ({companies_with_email/total_companies*100:.1f}%)", normal_format)
-        # worksheet.write(summary_row + 4, 0, f"Companies with Domain: {companies_with_domain} ({companies_with_domain/total_companies*100:.1f}%)", normal_format)
-        worksheet.write(summary_row + 5, 0, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", normal_format)
+        worksheet.write(summary_row + 4, 0, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", normal_format)
         
-        # Set summary column width
-        worksheet.set_column(0, 0, 35)
-    
+        worksheet.set_column(0, 0, 35)  # Set summary column width
+
     buffer.seek(0)
 
-    # Create filename from sheet name
-    filename = f"{sheet_name.lower().replace(' ', '_')}.xlsx"
-    
-    response = HttpResponse(buffer.getvalue(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    
-    return response
+    # Try to save using Django's FileField API so storage backends are respected
+    print("Debug: Getting file content from buffer...")
+    file_content = buffer.getvalue()
+    django_file = ContentFile(file_content)
+
+    try:
+        print(f"Debug: Saving file via FileField API. safe_name={safe_name}")
+        # Save the file via the FileField and let it save the model (save=True)
+        # This uses the configured storage backend.
+        task.results_file.save(safe_name, django_file, save=True)
+        print(f"Debug: FileField.save completed. task.results_file.name={task.results_file.name}")
+
+        # Ensure the model is persisted to 'global' DB if router requires it
+        try:
+            print("Debug: Saving task to global database...")
+            task.save(using='global')
+            print("Debug: Task saved to global database successfully")
+        except Exception as db_exc:
+            print(f"Debug: Failed to save to global DB, trying default: {db_exc}")
+            try:
+                task.save()
+                print("Debug: Task saved to default database successfully")
+            except Exception as db_exc2:
+                print(f"Error persisting task after FileField.save for task {task.task_id}: {db_exc2}")
+
+        # Diagnostics: print what was saved and where
+        try:
+            from django.core.files.storage import default_storage
+            stored_name = task.results_file.name
+            print(f"Debug: task.results_file.name -> {stored_name}")
+            exists_in_storage = False
+            try:
+                exists_in_storage = default_storage.exists(stored_name)
+            except Exception as ds_exc:
+                print(f"Warning checking default_storage.exists: {ds_exc}")
+
+            # Try to compute a filesystem path for local storage backends
+            try:
+                storage_path = default_storage.path(stored_name)
+            except Exception:
+                storage_path = os.path.join(getattr(__import__('django.conf').conf.settings, 'MEDIA_ROOT'), stored_name)
+
+            print(f"Debug: storage_path -> {storage_path}, exists -> {os.path.exists(storage_path)}, default_storage.exists -> {exists_in_storage}")
+        except Exception as diag_exc:
+            print(f"Debugging prints failed for task {task.task_id}: {diag_exc}")
+
+        return task.results_file.name
+
+    except Exception as e:
+        # Best-effort fallback: try writing directly to disk and set the field
+        print(f"Error saving file via FileField for task {task.task_id}: {e}")
+        try:
+            os.makedirs(target_dir, exist_ok=True)
+            with open(file_path, 'wb') as f:
+                f.write(file_content)
+
+            relative_path = os.path.join('enrichment_results', safe_name)
+            task.results_file = relative_path
+            try:
+                task.save(using='global')
+            except Exception as db_exc:
+                try:
+                    task.save()
+                except Exception as db_exc2:
+                    print(f"Error saving fallback task.results_file to DB for task {task.task_id}: {db_exc} then {db_exc2}")
+                    raise
+
+            return relative_path
+        except Exception as final_exc:
+            print(f"Final failure saving excel for task {task.task_id}: {final_exc}")
+            raise
 
 
 def clean_sheet_name(name):
@@ -891,7 +956,6 @@ def clean_sheet_name(name):
     cleaned = re.sub(r'[\\/*?\[\]:]', '', name)
     # Truncate to 200 characters
     return cleaned[:200]
-
 
 
 # Helper functions #

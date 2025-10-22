@@ -52,6 +52,18 @@ This is a Django-based CRM application designed to manage leads, sales, and oper
 - **Database Routing**: The project uses a database router (`IBH/database_router.py`) to direct database queries to the appropriate database based on the app.
 - **Celery for Background Tasks**: The `ai_agent` and `leads` apps use Celery for running background tasks. See `tasks.py` in these apps for examples.
 
+- **Database Migration**
+when making changes to models, ensure to create and apply migrations using:
+    ```bash
+    python manage.py makemigrations
+    python manage.py migrate
+    ```
+in case of model changes in ai_agent, specify the database name while making migrations:
+    ```bash
+    python manage.py makemigrations ai_agent
+    python manage.py migrate ai_agent --database=global
+    ```
+
 ### Example: Adding a new view
 
 To add a new view, you would typically need to:

@@ -244,12 +244,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     if (data.status === 'SUCCESS') {
                         clearInterval(interval);
-                        displayMessage('Enrichment complete! Downloading results...', 'success');
-                        window.location.href = `/ai_agent/download_results/${taskId}/`;
+                        displayMessage('Enrichment complete! Preparing download...', 'success');
                         LoadingManager.hide();
                         submitBtn.disabled = false;
                         submitBtn.classList.remove('btn-loading');
                         submitBtn.innerHTML = window.originalButtonHTML;
+
+                        if (data.download_url) {
+                            // Redirect directly to saved file
+                            window.location.href = data.download_url;
+                        } else {
+                            // Fallback to files list where user can download
+                            displayMessage('Your file is ready. Visit the <a href="/ai_agent/files/">Files</a> page to download.', 'success');
+                        }
                     } else if (data.status === 'FAILURE') {
                         clearInterval(interval);
                         displayMessage('Enrichment task failed. Please try again.', 'danger');
