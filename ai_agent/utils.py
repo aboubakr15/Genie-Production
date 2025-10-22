@@ -503,6 +503,7 @@ def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, re
     * Only return: verified data from credible current sources.
     * If domain exists: mandatory deep website check for address, phone, and email.
     * **Timezone Validation**: A `time_zone` (e.g., "est", "cen", "pac", "UK") may ONLY be present if a `phone` is present.
+    * **Timezone Validation**: If a phone is present there must be a time zone use the address or the area code or even the country to get an area code, but you are strictly prohibited from returning a phone number entry without it's time zone.
 
     === INPUT COMPANIES (process in this exact order) ===
     {company_list_str}
