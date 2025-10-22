@@ -60,10 +60,11 @@ class EnrichmentTask(models.Model):
     excel_sheet_name = models.CharField(max_length=255, default='Enriched Leads')
     status = models.CharField(max_length=50, default='PENDING')
     progress = models.IntegerField(default=0)
-    results = models.TextField(null=True, blank=True)
+    results = models.JSONField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     request_count = models.IntegerField(default=0)
+    company_count = models.IntegerField(default=0)
 
     # Dynamically set owner to Django project name
     owner = models.CharField(max_length=255)

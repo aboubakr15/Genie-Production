@@ -20,6 +20,7 @@ def enrich_data_task(self, company_names, excel_sheet_name):
         status='IN_PROGRESS',
         is_result_downloaded=False,
         owner=owner_name,
+        company_count=len(company_names),
     )
 
     total_companies = len(company_names)
