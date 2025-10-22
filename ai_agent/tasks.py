@@ -21,21 +21,19 @@ def enrich_chunk_task(self, company_names, task_id):
     try:
         enriched_results = orchestrate_enrichment_workflow(company_names, settings.GEMINI_API_KEY, task)
     finally:
-        # This block ensures that progress is updated even if the workflow fails
-        with transaction.atomic():
-            # Lock the task row to prevent race conditions
-            task_to_update = EnrichmentTask.objects.select_for_update().get(task_id=task_id)
-            
-            # Increment the completed chunks count
-            task_to_update.chunks_completed = F('chunks_completed') + 1
-            task_to_update.save(update_fields=['chunks_completed'])
-            task_to_update.refresh_from_db()
+        # This block ensures that progress is updated even if the workflow fails.
+        # We use an F() expression to atomically increment the counter in the database,
+        # which prevents race conditions without needing select_for_update.
+        task_to_update = EnrichmentTask.objects.get(task_id=task_id)
+        task_to_update.chunks_completed = F('chunks_completed') + 1
+        task_to_update.save(update_fields=['chunks_completed'])
+        task_to_update.refresh_from_db()
 
-            # Calculate and save the new progress percentage
-            if task_to_update.total_chunks > 0:
-                progress_percentage = int((task_to_update.chunks_completed / task_to_update.total_chunks) * 100)
-                task_to_update.progress = progress_percentage
-                task_to_update.save(update_fields=['progress'])
+        # Calculate and save the new progress percentage
+        if task_to_update.total_chunks > 0:
+            progress_percentage = int((task_to_update.chunks_completed / task_to_update.total_chunks) * 100)
+            task_to_update.progress = progress_percentage
+            task_to_update.save(update_fields=['progress'])
 
     return enriched_results
 
