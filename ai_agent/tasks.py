@@ -35,8 +35,15 @@ def enrich_data_task(self, company_names, excel_sheet_name):
         task.progress = 100
 
         if enriched_results:
-            task.results = json.dumps(enriched_results)
-            task.status = 'SUCCESS'
+            try:
+                # Generate the Excel file in memory
+                excel_content = save_excel_for_task(task, enriched_results, sheet_name=excel_sheet_name)
+                # Save the binary content to the database
+                task.results_file_content = excel_content
+                task.status = 'SUCCESS'
+            except Exception as e:
+                print(f"Error generating or saving Excel content for task {task.task_id}: {e}")
+                task.status = 'FAILURE'
         else:
             task.status = 'FAILURE'
 

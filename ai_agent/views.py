@@ -157,26 +157,18 @@ def list_enrichment_files(request):
 def download_enrichment_file(request, task_id):
     try:
         task = EnrichmentTask.objects.get(task_id=task_id)
-        if not task.results:
-            messages.error(request, "This task has no results to download.")
-            return redirect('ai_agent:files')
-
-        # Generate the Excel file on-demand from the stored results
-        try:
-            results = json.loads(task.results)
-            file_content = save_excel_for_task(task, results, task.excel_sheet_name)
-        except Exception as e:
-            messages.error(request, f"Could not generate Excel file: {e}")
+        if not task.results_file_content:
+            messages.error(request, "This task has no file content to download.")
             return redirect('ai_agent:files')
 
         # Mark the task as downloaded
         task.is_result_downloaded = True
         task.save()
 
-        # Create response from memory
+        # Create response from the binary content stored in the database
         filename = f"enrichment_results_{task.excel_sheet_name}.xlsx"
         response = HttpResponse(
-            file_content,
+            task.results_file_content,
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
         response['Content-Disposition'] = f'attachment; filename="{filename}"'

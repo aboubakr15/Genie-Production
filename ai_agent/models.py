@@ -60,7 +60,8 @@ class EnrichmentTask(models.Model):
     excel_sheet_name = models.CharField(max_length=255, default='Enriched Leads')
     status = models.CharField(max_length=50, default='PENDING')
     progress = models.IntegerField(default=0)
-    results = models.JSONField(null=True, blank=True)
+    results = models.JSONField(null=True, blank=True)  # We'll keep this for potential small-scale data or metadata
+    results_file_content = models.BinaryField(null=True, blank=True)  # To store the generated Excel file
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     request_count = models.IntegerField(default=0)
@@ -69,6 +70,7 @@ class EnrichmentTask(models.Model):
     # Dynamically set owner to Django project name
     owner = models.CharField(max_length=255)
 
+    # This FileField will no longer be used for storage, but can be kept for other metadata if needed
     results_file = models.FileField(upload_to='enrichment_results/', null=True, blank=True)
     is_result_downloaded = models.BooleanField(default=False)
 
