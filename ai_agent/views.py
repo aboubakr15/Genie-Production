@@ -157,33 +157,21 @@ def list_enrichment_files(request):
 def download_enrichment_file(request, task_id):
     try:
         task = EnrichmentTask.objects.get(task_id=task_id)
-        if not task.results_file:
-            messages.error(request, "This task has no associated file to download.")
+        if not task.results:
+            messages.error(request, "This task has no results to download.")
             return redirect('ai_agent:files')
 
-        media_root = getattr(settings, 'MEDIA_ROOT', None)
-        if not media_root:
-            messages.error(request, "Server error: MEDIA_ROOT is not configured.")
-            return redirect('ai_agent:files')
-
-        file_path = os.path.join(media_root, str(task.results_file))
-        if not os.path.exists(file_path):
-            messages.error(request, f"File not found on disk for task {task_id}. It may have been deleted or moved.")
-            return redirect('ai_agent:files')
-
-        # Read file content into memory first
-        with open(file_path, 'rb') as f:
-            file_content = f.read()
-
-        # Now that file is closed, we can safely delete it
+        # Generate the Excel file on-demand from the stored results
         try:
-            os.remove(file_path)
-            task.results_file = None
-            task.is_result_downloaded = True
-            task.save()
+            results = json.loads(task.results)
+            file_content = save_excel_for_task(task, results, task.excel_sheet_name)
         except Exception as e:
-            print(f"Error deleting file {file_path}: {e}")
-            # Even if deletion fails, we'll continue with the download
+            messages.error(request, f"Could not generate Excel file: {e}")
+            return redirect('ai_agent:files')
+
+        # Mark the task as downloaded
+        task.is_result_downloaded = True
+        task.save()
 
         # Create response from memory
         filename = f"enrichment_results_{task.excel_sheet_name}.xlsx"

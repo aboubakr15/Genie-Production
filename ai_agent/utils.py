@@ -726,28 +726,9 @@ def retry_missing_phones(enriched_results, api_key, batch_size, task):
 
 
 def save_excel_for_task(task, enriched_results, sheet_name="Enriched Leads"):
-    """Save the generated Excel to MEDIA_ROOT/enrichment_results/<task_id>.xlsx and attach to task.results_file"""
+    """Generate an Excel file in memory and return its content."""
     from django.conf import settings
     import os
-
-    print(f"Debug: Starting save_excel_for_task for task_id={task.task_id}")
-
-    # Ensure the folder exists
-    media_dir = getattr(settings, 'MEDIA_ROOT', None)
-    if not media_dir:
-        raise RuntimeError('MEDIA_ROOT is not configured. Set MEDIA_ROOT in settings.py')
-    
-    print(f"Debug: MEDIA_ROOT={media_dir}")
-
-    target_dir = os.path.join(media_dir, 'enrichment_results')
-    print(f"Debug: target_dir={target_dir}")
-    os.makedirs(target_dir, exist_ok=True)
-
-    # Build filename
-    safe_name = f"{task.task_id}.xlsx" if task and task.task_id else "default.xlsx"
-    print(f"Debug: safe_name={safe_name}")
-    file_path = os.path.join(target_dir, safe_name)
-    print(f"Debug: file_path={file_path}")
 
     # Use the Excel generation logic with proper formatting
     buffer = BytesIO()
@@ -832,22 +813,17 @@ def save_excel_for_task(task, enriched_results, sheet_name="Enriched Leads"):
         }
         
         # Write headers with formatting
-        print("Debug: Writing headers and formatting...")
         for col_num, column_name in enumerate(display_df.columns):
-            print(f"Debug: Writing header column {col_num}: {column_name}")
             worksheet.write(0, col_num, column_name, header_format)
             worksheet.set_column(col_num, col_num, column_widths.get(column_name, 15))
             
         # Write data rows with conditional formatting
-        print("Debug: Writing data rows...")
         for row_num, (index, row) in enumerate(display_df.iterrows(), start=1):
             for col_num, value in enumerate(row):
                 if (display_df.columns[col_num] in ['Phone Number', 'Email', 'Direct / Cell Number', 'Contact Email'] 
                     and not value):
-                    print(f"Debug: Writing row {row_num} col {col_num}: {value} (missing)")
                     worksheet.write(row_num, col_num, value, missing_format)
                 else:
-                    print(f"Debug: Writing row {row_num} col {col_num}: {value}")
                     worksheet.write(row_num, col_num, value, cell_format)
         
         # Add autofilter and freeze header
@@ -872,78 +848,7 @@ def save_excel_for_task(task, enriched_results, sheet_name="Enriched Leads"):
         worksheet.set_column(0, 0, 35)  # Set summary column width
 
     buffer.seek(0)
-
-    # Try to save using Django's FileField API so storage backends are respected
-    print("Debug: Getting file content from buffer...")
-    file_content = buffer.getvalue()
-    django_file = ContentFile(file_content)
-
-    try:
-        print(f"Debug: Saving file via FileField API. safe_name={safe_name}")
-        # Save the file via the FileField and let it save the model (save=True)
-        # This uses the configured storage backend.
-        task.results_file.save(safe_name, django_file, save=True)
-        print(f"Debug: FileField.save completed. task.results_file.name={task.results_file.name}")
-
-        # Ensure the model is persisted to 'global' DB if router requires it
-        try:
-            print("Debug: Saving task to global database...")
-            task.save(using='global')
-            print("Debug: Task saved to global database successfully")
-        except Exception as db_exc:
-            print(f"Debug: Failed to save to global DB, trying default: {db_exc}")
-            try:
-                task.save()
-                print("Debug: Task saved to default database successfully")
-            except Exception as db_exc2:
-                print(f"Error persisting task after FileField.save for task {task.task_id}: {db_exc2}")
-
-        # Diagnostics: print what was saved and where
-        try:
-            from django.core.files.storage import default_storage
-            stored_name = task.results_file.name
-            print(f"Debug: task.results_file.name -> {stored_name}")
-            exists_in_storage = False
-            try:
-                exists_in_storage = default_storage.exists(stored_name)
-            except Exception as ds_exc:
-                print(f"Warning checking default_storage.exists: {ds_exc}")
-
-            # Try to compute a filesystem path for local storage backends
-            try:
-                storage_path = default_storage.path(stored_name)
-            except Exception:
-                storage_path = os.path.join(getattr(__import__('django.conf').conf.settings, 'MEDIA_ROOT'), stored_name)
-
-            print(f"Debug: storage_path -> {storage_path}, exists -> {os.path.exists(storage_path)}, default_storage.exists -> {exists_in_storage}")
-        except Exception as diag_exc:
-            print(f"Debugging prints failed for task {task.task_id}: {diag_exc}")
-
-        return task.results_file.name
-
-    except Exception as e:
-        # Best-effort fallback: try writing directly to disk and set the field
-        print(f"Error saving file via FileField for task {task.task_id}: {e}")
-        try:
-            os.makedirs(target_dir, exist_ok=True)
-            with open(file_path, 'wb') as f:
-                f.write(file_content)
-
-            relative_path = os.path.join('enrichment_results', safe_name)
-            task.results_file = relative_path
-            try:
-                task.save(using='global')
-            except Exception as db_exc:
-                try:
-                    task.save()
-                except Exception as db_exc2:
-                    print(f"Error saving fallback task.results_file to DB for task {task.task_id}: {db_exc} then {db_exc2}")
-                    raise
-
-            return relative_path
-        except Exception as final_exc:
-            print(f"Final failure saving excel for task {task.task_id}: {final_exc}")
-            raise
+    return buffer.getvalue()
 
 
 def clean_sheet_name(name):

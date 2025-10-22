@@ -36,18 +36,8 @@ def enrich_data_task(self, company_names, excel_sheet_name):
 
         if enriched_results:
             task.results = json.dumps(enriched_results)
-            # Save excel to disk and attach to task
-            try:
-                saved_path = save_excel_for_task(task, enriched_results, sheet_name=excel_sheet_name)
-                print(f"Saved excel for task {task.task_id} -> {saved_path}")
-                # Only mark as SUCCESS if the file was saved
-                task.status = 'SUCCESS'
-            except Exception as save_exc:
-                # If saving the excel fails, the entire task is a failure.
-                print(f"Error: failed to save excel for task {task.task_id}: {save_exc}")
-                task.status = 'FAILURE'
+            task.status = 'SUCCESS'
         else:
-            # If no results are returned, but no exception was thrown, it's still a failure.
             task.status = 'FAILURE'
 
     except Exception as e:
