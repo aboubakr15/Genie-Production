@@ -720,7 +720,12 @@ def save_excel_for_task(task, enriched_results, sheet_name="Enriched Leads"):
         # Build output data for Excel
         output_data = []
         for result in enriched_results:
-            key_personnel = result.get("key_personnel", {})
+            # Defensive check to ensure 'result' is a dictionary
+            if not isinstance(result, dict):
+                print(f"Warning: Skipping malformed result item: {result}")
+                continue
+
+            key_personnel = result.get("key_personnel") or {}
             phone_number = result.get("phone", "")
             email = result.get("email", "")
             
