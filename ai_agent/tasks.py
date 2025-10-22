@@ -5,6 +5,8 @@ import json
 from django.conf import settings
 from django.utils import timezone
 import math
+from django.db import transaction
+from django.db.models import F
 
 # Define the size of each chunk
 CHUNK_SIZE = 20
@@ -12,10 +14,29 @@ CHUNK_SIZE = 20
 @shared_task(bind=True)
 def enrich_chunk_task(self, company_names, task_id):
     """
-    Celery task to process a small chunk of companies.
+    Celery task to process a small chunk of companies and update progress.
     """
     task = EnrichmentTask.objects.get(task_id=task_id)
-    enriched_results = orchestrate_enrichment_workflow(company_names, settings.GEMINI_API_KEY, task)
+    
+    try:
+        enriched_results = orchestrate_enrichment_workflow(company_names, settings.GEMINI_API_KEY, task)
+    finally:
+        # This block ensures that progress is updated even if the workflow fails
+        with transaction.atomic():
+            # Lock the task row to prevent race conditions
+            task_to_update = EnrichmentTask.objects.select_for_update().get(task_id=task_id)
+            
+            # Increment the completed chunks count
+            task_to_update.chunks_completed = F('chunks_completed') + 1
+            task_to_update.save(update_fields=['chunks_completed'])
+            task_to_update.refresh_from_db()
+
+            # Calculate and save the new progress percentage
+            if task_to_update.total_chunks > 0:
+                progress_percentage = int((task_to_update.chunks_completed / task_to_update.total_chunks) * 100)
+                task_to_update.progress = progress_percentage
+                task_to_update.save(update_fields=['progress'])
+
     return enriched_results
 
 @shared_task(bind=True)

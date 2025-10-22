@@ -244,19 +244,9 @@ def reset_enrichment_progress():
         'is_complete': False
     }
 
-def update_progress(current_batch, total_batches, companies_processed, total_companies, current_phase, task=None):
-    """Update progress for frontend and task model"""
-    if task:
-        # Increment the chunks_completed count and calculate progress
-        task.chunks_completed = F('chunks_completed') + 1
-        task.save(update_fields=['chunks_completed'])
-        task.refresh_from_db()  # Get the latest value
-
-        # Calculate progress as a percentage of chunks completed
-        if task.total_chunks > 0:
-            progress_percentage = int((task.chunks_completed / task.total_chunks) * 100)
-            task.progress = progress_percentage
-            task.save(update_fields=['progress'])
+def update_progress(current_batch=None, total_batches=None, companies_processed=None, total_companies=None, current_phase=None, task=None):
+    """A placeholder function that is no longer used for progress tracking."""
+    pass
 
 def mark_complete():
     """Mark processing as complete"""
@@ -566,7 +556,7 @@ def save_to_global_database(enriched_results):
         # Extract contact info
         phone_number = result.get('phone')
         email = result.get('email')
-        key_personnel = result.get("key_personnel", {})
+        key_personnel = result.get("key_personnel") or {}
         contact_phone = key_personnel.get("phone")
         contact_email = key_personnel.get("email")
 
