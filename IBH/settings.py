@@ -271,7 +271,8 @@ LOGGING = {
 LOGIN_URL='/login'
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# Use an environment variable for MEDIA_ROOT in production, with a default for local dev
+MEDIA_ROOT = os.environ.get('MEDIA_ROOT', os.path.join(BASE_DIR, 'media'))
 
 
 MESSAGE_TAGS = {
