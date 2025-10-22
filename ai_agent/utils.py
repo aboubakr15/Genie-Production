@@ -1,4 +1,5 @@
-from django.db import transaction, F
+from django.db import transaction
+from django.db.models import F
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from datetime import timedelta
