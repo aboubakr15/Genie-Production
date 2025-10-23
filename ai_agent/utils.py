@@ -821,8 +821,8 @@ def save_excel_for_task(task, enriched_results, sheet_name="Enriched Leads"):
         
         # Add summary section
         total_companies = len(enriched_results)
-        companies_with_phone = len([r for r in enriched_results if r.get('phone')])
-        companies_with_email = len([r for r in enriched_results if r.get('email')])
+        companies_with_phone = len([r for r in enriched_results if isinstance(r, dict) and r.get('phone')])
+        companies_with_email = len([r for r in enriched_results if isinstance(r, dict) and r.get('email')])
         
         summary_format = workbook.add_format({'bold': True, 'font_size': 11, 'font_name': 'Arial'})
         normal_format = workbook.add_format({'font_size': 10, 'font_name': 'Arial'})
