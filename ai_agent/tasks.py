@@ -1,58 +1,56 @@
-from celery import shared_task, chain
+from celery import shared_task, group, chain
 from .utils import orchestrate_enrichment_workflow, save_excel_for_task
 from .models import EnrichmentTask
 from django.conf import settings
 from django.utils import timezone
 import math
 from django.db.models import F
+from django.db import transaction
 
-# Define the size of each chunk for sequential processing
+# Define the size of each chunk
 CHUNK_SIZE = 20
 
-@shared_task(bind=True)
-def enrich_and_pass_chunk_task(self, previous_results, company_names, task_id):
+@shared_task(bind=True, acks_late=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 3, 'countdown': 60})
+def enrich_chunk_task(self, company_names, task_id):
     """
-    Processes one chunk of companies, appends results to the previous ones,
-    updates progress, and passes the cumulative results to the next task in the chain.
+    Processes a single chunk of companies. This task is designed to be fault-tolerant.
+    If it fails, Celery will automatically retry it.
     """
     task = EnrichmentTask.objects.get(task_id=task_id)
-
-    # 1. Enrich the current chunk of companies
-    current_results = orchestrate_enrichment_workflow(company_names, settings.GEMINI_API_KEY, task)
-
-    # 2. Combine results safely
-    if previous_results is None:
-        previous_results = []
     
-    # Filter out any non-dictionary items from the current results to prevent errors
-    valid_current_results = [res for res in current_results if isinstance(res, dict)]
-    combined_results = previous_results + valid_current_results
+    # Perform the enrichment for the current chunk
+    enriched_results = orchestrate_enrichment_workflow(company_names, settings.GEMINI_API_KEY, task)
 
-    # 3. Atomically update the progress in the database
-    task.chunks_completed = F('chunks_completed') + 1
-    task.save(update_fields=['chunks_completed'])
-    task.refresh_from_db()
+    # Atomically update the progress after the chunk is successfully processed
+    with transaction.atomic():
+        task_to_update = EnrichmentTask.objects.select_for_update().get(task_id=task_id)
+        task_to_update.chunks_completed = F('chunks_completed') + 1
+        task_to_update.save(update_fields=['chunks_completed'])
+        task_to_update.refresh_from_db()
 
-    if task.total_chunks > 0:
-        progress_percentage = int((task.chunks_completed / task.total_chunks) * 100)
-        task.progress = progress_percentage
-        task.save(update_fields=['progress'])
+        if task_to_update.total_chunks > 0:
+            progress_percentage = int((task_to_update.chunks_completed / task_to_update.total_chunks) * 100)
+            task_to_update.progress = progress_percentage
+            task_to_update.save(update_fields=['progress'])
 
-    # 4. Return the combined results for the next task in the chain
-    return combined_results
+    return enriched_results
 
 @shared_task(bind=True)
-def finalize_enrichment_task(self, all_results, task_id):
+def finalize_enrichment_task(self, results, task_id):
     """
-    The final task in the chain. Takes the complete list of results,
-    generates the Excel file, and saves it to the database.
+    The final task. It collects all results, handles potential failures,
+    and generates the final Excel file.
     """
     task = EnrichmentTask.objects.get(task_id=task_id)
+    
+    # Filter out any failed chunks (which may appear as None or exceptions)
+    successful_results = [item for sublist in results if sublist and isinstance(sublist, list) for item in sublist]
+    
     try:
-        # One final check to ensure all data is valid before file generation
-        final_results = [res for res in all_results if isinstance(res, dict)]
+        if not successful_results:
+            raise ValueError("All enrichment chunks failed.")
 
-        excel_content = save_excel_for_task(task, final_results, sheet_name=task.excel_sheet_name)
+        excel_content = save_excel_for_task(task, successful_results, sheet_name=task.excel_sheet_name)
         task.results_file_content = excel_content
         task.status = 'SUCCESS'
         task.progress = 100
@@ -68,7 +66,7 @@ def finalize_enrichment_task(self, all_results, task_id):
 @shared_task(bind=True)
 def enrich_data_task(self, company_names, excel_sheet_name):
     """
-    Manages the data enrichment process by creating a sequential chain of tasks.
+    Manages the data enrichment process by creating a parallel workflow.
     """
     task_id = self.request.id
     owner_name = 'IBH'
@@ -85,26 +83,22 @@ def enrich_data_task(self, company_names, excel_sheet_name):
         total_chunks=total_chunks,
     )
 
-    chunks = [company_names[i:i + CHUNK_SIZE] for i in range(0, total_companies, CHUNK_SIZE)]
-
-    if not chunks:
+    if total_companies == 0:
         task.status = 'SUCCESS'
         task.progress = 100
         task.completed_at = timezone.now()
         task.save()
         return "No companies to enrich."
 
-    # Build the sequential chain of tasks
-    # Start with the first chunk, passing `None` for previous_results
-    task_chain = enrich_and_pass_chunk_task.s(None, chunks[0], task_id)
+    # Create a group of parallel tasks for each chunk
+    chunk_tasks = group(
+        enrich_chunk_task.s(company_names[i:i + CHUNK_SIZE], task_id)
+        for i in range(0, total_companies, CHUNK_SIZE)
+    )
 
-    # For the rest of the chunks, Celery automatically passes the result of the previous task
-    for chunk in chunks[1:]:
-        task_chain |= enrich_and_pass_chunk_task.s(chunk, task_id)
-
-    # The final task in the chain is the finalizer, which receives all results
-    workflow = task_chain | finalize_enrichment_task.s(task_id=task_id)
+    # Define a workflow: run all chunks in parallel, then run the finalizer
+    workflow = (chunk_tasks | finalize_enrichment_task.s(task_id=task_id))
     
     workflow.apply_async()
 
-    return f"Sequential enrichment started for {excel_sheet_name}"
+    return f"Parallel enrichment started for {excel_sheet_name}"
