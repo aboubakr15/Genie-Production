@@ -5,7 +5,6 @@ from django.conf import settings
 from django.utils import timezone
 import math
 from django.db.models import F
-from django.db import transaction
 
 # Define the size of each chunk
 CHUNK_SIZE = 20
@@ -21,17 +20,16 @@ def enrich_chunk_task(self, company_names, task_id):
     # Perform the enrichment for the current chunk
     enriched_results = orchestrate_enrichment_workflow(company_names, settings.GEMINI_API_KEY, task)
 
-    # Atomically update the progress after the chunk is successfully processed
-    with transaction.atomic():
-        task_to_update = EnrichmentTask.objects.select_for_update().get(task_id=task_id)
-        task_to_update.chunks_completed = F('chunks_completed') + 1
-        task_to_update.save(update_fields=['chunks_completed'])
-        task_to_update.refresh_from_db()
+    # Atomically update the progress after the chunk is successfully processed.
+    # The F() expression creates an atomic database operation, which is safe from race conditions.
+    task.chunks_completed = F('chunks_completed') + 1
+    task.save(update_fields=['chunks_completed'])
+    task.refresh_from_db()
 
-        if task_to_update.total_chunks > 0:
-            progress_percentage = int((task_to_update.chunks_completed / task_to_update.total_chunks) * 100)
-            task_to_update.progress = progress_percentage
-            task_to_update.save(update_fields=['progress'])
+    if task.total_chunks > 0:
+        progress_percentage = int((task.chunks_completed / task.total_chunks) * 100)
+        task.progress = progress_percentage
+        task.save(update_fields=['progress'])
 
     return enriched_results
 
