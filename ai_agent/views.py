@@ -13,6 +13,7 @@ from django.utils import timezone
 from django.conf import settings
 from django.http import FileResponse, Http404
 import os
+from django.core.paginator import Paginator
 
 @user_passes_test(lambda user: is_in_group(user, "ai_agent"))
 def index(request):
@@ -147,13 +148,6 @@ def enrichment_results_page(request, task_id):
 
 
 @user_passes_test(lambda user: is_in_group(user, "ai_agent"))
-def list_enrichment_files(request):
-    """List enrichment tasks that have saved result files."""
-    tasks = EnrichmentTask.objects.filter(status='SUCCESS',is_result_downloaded=False).order_by('-completed_at')
-    return render(request, 'ai_agent/files.html', {'tasks': tasks})
-
-
-@user_passes_test(lambda user: is_in_group(user, "ai_agent"))
 def download_enrichment_file(request, task_id):
     try:
         task = EnrichmentTask.objects.get(task_id=task_id)
@@ -185,8 +179,13 @@ def download_enrichment_file(request, task_id):
 @user_passes_test(lambda user: is_in_group(user, "ai_agent"))
 def task_dashboard_view(request):
     """
-    Displays a dashboard of the user's enrichment tasks.
+    Displays a paginated dashboard of the user's enrichment tasks.
     """
-    tasks = EnrichmentTask.objects.filter(user_id=request.user.id).order_by('-created_at')
+    task_list = EnrichmentTask.objects.filter(user_id=request.user.id).order_by('-created_at')
+    paginator = Paginator(task_list, 10)  # Show 10 tasks per page
+
+    page_number = request.GET.get('page')
+    tasks = paginator.get_page(page_number)
+    
     return render(request, 'ai_agent/task_dashboard.html', {'tasks': tasks})
 
