@@ -18,7 +18,6 @@ urlpatterns = [
     path('enrichment_progress/', get_enrichment_progress, name='enrichment_progress'),
     path('results/<str:task_id>/', enrichment_results_page, name='enrichment_results_page'),
     path('enrichment_status/<str:task_id>/', get_enrichment_status, name='enrichment_status'),
-    path('files/', list_enrichment_files, name='files'),
     path('files/download/<str:task_id>/', download_enrichment_file, name='download_file'),
     path('dashboard/', task_dashboard_view, name='task-dashboard'),
 ]
