@@ -62,7 +62,7 @@ def finalize_enrichment_task(self, results, task_id):
     return f"Enrichment complete and finalized for {task.excel_sheet_name}"
 
 @shared_task(bind=True)
-def enrich_data_task(self, company_names, excel_sheet_name):
+def enrich_data_task(self, company_names, excel_sheet_name, user_id=None):
     """
     Manages the data enrichment process by creating a parallel workflow.
     """
@@ -79,6 +79,7 @@ def enrich_data_task(self, company_names, excel_sheet_name):
         owner=owner_name,
         company_count=total_companies,
         total_chunks=total_chunks,
+        user_id=user_id,
     )
 
     if total_companies == 0:

@@ -7,6 +7,7 @@ from .views import (
     get_enrichment_status,
     list_enrichment_files,
     download_enrichment_file,
+    task_dashboard_view,
 )
 
 app_name = 'ai_agent'
@@ -20,4 +21,5 @@ urlpatterns = [
     path('enrichment_status/<str:task_id>/', get_enrichment_status, name='enrichment_status'),
     path('files/', list_enrichment_files, name='files'),
     path('files/download/<str:task_id>/', download_enrichment_file, name='download_file'),
+    path('dashboard/', task_dashboard_view, name='task_dashboard'),
 ]

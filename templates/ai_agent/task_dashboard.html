@@ -1,0 +1,90 @@
+{% extends 'layout/app.html' %}
+{% block 'content' %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">My Enrichment Tasks</h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Task ID</th>
+                                    <th>Sheet Name</th>
+                                    <th>Status</th>
+                                    <th>Progress</th>
+                                    <th>Submitted</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for task in tasks %}
+                                <tr id="task-{{ task.task_id }}">
+                                    <td>{{ task.task_id }}</td>
+                                    <td>{{ task.excel_sheet_name }}</td>
+                                    <td class="task-status">{{ task.status }}</td>
+                                    <td class="task-progress">
+                                        <div class="progress">
+                                            <div class="progress-bar" role="progressbar" style="width: {{ task.progress }}%;" aria-valuenow="{{ task.progress }}" aria-valuemin="0" aria-valuemax="100">{{ task.progress }}%</div>
+                                        </div>
+                                    </td>
+                                    <td>{{ task.created_at|date:"Y-m-d H:i" }}</td>
+                                    <td class="task-actions">
+                                        {% if task.status == 'SUCCESS' and not task.is_result_downloaded %}
+                                            <a href="{% url 'ai_agent:download_file' task.task_id %}" class="btn btn-success btn-sm">Download</a>
+                                        {% elif task.status == 'SUCCESS' and task.is_result_downloaded %}
+                                            <span class="text-muted">Downloaded</span>
+                                        {% elif task.status == 'FAILURE' %}
+                                            <span class="text-danger">Failed</span>
+                                        {% else %}
+                                            <span class="text-info">In Progress</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const taskRows = document.querySelectorAll('[id^="task-"]');
+
+        function updateTaskStatus() {
+            taskRows.forEach(row => {
+                const statusCell = row.querySelector('.task-status');
+                if (statusCell.textContent.trim() === 'IN_PROGRESS') {
+                    const taskId = row.id.split('-')[1];
+                    fetch(`/ai_agent/enrichment_status/${taskId}/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const progressBar = row.querySelector('.progress-bar');
+                            progressBar.style.width = data.progress + '%';
+                            progressBar.textContent = data.progress + '%';
+                            statusCell.textContent = data.status;
+
+                            if (data.status === 'SUCCESS') {
+                                const actionsCell = row.querySelector('.task-actions');
+                                actionsCell.innerHTML = `<a href="/ai_agent/files/download/${taskId}/" class="btn btn-success btn-sm">Download</a>`;
+                            } else if (data.status === 'FAILURE') {
+                                const actionsCell = row.querySelector('.task-actions');
+                                actionsCell.innerHTML = `<span class="text-danger">Failed</span>`;
+                            }
+                        });
+                }
+            });
+        }
+
+        // Update status every 5 seconds
+        setInterval(updateTaskStatus, 5000);
+    });
+</script>
+{% endblock %}

@@ -1,5 +1,4 @@
 from django.db import transaction
-from django.db.models import F
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from datetime import timedelta
@@ -214,7 +213,6 @@ from google.genai import types
 import pandas as pd
 from io import BytesIO
 from django.http import HttpResponse, JsonResponse
-from django.core.files.base import ContentFile
 from .models import GlobalOrganization, GlobalPhoneNumbers, GlobalEmails, GlobalContactNames
 from main.models import Lead, LeadEmails, LeadPhoneNumbers, LeadContactNames
 from datetime import datetime
@@ -244,9 +242,6 @@ def reset_enrichment_progress():
         'is_complete': False
     }
 
-def update_progress(current_batch=None, total_batches=None, companies_processed=None, total_companies=None, current_phase=None, task=None):
-    """A placeholder function that is no longer used for progress tracking."""
-    pass
 
 def mark_complete():
     """Mark processing as complete"""
@@ -264,15 +259,11 @@ def orchestrate_enrichment_workflow(company_names, api_key, task):
     # found_leads, not_found_leads = search_databases(company_names)
     # print(f"📊 Database results: {len(found_leads)} found, {len(not_found_leads)} not found")
     
-    # # Update progress for database search
-    # update_progress(0, 0, len(found_leads), len(company_names), 'database_search')
-    
 
     ## If you wan to disable database search and want to use AI for all companies, uncomment below lines ##
     found_leads = []
     not_found_leads = company_names
     print(f"📊 Database search disabled: {len(found_leads)} found, {len(not_found_leads)} not found")
-    update_progress(0, 0, len(found_leads), len(company_names), 'database_search', task=task)
     #######################################################################################################
 
     # Step 2: Enrich not found leads with AI
@@ -375,23 +366,11 @@ def enrich_with_ai(company_names, api_key, batch_size, task):
     Enrich companies using AI in batches
     """
     results = []
-    company_mapping = {name.lower().strip(): name for name in company_names}
-    total_batches = (len(company_names) + batch_size - 1) // batch_size
     
     for i in range(0, len(company_names), batch_size):
         batch = company_names[i:i + batch_size]
         batch_mapping = {name.lower().strip(): name for name in batch}
         current_batch = (i // batch_size) + 1
-        
-        # Update progress
-        update_progress(
-            current_batch=current_batch,
-            total_batches=total_batches,
-            companies_processed=len(results),
-            total_companies=len(company_names),
-            current_phase='ai_processing',
-            task=task
-        )
         
         print(f"🔍 Processing AI batch {current_batch} with {len(batch)} companies")
         
@@ -439,75 +418,93 @@ def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, re
     print(f"🔍 Preparing API request for batch {batch_number} (Retry round {retry_round})...")
 
     # Enhanced prompt with stricter instructions to prevent cumulative responses
-    prompt = f"""You are a business intelligence agent tasked with retrieving verified contact data for {len(company_list)} companies.
+    prompt = f"""You are a precise business intelligence agent.
+        Your task is to retrieve verified contact information for exactly {len(company_list)} companies provided below.
 
-    === NON-NEGOTIABLE RULES ===
-    1. Process companies SEQUENTIALLY using grounding_with_google_search tool
-    2. Return company names EXACTLY as provided - zero modifications
-    3. Return ONE JSON object per company in INPUT ORDER
-    4. Missing data = null (never guess, infer, or fabricate)
-    5. Return ONLY final JSON array - no progress updates, explanations, or markdown
-    6. Watch for similar company names - ensure correct matching using grounding tool
-    7. Return only one value per field - no arrays or multiple entries separated by commas
-    8. Array must contain exactly {len(company_list)} objects
+        ### CRITICAL RULES
+        2. You MUST return each company names EXACTLY as provided - do not modify them
+        3. You MUST return one JSON object per company in the same order as the input list
+        4. If you cannot find information for a company, still return a JSON object with null values but preserve the company name
+        5. Make sure there are no US based phone numbers exist online for the compny you are searching before getting any other country's phone number.
+        6. if you find Google Knowledge Panel which usually has the map location, phnoe number and website of the searched organization
+          you must search for information in it and return them if they exist.
+        8. if you return a phone number do not put the time zone as NULL, you must return a time zone as instructed and if there is no phone number do not return any time zone.
+        9. **IMPORTANT: Search the company's facebook page for emails and phone numbers.**
+        10. **IMPORTANT: Return only the final complete JSON array. Do NOT show incremental progress or multiple JSON arrays.**
 
-    === PHONE NUMBER PRIORITY (CRITICAL) ===
-    **MANDATORY**: If phone field contains any value (including toll-free), time_zone MUST NOT be null
+        ### Primary Directive
+        You will USE THE GOOGLE SEARCH TOOL to search the internet and process each company **sequentially and independently**.
+        You must complete the entire research and data structuring process for one company before starting the next.
 
-    **DIRECT US LINES FIRST**: Prioritize standard geographic numbers (216-xxx-xxxx, 515-xxx-xxxx, 310-xxx-xxxx, etc.)
-    Toll-free (800/888/877/866/855/844/833) are LAST RESORT ONLY if no direct line exists.
+        ### Input Companies (Process these EXACTLY in this order):
+        {company_list_str}
 
-    Search order:
-    1. Company website (all pages, not just contact, find address)
-    2. Google Knowledge Panel (map location sidebar, find address)
-    3. Company Facebook page (thoroughly check about section for address)
-    4. LinkedIn, Crunchbase (find HQ address)
+        ### Data Collection & VALIDATION Rules
+        1. Return only data verified from credible, current sources (company website, LinkedIn, company's Facebook page, Crunchbase)
+        2. Never guess or infer data or return common formats of data searched, only return real data. Mark missing/unverifiable fields as NULL
+        3. You are strictly prohibited from returning fake linkedin profiles, fake emails, fake phone numbers, or guessed domains
+        4. If domain exists, Mandatory website check for contact information
+        5. Check Google search result sidebar for phone/website
+        6. Prioritize US and direct phone numbers
+        7. Search deeply in the website and company facebook page for emails and phone numbers,
+        not just the contact us page and make sure to look at the facebook page of the company that is referenced on the website.
 
-    === TIME ZONE RULES (REVISED) ===
-    **US PHONE NUMBERS** (including +1 numbers):
-    - Area codes 201, 202, 203, 212, 215, 216, 217, 218, 219, 224, 225, 228, 229, 231, 234, 239, 240, 248, 251, 252, 253, 254, 256, 260, 262, 267, 269, 270, 272, 274, 276, 281, 283, 301, 302, 303, 304, 305, 307, 308, 309, 310, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 323, 325, 330, 331, 332, 334, 336, 337, 339, 340, 346, 347, 351, 352, 360, 361, 364, 380, 385, 386, 401, 402, 404, 405, 406, 407, 408, 409, 410, 412, 413, 414, 415, 417, 419, 423, 424, 425, 434, 435, 440, 442, 443, 445, 447, 448, 458, 463, 464, 469, 470, 475, 478, 479, 480, 484, 501, 502, 503, 504, 505, 507, 508, 509, 510, 512, 513, 515, 516, 517, 518, 520, 530, 531, 534, 539, 540, 541, 551, 557, 559, 561, 562, 563, 564, 567, 570, 571, 573, 574, 575, 580, 585, 586, 601, 602, 603, 605, 606, 607, 608, 609, 610, 612, 614, 615, 616, 617, 618, 619, 620, 623, 626, 627, 628, 629, 630, 631, 636, 640, 641, 646, 650, 651, 657, 659, 660, 661, 662, 667, 669, 670, 671, 678, 679, 680, 681, 682, 684, 689, 701, 702, 703, 704, 706, 707, 708, 712, 713, 714, 715, 716, 717, 718, 719, 720, 724, 725, 726, 727, 730, 731, 732, 734, 737, 740, 743, 747, 754, 757, 760, 762, 763, 764, 765, 769, 770, 772, 773, 774, 775, 779, 781, 785, 786, 787, 801, 802, 803, 804, 805, 806, 808, 810, 812, 813, 814, 815, 816, 817, 818, 820, 826, 828, 830, 831, 832, 835, 838, 839, 840, 843, 845, 847, 848, 850, 854, 856, 857, 858, 859, 860, 862, 863, 864, 865, 870, 872, 878, 901, 903, 904, 906, 907, 908, 909, 910, 912, 913, 914, 915, 916, 917, 918, 919, 920, 925, 927, 928, 929, 930, 931, 934, 936, 937, 938, 939, 940, 941, 943, 945, 947, 948, 949, 951, 952, 954, 956, 957, 959, 970, 971, 972, 973, 975, 978, 979, 980, 984, 985, 986, 989 → 'est'
-    - Area codes 205, 210, 214, 217, 219, 224, 225, 228, 229, 251, 256, 260, 262, 270, 272, 281, 309, 312, 314, 316, 317, 318, 319, 320, 321, 325, 331, 337, 346, 347, 351, 352, 361, 364, 385, 402, 404, 405, 406, 407, 408, 409, 410, 412, 413, 414, 417, 419, 423, 424, 425, 430, 432, 434, 435, 440, 443, 445, 447, 458, 463, 464, 469, 470, 475, 478, 479, 480, 484, 501, 502, 503, 504, 505, 507, 508, 509, 510, 512, 513, 515, 516, 517, 518, 520, 530, 531, 534, 539, 540, 541, 551, 557, 559, 561, 562, 563, 564, 567, 570, 571, 573, 574, 575, 580, 585, 586, 601, 602, 603, 605, 606, 607, 608, 609, 610, 612, 614, 615, 616, 617, 618, 619, 620, 623, 626, 627, 628, 629, 630, 631, 636, 640, 641, 646, 650, 651, 657, 659, 660, 661, 662, 667, 669, 670, 671, 678, 679, 680, 681, 682, 684, 689, 701, 702, 703, 704, 706, 707, 708, 712, 713, 714, 715, 716, 717, 718, 719, 720, 724, 725, 726, 727, 730, 731, 732, 734, 737, 740, 743, 747, 754, 757, 760, 762, 763, 764, 765, 769, 770, 772, 773, 774, 775, 779, 781, 785, 786, 787, 801, 802, 803, 804, 805, 806, 808, 810, 812, 813, 814, 815, 816, 817, 818, 820, 826, 828, 830, 831, 832, 835, 838, 839, 840, 843, 845, 847, 848, 850, 854, 856, 857, 858, 859, 860, 862, 863, 864, 865, 870, 872, 878, 901, 903, 904, 906, 907, 908, 909, 910, 912, 913, 914, 915, 916, 917, 918, 919, 920, 925, 927, 928, 929, 930, 931, 934, 936, 937, 938, 939, 940, 941, 943, 945, 947, 948, 949, 951, 952, 954, 956, 957, 959, 970, 971, 972, 973, 975, 978, 979, 980, 984, 985, 986, 989 → 'cen'
-    - Area codes 206, 208, 209, 213, 253, 310, 323, 360, 408, 415, 424, 425, 442, 458, 503, 509, 510, 530, 559, 562, 619, 626, 627, 628, 650, 657, 661, 669, 678, 707, 714, 747, 760, 764, 769, 775, 778, 805, 818, 831, 858, 909, 916, 925, 935, 949, 951, 971 → 'pac'
+        
+        === PHONE NUMBER PRIORITY (CRITICAL) ===
+        **MANDATORY**: If phone field contains any value (including toll-free), time_zone MUST NOT be null
 
-    **CANADA PHONE NUMBERS** (+1 numbers):
-    - Area codes 204, 226, 236, 249, 250, 263, 289, 306, 343, 365, 367, 368, 403, 416, 418, 431, 437, 438, 450, 467, 474, 506, 514, 519, 548, 579, 581, 587, 600, 604, 613, 639, 647, 672, 678, 705, 709, 742, 753, 778, 780, 782, 807, 819, 825, 867, 873, 902, 905 → Use US mapping above
+        **DIRECT US LINES FIRST**: Prioritize standard geographic numbers (216-xxx-xxxx, 515-xxx-xxxx, 310-xxx-xxxx, etc.)
+        Toll-free (800/888/877/866/855/844/833) are LAST RESORT ONLY if no direct line exists.
 
-    **TOLL-FREE NUMBERS** (800, 888, 877, 866, 855, 844, 833):
-    - If company has US presence → 'est' (default)
-    - If company is Canada-only → 'cen' 
-    - If international → use country name
+        Search order:
+        1. Company website (all pages, not just contact, find address)
+        2. Google Knowledge Panel (map location sidebar, find address)
+        3. Company Facebook page (thoroughly check about section for phone numbers and emails)
+        4. LinkedIn, Crunchbase
 
-    **NON-US/NON-CANADA PHONE NUMBERS**:
-    - Return country name only (e.g., 'UK', 'Australia', 'Germany')
-    - Use 'UK' for United Kingdom
+        ### Time Zone Rules
+        8. For US phone numbers: use 'est', 'cen', or 'pac' based on state, you must return a time zone from the following list if you find a US based phone number: ('est', 'cen', 'pac')
+         even if you find others like ('mst', 'akst', 'hst') or any other time zone, you must return the nearest time zone only from the list which is ('est', 'cen', 'pac').
+        9. For non-US phone numbers: use country name only (use 'UK' for United Kingdom)
+        10. If no phone number, time zone should be NULL
+        * **Timezone Validation**: A `time_zone` (e.g., "est", "cen", "pac", "UK") may ONLY be present if a `phone` is present.
+        * **Timezone Validation**: If a phone is present there must be a time zone use the address or the area code or even the country to get an area code, but you are strictly prohibited from returning a phone number entry without it's time zone.
 
-    === DATA VALIDATION ===
-    * Never return: fake LinkedIn profiles, guessed emails, fabricated phones, assumed domains.
-    * Only return: verified data from credible current sources.
-    * If domain exists: mandatory deep website check for address, phone, and email.
-    * **Timezone Validation**: A `time_zone` (e.g., "est", "cen", "pac", "UK") may ONLY be present if a `phone` is present.
-    * **Timezone Validation**: If a phone is present there must be a time zone use the address or the area code or even the country to get an area code, but you are strictly prohibited from returning a phone number entry without it's time zone.
+        **TOLL-FREE NUMBERS** (800, 888, 877, 866, 855, 844, 833):
+        - If company has US presence → 'est' (default)
+        - If company is Canada-only → 'cen' 
+        - If international → use country name
 
-    === INPUT COMPANIES (process in this exact order) ===
-    {company_list_str}
+        **NON-US/NON-CANADA PHONE NUMBERS**:
+        - Return country name only (e.g., 'UK', 'Australia', 'Germany')
+        - Use 'UK' for United Kingdom
 
-    === OUTPUT FORMAT ===
-    Return SINGLE JSON array with this structure per company:
-    {{
-        "company_name": "EXACT INPUT NAME",
-        "domain": "domain or null",
-        "phone": "phone number or null",
-        "time_zone": "est/cen/pac/country or null",
-        "email": "email or null",
-        "key_personnel": {{
-            "name": "name or null",
+        **Most Important Note**:
+        - There Must be NO phone number without a corresponding time zone. If you return a phone number, you MUST return a time zone as per the rules above.
+        - Choose the closest time zone as per the rules above if exact match not found, choose it according to the area codes (216, 515, 310, etc.).
+
+
+        ### Output Format Requirements
+        You MUST return a SINGLE JSON array with exactly {len(company_list)} objects, one for each company in the input order.
+
+        Each object must follow this exact structure:
+        {{
+            "company_name": "EXACT COMPANY NAME AS PROVIDED",
+            "domain": "domain or null",
             "phone": "phone or null",
-            "title": "title or null",
-            "email": "email or null"
+            "time_zone": "if phone number must put time zone or else null",
+            "email": "email or null",
+            "key_personnel": {{
+                "name": "name or null",
+                "phone": "phone or null", 
+                "title": "title or null",
+                "email": "email or null"
+            }}
         }}
-    }}
 
-    CRITICAL: One value per field. No arrays, no multiple entries, no text outside JSON."""
+        ### Final Output Requirement
+        Return ONLY the final JSON array with no additional text, explanations, mutliple values at one field or markdown formatting.
+        Ensure the array has exactly {len(company_list)} objects in the exact same order as the input companies."""
 
     try:
         client = genai.Client(api_key=api_key)
@@ -726,7 +723,15 @@ def save_excel_for_task(task, enriched_results, sheet_name="Enriched Leads"):
                 continue
 
             key_personnel = result.get("key_personnel") or {}
-            phone_number = result.get("phone", "")
+
+            # Clean both primary and direct phone numbers
+            primary_phone = clean_phone_number(result.get("phone", ""))
+            direct_phone = clean_phone_number(key_personnel.get("phone", ""))
+            
+            # If the numbers are the same, clear the direct phone
+            if primary_phone and direct_phone and primary_phone == direct_phone:
+                direct_phone = ""
+
             email = result.get("email", "")
             
             dm_name_parts = [
@@ -737,13 +742,13 @@ def save_excel_for_task(task, enriched_results, sheet_name="Enriched Leads"):
 
             output_data.append({
                 "Company Name": result.get("company_name"),
-                "Phone Number": phone_number,
+                "Phone Number": primary_phone,
                 "Time Zone": result.get("time_zone", ""),
-                "Direct / Cell Number": key_personnel.get("phone", ""),
+                "Direct / Cell Number": direct_phone,
                 "Email": email,
                 "DM Name": dm_name,
                 "Contact Email": key_personnel.get("email", ""),
-                "_MissingPhone": "MISSING" if not phone_number else "",
+                "_MissingPhone": "MISSING" if not primary_phone else "",
                 "_MissingEmail": "MISSING" if not email else ""
             })
 
@@ -1037,3 +1042,31 @@ def create_emergency_results(companies: List[str], company_mapping: Dict[str, st
         })
     
     return results
+
+def clean_phone_number(phone_str):
+    """
+    Cleans and formats a phone number string.
+    Prioritizes formatting for 10-digit (US/Canada) numbers,
+    but safely cleans other international numbers.
+    """
+    if not phone_str or not isinstance(phone_str, str):
+        return ""
+
+    # Remove all non-digit characters to get a clean string of digits
+    digits = re.sub(r'\D', '', phone_str)
+
+    # Handle North American numbers (country code '1')
+    if len(digits) == 11 and digits.startswith('1'):
+        # This is likely a US/Canada number with country code, strip it for formatting
+        national_digits = digits[1:]
+        return f"{national_digits[0:3]} {national_digits[3:6]} {national_digits[6:10]}"
+    
+    # Handle 10-digit numbers (likely US/Canada without country code)
+    if len(digits) == 10:
+        return f"{digits[0:3]} {digits[3:6]} {digits[6:10]}"
+
+    # For all other international numbers, just return it as is.
+    if phone_str.strip().startswith('+'):
+        return phone_str.strip()
+
+    return digits

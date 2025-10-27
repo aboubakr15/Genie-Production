@@ -56,6 +56,7 @@ class GlobalContactNames(models.Model):
         return self.name
 
 class EnrichmentTask(models.Model):
+    user_id = models.IntegerField(null=True)  # Store the user's ID directly
     task_id = models.CharField(max_length=255, unique=True)
     excel_sheet_name = models.CharField(max_length=255, default='Enriched Leads')
     status = models.CharField(max_length=50, default='PENDING')

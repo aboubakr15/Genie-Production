@@ -78,7 +78,7 @@ def data_enrichment_view(request):
                     }, status=400)
                 
                 # Call the Celery task to run in the background
-                task = enrich_data_task.delay(company_names, excel_sheet_name)
+                task = enrich_data_task.delay(company_names, excel_sheet_name, user_id=request.user.id)
                 
                 return JsonResponse({
                     'status': 'success', 
@@ -180,4 +180,13 @@ def download_enrichment_file(request, task_id):
     except Exception as e:
         messages.error(request, f"An unexpected error occurred: {e}")
         return redirect('ai_agent:files')
+
+
+@user_passes_test(lambda user: is_in_group(user, "ai_agent"))
+def task_dashboard_view(request):
+    """
+    Displays a dashboard of the user's enrichment tasks.
+    """
+    tasks = EnrichmentTask.objects.filter(user_id=request.user.id).order_by('-created_at')
+    return render(request, 'ai_agent/task_dashboard.html', {'tasks': tasks})
 
