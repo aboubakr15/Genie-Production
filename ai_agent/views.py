@@ -10,9 +10,6 @@ from django.http import JsonResponse
 from .tasks import enrich_data_task
 from django.contrib import messages
 from django.utils import timezone
-from django.conf import settings
-from django.http import FileResponse, Http404
-import os
 from django.core.paginator import Paginator
 
 @user_passes_test(lambda user: is_in_group(user, "ai_agent"))

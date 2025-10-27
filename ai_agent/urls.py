@@ -5,7 +5,6 @@ from .views import (
     get_enrichment_progress,
     enrichment_results_page,
     get_enrichment_status,
-    list_enrichment_files,
     download_enrichment_file,
     task_dashboard_view,
 )
