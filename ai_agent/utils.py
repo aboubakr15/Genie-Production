@@ -473,11 +473,12 @@ def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, re
         **TOLL-FREE NUMBERS** (800, 888, 877, 866, 855, 844, 833):
         - If company has US presence → 'est' (default)
         - If company is Canada-only → 'cen' 
-        - If international → use country name
+        - If international → use country name except for Canada use the same time zones as US.
 
         **NON-US/NON-CANADA PHONE NUMBERS**:
         - Return country name only (e.g., 'UK', 'Australia', 'Germany')
         - Use 'UK' for United Kingdom
+        - Canada use the same time zones as US.
 
         **Most Important Note**:
         - There Must be NO phone number without a corresponding time zone. If you return a phone number, you MUST return a time zone as per the rules above.
