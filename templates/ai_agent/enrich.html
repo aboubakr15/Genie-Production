@@ -254,8 +254,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             // Redirect directly to saved file
                             window.location.href = data.download_url;
                         } else {
-                            // Fallback to files list where user can download
-                            displayMessage('Your file is ready. Visit the <a href="/ai_agent/files/">Files</a> page to download.', 'success');
+                            // Fallback to task-dashboard where user can download
+                            displayMessage('Your file is ready. Visit the <a href="/ai_agent/task-dashboard/">Tasks Dashboard</a> to download.', 'success');
                         }
                     } else if (data.status === 'FAILURE') {
                         clearInterval(interval);
