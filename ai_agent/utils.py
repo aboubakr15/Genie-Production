@@ -284,6 +284,11 @@ def orchestrate_enrichment_workflow(company_names, api_key, task):
     # Mark as complete
     mark_complete()
     
+    # Final processing step: ensure all phone numbers have a timezone
+    for result in enriched_results:
+        if isinstance(result, dict) and result.get('phone') and not result.get('time_zone'):
+            result['time_zone'] = get_timezone_for_number(result.get('phone'))
+
     return enriched_results
 
 
@@ -422,18 +427,15 @@ def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, re
         Your task is to retrieve verified contact information for exactly {len(company_list)} companies provided below.
 
         ### CRITICAL RULES
-        2. You MUST return each company names EXACTLY as provided - do not modify them
-        3. You MUST return one JSON object per company in the same order as the input list
-        4. If you cannot find information for a company, still return a JSON object with null values but preserve the company name
-        5. Make sure there are no US based phone numbers exist online for the compny you are searching before getting any other country's phone number.
-        6. if you find Google Knowledge Panel which usually has the map location, phnoe number and website of the searched organization
+        1. You MUST return each company names EXACTLY as provided - do not modify them
+        2. You MUST return one JSON object per company in the same order as the input list
+        3. If you cannot find information for a company, still return a JSON object with null values but preserve the company name
+        4. if you find Google Knowledge Panel which usually has the map location, phnoe number and website of the searched organization
           you must search for information in it and return them if they exist.
-        8. if you return a phone number do not put the time zone as NULL, you must return a time zone as instructed and if there is no phone number do not return any time zone.
-        9. **IMPORTANT: Search the company's facebook page for emails and phone numbers.**
-        10. **IMPORTANT: Return only the final complete JSON array. Do NOT show incremental progress or multiple JSON arrays.**
+        5. **IMPORTANT: Search the company's facebook page for emails and phone numbers.**
 
         ### Primary Directive
-        You will USE THE GOOGLE SEARCH TOOL to search the internet and process each company **sequentially and independently**.
+        You will search the internet and process each company **sequentially and independently**.
         You must complete the entire research and data structuring process for one company before starting the next.
 
         ### Input Companies (Process these EXACTLY in this order):
@@ -445,48 +447,31 @@ def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, re
         3. You are strictly prohibited from returning fake linkedin profiles, fake emails, fake phone numbers, or guessed domains
         4. If domain exists, Mandatory website check for contact information
         5. Check Google search result sidebar for phone/website
-        6. Prioritize US and direct phone numbers
-        7. Search deeply in the website and company facebook page for emails and phone numbers,
-        not just the contact us page and make sure to look at the facebook page of the company that is referenced on the website.
-
         
-        === PHONE NUMBER PRIORITY (CRITICAL) ===
-        **MANDATORY**: If phone field contains any value (including toll-free), time_zone MUST NOT be null
-
+        ### PHONE NUMBER PRIORITY (CRITICAL) ###
         **DIRECT US LINES FIRST**: Prioritize standard geographic numbers (216-xxx-xxxx, 515-xxx-xxxx, 310-xxx-xxxx, etc.)
         Toll-free (800/888/877/866/855/844/833) are LAST RESORT ONLY if no direct line exists.
 
         Search order:
-        1. Company website (all pages, not just contact, find address)
-        2. Google Knowledge Panel (map location sidebar, find address)
-        3. Company Facebook page (thoroughly check about section for phone numbers and emails)
+        1. Company website (all pages, not just contact - **Deep Seaerch**)
+        2. Google Knowledge Panel (map location sidebar)
+        3. Company Facebook page (thoroughly check about section for phone numbers and emails - - **Deep Seaerch**)
         4. LinkedIn, Crunchbase
 
-        ### Time Zone Rules
-        8. For US phone numbers: use 'est', 'cen', or 'pac' based on state, you must return a time zone from the following list if you find a US based phone number: ('est', 'cen', 'pac')
-         even if you find others like ('mst', 'akst', 'hst') or any other time zone, you must return the nearest time zone only from the list which is ('est', 'cen', 'pac').
-        9. For non-US phone numbers: use country name only (use 'UK' for United Kingdom)
-        10. If no phone number, time zone should be NULL
-        * **Timezone Validation**: A `time_zone` (e.g., "est", "cen", "pac", "UK") may ONLY be present if a `phone` is present.
-        * **Timezone Validation**: If a phone is present there must be a time zone use the address or the area code or even the country to get an area code, but you are strictly prohibited from returning a phone number entry without it's time zone.
+        ### Time Zone Rules ###
 
-        **TOLL-FREE NUMBERS** (800, 888, 877, 866, 855, 844, 833):
-        - If company has US presence → 'est' (default)
-        - If company is Canada-only → 'cen' 
-        - If international → use country name except for Canada use the same time zones as US.
+            1)**US/CANADA PHONE NUMBERS**:
+            - For US/CANADA phone numbers: use 'est', 'cen', or 'pac' based on state, you must return a time zone from the following list if you find a US/CANADA based phone number: ('est', 'cen', 'pac')
+            even if you find others like ('mst', 'akst', 'hst') or any other time zone, you must return the nearest time zone only from the list which is ('est', 'cen', 'pac').
+            - If no phone number, time zone should be NULL
 
-        **NON-US/NON-CANADA PHONE NUMBERS**:
-        - Return country name only (e.g., 'UK', 'Australia', 'Germany')
-        - Use 'UK' for United Kingdom
-        - Canada use the same time zones as US.
+            2) **NON-US/NON-CANADA PHONE NUMBERS**:
+            - Return country name only (e.g., 'UK', 'Australia', 'Germany')
+            - Use 'UK' for United Kingdom
 
-        **Most Important Note**:
-        - There Must be NO phone number without a corresponding time zone. If you return a phone number, you MUST return a time zone as per the rules above.
-        - Choose the closest time zone as per the rules above if exact match not found, choose it according to the area codes (216, 515, 310, etc.).
-
-
-        ### Output Format Requirements
-        You MUST return a SINGLE JSON array with exactly {len(company_list)} objects, one for each company in the input order.
+            3) **Most Important Note**:
+            - Use the area code which is the first 3 digits of the phone number to get it's time zone. If no exact match get the closest zone for each the area code searched.
+            - If international → use country name except for Canada use the same time zones as US.
 
         Each object must follow this exact structure:
         {{
@@ -734,6 +719,7 @@ def save_excel_for_task(task, enriched_results, sheet_name="Enriched Leads"):
                 direct_phone = ""
 
             email = result.get("email", "")
+            direct_email = key_personnel.get("email", "")
             
             dm_name_parts = [
                 str(key_personnel.get("name", "") or ""),
@@ -746,9 +732,8 @@ def save_excel_for_task(task, enriched_results, sheet_name="Enriched Leads"):
                 "Phone Number": primary_phone,
                 "Time Zone": result.get("time_zone", ""),
                 "Direct / Cell Number": direct_phone,
-                "Email": email,
+                "Email": direct_email if direct_email else email,
                 "DM Name": dm_name,
-                "Contact Email": key_personnel.get("email", ""),
                 "_MissingPhone": "MISSING" if not primary_phone else "",
                 "_MissingEmail": "MISSING" if not email else ""
             })
@@ -1071,3 +1056,48 @@ def clean_phone_number(phone_str):
         return phone_str.strip()
 
     return digits
+
+# Timezone mapping data
+TOLL_FREE_AREA_CODES = {'800', '888', '877', '866', '855', '844', '833', '822', '811'}
+EST_AREA_CODES = {
+    '201', '202', '203', '212', '215', '216', '217', '218', '219', '224', '225', '228', '229', '231', '234', '239', '240', '248', '251', '252', '253', '254', '256', '260', '262', '267', '269', '270', '272', '274', '276', '281', '283', '301', '302', '303', '304', '305', '307', '308', '309', '310', '312', '313', '314', '315', '316', '317', '318', '319', '320', '321', '323', '325', '330', '331', '332', '334', '336', '337', '339', '340', '346', '347', '351', '352', '360', '361', '364', '380', '385', '386', '401', '402', '404', '405', '406', '407', '408', '409', '410', '412', '413', '414', '415', '417', '419', '423', '424', '425', '434', '435', '440', '442', '443', '445', '447', '448', '458', '463', '464', '469', '470', '475', '478', '479', '480', '484', '501', '502', '503', '504', '505', '507', '508', '509', '510', '512', '513', '515', '516', '517', '518', '520', '530', '531', '534', '539', '540', '541', '551', '557', '559', '561', '562', '563', '564', '567', '570', '571', '573', '574', '575', '580', '585', '586', '601', '602', '603', '605', '606', '607', '608', '609', '610', '612', '614', '615', '616', '617', '618', '619', '620', '623', '626', '627', '628', '629', '630', '631', '636', '640', '641', '646', '650', '651', '657', '659', '660', '661', '662', '667', '669', '670', '671', '678', '679', '680', '681', '682', '684', '689', '701', '702', '703', '704', '706', '707', '708', '712', '713', '714', '715', '716', '717', '718', '719', '720', '724', '725', '726', '727', '730', '731', '732', '734', '737', '740', '743', '747', '754', '757', '760', '762', '763', '764', '765', '769', '770', '772', '773', '774', '775', '779', '781', '785', '786', '787', '801', '802', '803', '804', '805', '806', '808', '810', '812', '813', '814', '815', '816', '817', '818', '820', '826', '828', '830', '831', '832', '835', '838', '839', '840', '843', '845', '847', '848', '850', '854', '856', '857', '858', '859', '860', '862', '863', '864', '865', '870', '872', '878', '901', '903', '904', '906', '907', '908', '909', '910', '912', '913', '914', '915', '916', '917', '918', '919', '920', '925', '927', '928', '929', '930', '931', '934', '936', '937', '938', '939', '940', '941', '943', '945', '947', '948', '949', '951', '952', '954', '956', '957', '959', '970', '971', '972', '973', '975', '978', '979', '980', '984', '985', '986', '989'
+}
+CEN_AREA_CODES = {
+    '205', '210', '214', '217', '219', '224', '225', '228', '229', '251', '256', '260', '262', '270', '272', '281', '309', '312', '314', '316', '317', '318', '319', '320', '321', '325', '331', '337', '346', '347', '351', '352', '361', '364', '385', '402', '404', '405', '406', '407', '408', '409', '410', '412', '413', '414', '417', '419', '423', '424', '425', '430', '432', '434', '435', '440', '443', '445', '447', '458', '463', '464', '469', '470', '475', '478', '479', '480', '484', '501', '502', '503', '504', '505', '507', '508', '509', '510', '512', '513', '515', '516', '517', '518', '520', '530', '531', '534', '539', '540', '541', '551', '557', '559', '561', '562', '563', '564', '567', '570', '571', '573', '574', '575', '580', '585', '586', '601', '602', '603', '605', '606', '607', '608', '609', '610', '612', '614', '615', '616', '617', '618', '619', '620', '623', '626', '627', '628', '629', '630', '631', '636', '640', '641', '646', '650', '651', '657', '659', '660', '661', '662', '667', '669', '670', '671', '678', '679', '680', '681', '682', '684', '689', '701', '702', '703', '704', '706', '707', '708', '712', '713', '714', '715', '716', '717', '718', '719', '720', '724', '725', '726', '727', '730', '731', '732', '734', '737', '740', '743', '747', '754', '757', '760', '762', '763', '764', '765', '769', '770', '772', '773', '774', '775', '779', '781', '785', '786', '787', '801', '802', '803', '804', '805', '806', '808', '810', '812', '813', '814', '815', '816', '817', '818', '820', '826', '828', '830', '831', '832', '835', '838', '839', '840', '843', '845', '847', '848', '850', '854', '856', '857', '858', '859', '860', '862', '863', '864', '865', '870', '872', '878', '901', '903', '904', '906', '907', '908', '909', '910', '912', '913', '914', '915', '916', '917', '918', '919', '920', '925', '927', '928', '929', '930', '931', '934', '936', '937', '938', '939', '940', '941', '943', '945', '947', '948', '949', '951', '952', '954', '956', '957', '959', '970', '971', '972', '973', '975', '978', '979', '980', '984', '985', '986', '989'
+}
+PAC_AREA_CODES = {
+    '206', '208', '209', '213', '253', '310', '323', '360', '408', '415', '424', '425', '442', '458', '503', '509', '510', '530', '559', '562', '619', '626', '627', '628', '650', '657', '661', '669', '678', '707', '714', '747', '760', '764', '769', '775', '778', '805', '818', '831', '858', '909', '916', '925', '935', '949', '951', '971'
+}
+CAN_AREA_CODES = {
+    '204', '226', '236', '249', '250', '263', '289', '306', '343', '365', '367', '368', '403', '416', '418', '431', '437', '438', '450', '467', '474', '506', '514', '519', '548', '579', '581', '587', '600', '604', '613', '639', '647', '672', '678', '705', '709', '742', '753', '778', '780', '782', '807', '819', '825', '867', '873', '902', '905'
+}
+
+def get_timezone_for_number(phone_str):
+    """
+    Determines the timezone for a given phone number based on its area code.
+    """
+    if not phone_str or not isinstance(phone_str, str):
+        return None
+
+    digits = re.sub(r'\D', '', phone_str)
+    
+    # Handle numbers with country code '1'
+    if len(digits) == 11 and digits.startswith('1'):
+        area_code = digits[1:4]
+    # Handle 10-digit numbers
+    elif len(digits) == 10:
+        area_code = digits[0:3]
+    else:
+        # Not a standard US/Canada number, we can't determine timezone from area code
+        return None
+
+    if area_code in TOLL_FREE_AREA_CODES:
+        return 'cen'  # Default for toll-free
+    if area_code in EST_AREA_CODES or area_code in CAN_AREA_CODES:
+        return 'est'
+    if area_code in CEN_AREA_CODES:
+        return 'cen'
+    if area_code in PAC_AREA_CODES:
+        return 'pac'
+
+    return None # Default if no match is found
