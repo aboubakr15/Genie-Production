@@ -1,8 +1,16 @@
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from datetime import timedelta
+from django.http import JsonResponse
+from datetime import timedelta, datetime
 from main.models import *
+import json, time, re
+from typing import Optional, Dict, List
+import google.genai as genai
+from google.genai import types
+import pandas as pd
+from io import BytesIO
+from .models import GlobalOrganization, GlobalPhoneNumbers, GlobalEmails, GlobalContactNames
 
 def get_credit_balance():
     """Get current project credit balance"""
@@ -206,16 +214,6 @@ def get_monthly_summary():
 
 
 ############################################################## Enrichment part ##############################################################
-import json, time, re
-from typing import Optional, Dict, List
-import google.genai as genai
-from google.genai import types
-import pandas as pd
-from io import BytesIO
-from django.http import HttpResponse, JsonResponse
-from .models import GlobalOrganization, GlobalPhoneNumbers, GlobalEmails, GlobalContactNames
-from main.models import Lead, LeadEmails, LeadPhoneNumbers, LeadContactNames
-from datetime import datetime
 
 enrichment_progress = {
     'current_batch': 0,
@@ -461,17 +459,19 @@ def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, re
         ### Time Zone Rules ###
 
             1)**US/CANADA PHONE NUMBERS**:
-            - For US/CANADA phone numbers: use 'est', 'cen', or 'pac' based on state, you must return a time zone from the following list if you find a US/CANADA based phone number: ('est', 'cen', 'pac')
-            even if you find others like ('mst', 'akst', 'hst') or any other time zone, you must return the nearest time zone only from the list which is ('est', 'cen', 'pac').
-            - If no phone number, time zone should be NULL
+            you **MUST** return a time zone from the following list if you find a US/CANADA based phone number: ('est', 'cen', 'pac')
+            even if you find others like ('mst', 'akst', 'hst') or any other time zone, you must return the nearest time zone only from the list.
 
             2) **NON-US/NON-CANADA PHONE NUMBERS**:
             - Return country name only (e.g., 'UK', 'Australia', 'Germany')
             - Use 'UK' for United Kingdom
+            - make sure to return '+' sign and country code at the start of the phone number.
 
-            3) **Most Important Note**:
-            - Use the area code which is the first 3 digits of the phone number to get it's time zone. If no exact match get the closest zone for each the area code searched.
+            3) **Important Note**:
+            - Use the area code which is the first 3 digits of the phone number to get it's time zone.
+            - If no exact match from ('est', 'cen', 'pac') choose one of them based on the closest to the area code searched.
             - If international → use country name except for Canada use the same time zones as US.
+            - If no phone number, time zone should be NULL
 
         Each object must follow this exact structure:
         {{
@@ -694,9 +694,7 @@ def retry_missing_phones(enriched_results, api_key, batch_size, task):
 
 def save_excel_for_task(task, enriched_results, sheet_name="Enriched Leads"):
     """Generate an Excel file in memory and return its content."""
-    from django.conf import settings
-    import os
-
+    
     # Use the Excel generation logic with proper formatting
     buffer = BytesIO()
     with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
@@ -902,7 +900,7 @@ def extract_final_json_array(text: str) -> Optional[List[Dict]]:
             if text[i] == '[':
                 bracket_count += 1
             elif text[i] == ']':
-                bracket_count -= 1
+                bracket_count -= 1;
                 if bracket_count == 0:
                     end_idx = i
                     break
@@ -1029,21 +1027,21 @@ def create_emergency_results(companies: List[str], company_mapping: Dict[str, st
     
     return results
 
+
 def clean_phone_number(phone_str):
     """
     Cleans and formats a phone number string.
     Prioritizes formatting for 10-digit (US/Canada) numbers,
-    but safely cleans other international numbers.
+    but ensures other international numbers are prefixed with '+'.
     """
     if not phone_str or not isinstance(phone_str, str):
         return ""
 
-    # Remove all non-digit characters to get a clean string of digits
+    # Remove all non-digit characters
     digits = re.sub(r'\D', '', phone_str)
 
     # Handle North American numbers (country code '1')
     if len(digits) == 11 and digits.startswith('1'):
-        # This is likely a US/Canada number with country code, strip it for formatting
         national_digits = digits[1:]
         return f"{national_digits[0:3]} {national_digits[3:6]} {national_digits[6:10]}"
     
@@ -1051,11 +1049,8 @@ def clean_phone_number(phone_str):
     if len(digits) == 10:
         return f"{digits[0:3]} {digits[3:6]} {digits[6:10]}"
 
-    # For all other international numbers, just return it as is.
-    if phone_str.strip().startswith('+'):
-        return phone_str.strip()
-
-    return digits
+    # For all other numbers, return the cleaned digits with a '+' prefix.
+    return f" +{digits}"
 
 # Timezone mapping data
 TOLL_FREE_AREA_CODES = {'800', '888', '877', '866', '855', '844', '833', '822', '811'}
