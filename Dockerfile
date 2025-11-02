@@ -12,7 +12,7 @@ WORKDIR /app
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
        build-essential \
-       libmysqlclient-dev \
+       libmariadb-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the requirements file and install dependencies
