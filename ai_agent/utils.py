@@ -422,75 +422,75 @@ def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, re
 
     # Enhanced prompt with stricter instructions to prevent cumulative responses
     prompt = f"""You are a precise business intelligence agent.
-        Your task is to retrieve verified contact information for exactly {len(company_list)} companies provided below.
+    Your task is to retrieve verified contact information for exactly {len(company_list)} companies provided below.
 
-        ### CRITICAL RULES
-        1. You MUST return each company names EXACTLY as provided - do not modify them
-        2. You MUST return one JSON object per company in the same order as the input list
-        3. If you cannot find information for a company, still return a JSON object with null values but preserve the company name
-        4. if you find Google Knowledge Panel which usually has the map location, phnoe number and website of the searched organization
-          you must search for information in it and return them if they exist.
-        5. **IMPORTANT: Search the company's facebook page for emails and phone numbers.**
+    ### CRITICAL RULES
+    1. You MUST return each company names EXACTLY as provided - do not modify them
+    2. You MUST return one JSON object per company in the same order as the input list
+    3. If you cannot find information for a company, still return a JSON object with null values but preserve the company name
+    4. if you find Google Knowledge Panel which usually has the map location, phnoe number and website of the searched organization
+        you must search for information in it and return them if they exist.
+    5. **IMPORTANT: Search the company's facebook page for emails and phone numbers.**
 
-        ### Primary Directive
-        You will search the internet and process each company **sequentially and independently**.
-        You must complete the entire research and data structuring process for one company before starting the next.
+    ### Primary Directive
+    You will search the internet and process each company **sequentially and independently**.
+    You must complete the entire research and data structuring process for one company before starting the next.
 
-        ### Input Companies (Process these EXACTLY in this order):
-        {company_list_str}
+    ### Input Companies (Process these EXACTLY in this order):
+    {company_list_str}
 
-        ### Data Collection & VALIDATION Rules
-        1. Return only data verified from credible, current sources (company website, LinkedIn, company's Facebook page, Crunchbase)
-        2. Never guess or infer data or return common formats of data searched, only return real data. Mark missing/unverifiable fields as NULL
-        3. You are strictly prohibited from returning fake linkedin profiles, fake emails, fake phone numbers, or guessed domains
-        4. If domain exists, Mandatory website check for contact information
-        5. Check Google search result sidebar for phone/website
-        
-        ### PHONE NUMBER PRIORITY (CRITICAL) ###
-        **DIRECT US LINES FIRST**: Prioritize standard geographic numbers (216-xxx-xxxx, 515-xxx-xxxx, 310-xxx-xxxx, etc.)
-        Toll-free (800/888/877/866/855/844/833) are LAST RESORT ONLY if no direct line exists.
+    ### Data Collection & VALIDATION Rules
+    1. Return only data verified from credible, current sources (company website, LinkedIn, company's Facebook page, Crunchbase)
+    2. Never guess or infer data or return common formats of data searched, only return real data. Mark missing/unverifiable fields as NULL
+    3. You are strictly prohibited from returning fake linkedin profiles, fake emails, fake phone numbers, or guessed domains
+    4. If domain exists, Mandatory website check for contact information
+    5. Check Google search result sidebar for phone/website
+    
+    ### PHONE NUMBER PRIORITY (CRITICAL) ###
+    **DIRECT US LINES FIRST**: Prioritize standard geographic numbers (216-xxx-xxxx, 515-xxx-xxxx, 310-xxx-xxxx, etc.)
+    Toll-free (800/888/877/866/855/844/833) are LAST RESORT ONLY if no direct line exists.
 
-        Search order:
-        1. Company website (all pages, not just contact - **Deep Seaerch**)
-        2. Google Knowledge Panel (map location sidebar)
-        3. Company Facebook page (thoroughly check about section for phone numbers and emails - - **Deep Seaerch**)
-        4. LinkedIn, Crunchbase
+    Search order:
+    1. Company website (all pages, not just contact - **Deep Seaerch**)
+    2. Google Knowledge Panel (map location sidebar)
+    3. Company Facebook page (thoroughly check about section for phone numbers and emails - - **Deep Seaerch**)
+    4. LinkedIn, Crunchbase
 
-        ### Time Zone Rules ###
+    ### Time Zone Rules ###
 
-            1)**US/CANADA PHONE NUMBERS**:
-            you **MUST** return a time zone from the following list if you find a US/CANADA based phone number: ('est', 'cen', 'pac')
-            even if you find others like ('mst', 'akst', 'hst') or any other time zone, you must return the nearest time zone only from the list.
+        1)**US/CANADA PHONE NUMBERS**:
+        you **MUST** return a time zone from the following list if you find a US/CANADA based phone number: ('est', 'cen', 'pac')
+        even if you find others like ('mst', 'akst', 'hst') or any other time zone, you must return the nearest time zone only from the list.
 
-            2) **NON-US/NON-CANADA PHONE NUMBERS**:
-            - Return country name only (e.g., 'UK', 'Australia', 'Germany')
-            - Use 'UK' for United Kingdom
-            - make sure to return '+' sign and country code at the start of the phone number.
+        2) **NON-US/NON-CANADA PHONE NUMBERS**:
+        - Return country name only (e.g., 'UK', 'Australia', 'Germany')
+        - Use 'UK' for United Kingdom
+        - make sure to return '+' sign and country code at the start of the phone number.
 
-            3) **Important Note**:
-            - Use the area code which is the first 3 digits of the phone number to get it's time zone.
-            - If no exact match from ('est', 'cen', 'pac') choose one of them based on the closest to the area code searched.
-            - If international → use country name except for Canada use the same time zones as US.
-            - If no phone number, time zone should be NULL
+        3) **Important Note**:
+        - Use the area code which is the first 3 digits of the phone number to get it's time zone.
+        - If no exact match from ('est', 'cen', 'pac') choose one of them based on the closest to the area code searched.
+        - If international → use country name except for Canada use the same time zones as US.
+        - If no phone number, time zone should be NULL
 
-        Each object must follow this exact structure:
-        {{
-            "company_name": "EXACT COMPANY NAME AS PROVIDED",
-            "domain": "domain or null",
-            "phone": "phone or null",
-            "time_zone": "if phone number must put time zone or else null",
-            "email": "email or null",
-            "key_personnel": {{
-                "name": "name or null",
-                "phone": "phone or null", 
-                "title": "title or null",
-                "email": "email or null"
-            }}
+    Each object must follow this exact structure:
+    {{
+        "company_name": "EXACT COMPANY NAME AS PROVIDED",
+        "domain": "domain or null",
+        "phone": "phone or null",
+        "time_zone": "if phone number must put time zone or else null",
+        "email": "email or null",
+        "key_personnel": {{
+            "name": "name or null",
+            "phone": "phone or null", 
+            "title": "title or null",
+            "email": "email or null"
         }}
+    }}
 
-        ### Final Output Requirement
-        Return ONLY the final JSON array with no additional text, explanations, mutliple values at one field or markdown formatting.
-        Ensure the array has exactly {len(company_list)} objects in the exact same order as the input companies."""
+    ### Final Output Requirement
+    Return ONLY the final JSON array with no additional text, explanations, mutliple values at one field or markdown formatting.
+    Ensure the array has exactly {len(company_list)} objects in the exact same order as the input companies."""
 
     try:
         client = genai.Client(api_key=api_key)
