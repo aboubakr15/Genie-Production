@@ -1060,7 +1060,7 @@ def clean_phone_number(phone_str):
         return f"{digits[0:3]} {digits[3:6]} {digits[6:10]}"
 
     # For all other numbers, return the cleaned digits with a '+' prefix.
-    return f" +{digits}"
+    return f" +{digits[0:2]} {digits[2:]}"
 
 # Timezone mapping data
 TOLL_FREE_AREA_CODES = {'800', '888', '877', '866', '855', '844', '833', '822', '811'}
