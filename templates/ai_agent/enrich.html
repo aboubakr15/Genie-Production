@@ -125,11 +125,17 @@
         <form id="enrichment-form">
             {% csrf_token %}
             <div class="excel-settings-card text-white mb-4">
-                <div class="form-group mb-0">
+                <div class="form-group mb-3">
                     <label for="{{ form.excel_sheet_name.id_for_label }}" class="form-label d-flex align-items-center">
-                        <i class="fas fa-file-excel me-2"></i>Excel Sheet Name (show name):
+                        <i class="fas fa-file-excel me-2"></i>Excel Sheet Name:
                     </label>
                     {{ form.excel_sheet_name }}
+                </div>
+                <div class="form-group mb-0">
+                    <label for="{{ form.show_name.id_for_label }}" class="form-label d-flex align-items-center">
+                        <i class="fas fa-tv me-2"></i>Show/Conference Name (Optional):
+                    </label>
+                    {{ form.show_name }}
                 </div>
             </div>
 
