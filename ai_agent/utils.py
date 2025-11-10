@@ -247,7 +247,7 @@ def mark_complete():
     enrichment_progress['is_complete'] = True
 
 
-def orchestrate_enrichment_workflow(company_names, api_key, task):
+def orchestrate_enrichment_workflow(company_names, api_key, task, show_name=None):
     """
     Main workflow that orchestrates the entire enrichment process
     """
@@ -267,7 +267,7 @@ def orchestrate_enrichment_workflow(company_names, api_key, task):
     # Step 2: Enrich not found leads with AI
     ai_leads = []
     if not_found_leads:
-        ai_leads = enrich_with_ai(not_found_leads, api_key, batch_size=4, task=task)
+        ai_leads = enrich_with_ai(not_found_leads, api_key, batch_size=3, task=task, show_name=show_name)
         
         # Step 3: Save AI results to global database
         if ai_leads:
@@ -277,7 +277,7 @@ def orchestrate_enrichment_workflow(company_names, api_key, task):
     enriched_results = merge_results(company_names, found_leads, ai_leads)
     
     # Step 5: Retry companies missing phone numbers (single retry only)
-    enriched_results = retry_missing_phones(enriched_results, api_key, batch_size=8, task=task)
+    enriched_results = retry_missing_phones(enriched_results, api_key, batch_size=8, task=task, show_name=show_name)
     
     # Mark as complete
     mark_complete()
@@ -364,7 +364,7 @@ def search_global_database(company_name):
     }
 
 
-def enrich_with_ai(company_names, api_key, batch_size, task):
+def enrich_with_ai(company_names, api_key, batch_size, task, show_name=None):
     """
     Enrich companies using AI in batches
     """
@@ -386,7 +386,8 @@ def enrich_with_ai(company_names, api_key, batch_size, task):
             api_key,
             batch_number=current_batch,
             retry_round=1,
-            company_mapping=batch_mapping
+            company_mapping=batch_mapping,
+            show_name=show_name
         )
         
         if ai_batch:
@@ -412,7 +413,7 @@ def enrich_with_ai(company_names, api_key, batch_size, task):
     return results
 
 
-def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, retry_round: int, company_mapping: Dict[str, str]) -> Optional[List[Dict]]:
+def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, retry_round: int, company_mapping: Dict[str, str], show_name: Optional[str] = None) -> Optional[List[Dict]]:
     
     # Use original company names for the prompt
     original_company_list = [company_mapping.get(comp.lower().strip(), comp) for comp in company_list]
@@ -420,11 +421,19 @@ def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, re
     
     print(f"🔍 Preparing API request for batch {batch_number} (Retry round {retry_round})...")
 
-    # Enhanced prompt with stricter instructions to prevent cumulative responses
-    prompt = f"""You are a precise business intelligence agent.
-    Your task is to retrieve verified contact information for exactly {len(company_list)} companies provided below.
+    # Build the contextual prompt part
+    context_prompt = ""
+    if show_name:
+        context_prompt = f"""
+    === CONTEXTUAL SEARCH PARAMETERS - CRITICAL ===
+    *   **Event Context**: These companies are associated with the "{show_name}" event. Use this to disambiguate companies with similar names. For example, if a company name is "Acme Inc." and the event is a farming conference, prioritize the "Acme Inc." that sells agricultural equipment over one that sells software.
+    *   **NEGATIVE CONSTRAINT**: You are strictly forbidden from returning contact information (phone, email) for the event organizers or the event itself. Your focus is solely on the company.
+    """
 
-    ### CRITICAL RULES
+    # Enhanced prompt with stricter instructions to prevent cumulative responses
+    prompt = f"""You are a business intelligence agent tasked with retrieving verified contact data for {len(company_list)} companies.
+    {context_prompt}
+    === NON-NEGOTIABLE RULES ===
     1. You MUST return each company names EXACTLY as provided - do not modify them
     2. You MUST return one JSON object per company in the same order as the input list
     3. If you cannot find information for a company, still return a JSON object with null values but preserve the company name
@@ -440,7 +449,7 @@ def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, re
     {company_list_str}
 
     ### Data Collection & VALIDATION Rules
-    1. Return only data verified from credible, current sources (company website, LinkedIn, company's Facebook page, Crunchbase)
+    1. Return only data verified from credible, current sources (company's website, LinkedIn, company's Facebook page, Crunchbase)
     2. Never guess or infer data or return common formats of data searched, only return real data. Mark missing/unverifiable fields as NULL
     3. You are strictly prohibited from returning fake linkedin profiles, fake emails, fake phone numbers, or guessed domains
     4. If domain exists, Mandatory website check for contact information
@@ -638,7 +647,7 @@ def merge_results(company_names, found_leads, ai_leads):
     return enriched_results
 
 
-def retry_missing_phones(enriched_results, api_key, batch_size, task):
+def retry_missing_phones(enriched_results, api_key, batch_size, task, show_name=None):
     """
     Retry companies that are missing phone numbers using AI in batches.
     """
@@ -669,7 +678,8 @@ def retry_missing_phones(enriched_results, api_key, batch_size, task):
             api_key,
             batch_number=(i // batch_size) + 1,
             retry_round=2,
-            company_mapping=batch_mapping
+            company_mapping=batch_mapping,
+            show_name=show_name
         )
         if ai_batch:
             retry_results.extend(ai_batch)

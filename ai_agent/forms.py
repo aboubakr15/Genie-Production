@@ -21,3 +21,14 @@ class CompanyListForm(forms.Form):
         label='Excel Sheet Name',
         help_text='Maximum 31 characters.'
     )
+
+    show_name = forms.CharField(
+        required=False,
+        max_length=255,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Optional: Enter show or conference name',
+            'class': 'form-control'
+        }),
+        label='Show/Conference Name',
+        help_text='Providing a show name helps find the correct company industry.'
+    )

@@ -60,6 +60,7 @@ def data_enrichment_view(request):
                     }, status=400)
                 
                 excel_sheet_name = form.cleaned_data['excel_sheet_name'].strip() or 'Enriched Leads'
+                show_name = form.cleaned_data.get('show_name', '').strip()
                 
                 # Validate sheet name length
                 if len(excel_sheet_name) > 31:
@@ -76,7 +77,7 @@ def data_enrichment_view(request):
                     }, status=400)
                 
                 # Call the Celery task to run in the background
-                task = enrich_data_task.delay(company_names, excel_sheet_name, user_id=request.user.id)
+                task = enrich_data_task.delay(company_names, excel_sheet_name, user_id=request.user.id, show_name=show_name)
                 
                 return JsonResponse({
                     'status': 'success', 
