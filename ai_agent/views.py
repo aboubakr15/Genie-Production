@@ -69,15 +69,40 @@ def data_enrichment_view(request):
                         'message': 'Excel sheet name must be 31 characters or less.'
                     }, status=400)
                 
-                # Check credits first
-                if not use_credits(amount=len(company_names), description="AI Enrichment", user=None):
-                    return JsonResponse({
-                        'status': 'error', 
-                        'message': 'Insufficient credits to process the request.'
-                    }, status=400)
-                
-                # Call the Celery task to run in the background
-                task = enrich_data_task.delay(company_names, excel_sheet_name, user_id=request.user.id, show_name=show_name)
+                # Step A: Perform local database search first (local searches are free)
+                found_local = []
+                not_found_local = []
+                for name in company_names:
+                    try:
+                        res = search_local_database(name)
+                    except Exception:
+                        res = None
+
+                    if res:
+                        found_local.append(res)
+                    else:
+                        not_found_local.append(name)
+
+                not_found_count = len(not_found_local)
+
+                # Step B: Check credits only for the companies not found locally
+                if not_found_count > 0:
+                    # Use a non-destructive check first
+                    if not can_use_feature(cost=not_found_count):
+                        return JsonResponse({
+                            'status': 'error',
+                            'message': 'Insufficient credits to process the non-local companies.'
+                        }, status=400)
+
+                    # Deduct credits (FIFO) for the non-local companies
+                    if not use_credits(amount=not_found_count, description="AI Enrichment (non-local)", user=request.user):
+                        return JsonResponse({
+                            'status': 'error',
+                            'message': 'Failed to deduct credits. Please try again.'
+                        }, status=400)
+
+                # Call the Celery task to run in the background and pass number of local companies found
+                task = enrich_data_task.delay(company_names, excel_sheet_name, user_id=request.user.id, show_name=show_name, local_found_count=len(found_local))
                 
                 return JsonResponse({
                     'status': 'success', 

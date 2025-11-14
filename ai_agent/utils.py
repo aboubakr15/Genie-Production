@@ -258,11 +258,9 @@ def orchestrate_enrichment_workflow(company_names, api_key, task, show_name=None
     # print(f"📊 Database results: {len(found_leads)} found, {len(not_found_leads)} not found")
     
 
-    ## If you wan to disable database search and want to use AI for all companies, uncomment below lines ##
-    found_leads = []
-    not_found_leads = company_names
-    print(f"📊 Database search disabled: {len(found_leads)} found, {len(not_found_leads)} not found")
-    #######################################################################################################
+    # Step 1: Search in Local then Global databases (local search is free)
+    found_leads, not_found_leads = search_databases(company_names)
+    print(f"📊 Database results: {len(found_leads)} found, {len(not_found_leads)} not found")
 
     # Step 2: Enrich not found leads with AI
     ai_leads = []
@@ -829,9 +827,22 @@ def save_excel_for_task(task, enriched_results, sheet_name="Enriched Leads"):
         summary_row = len(display_df) + 3
         worksheet.write(summary_row, 0, "Data Enrichment Summary:", summary_format)
         worksheet.write(summary_row + 1, 0, f"Total Companies Processed: {total_companies}", normal_format)
-        worksheet.write(summary_row + 2, 0, f"Companies with Phone: {companies_with_phone} ({companies_with_phone/total_companies*100:.1f}%)", normal_format)
-        worksheet.write(summary_row + 3, 0, f"Companies with Email: {companies_with_email} ({companies_with_email/total_companies*100:.1f}%)", normal_format)
-        worksheet.write(summary_row + 4, 0, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", normal_format)
+        worksheet.write(summary_row + 2, 0, f"Companies with Phone: {companies_with_phone} ({(companies_with_phone/total_companies*100) if total_companies else 0:.1f}%)", normal_format)
+        worksheet.write(summary_row + 3, 0, f"Companies with Email: {companies_with_email} ({(companies_with_email/total_companies*100) if total_companies else 0:.1f}%)", normal_format)
+
+        # If the task stored metadata about how many were found locally, include it
+        local_found = None
+        try:
+            if task and getattr(task, 'results', None) and isinstance(task.results, dict):
+                local_found = task.results.get('local_companies_found')
+        except Exception:
+            local_found = None
+
+        if local_found is not None:
+            worksheet.write(summary_row + 4, 0, f"Companies found in local DB: {local_found}", normal_format)
+            worksheet.write(summary_row + 5, 0, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", normal_format)
+        else:
+            worksheet.write(summary_row + 4, 0, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", normal_format)
         
         worksheet.set_column(0, 0, 35)  # Set summary column width
 

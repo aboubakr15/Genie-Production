@@ -62,7 +62,7 @@ def finalize_enrichment_task(self, results, task_id):
     return f"Enrichment complete and finalized for {task.excel_sheet_name}"
 
 @shared_task(bind=True)
-def enrich_data_task(self, company_names, excel_sheet_name, user_id=None, show_name=None):
+def enrich_data_task(self, company_names, excel_sheet_name, user_id=None, show_name=None, local_found_count=0, **kwargs):
     """
     Manages the data enrichment process by creating a parallel workflow.
     """
@@ -81,6 +81,22 @@ def enrich_data_task(self, company_names, excel_sheet_name, user_id=None, show_n
         total_chunks=total_chunks,
         user_id=user_id,
     )
+
+    # Store metadata about how many companies were found locally (so it can be used in the Excel summary)
+    try:
+        # Allow compatibility: get from explicit param or kwargs if provided by older/newer callers
+        local_count = int(local_found_count or 0)
+        if 'local_found_count' in kwargs and kwargs.get('local_found_count') is not None:
+            try:
+                local_count = int(kwargs.get('local_found_count'))
+            except Exception:
+                pass
+
+        task.results = {'local_companies_found': local_count}
+        task.save(update_fields=['results'])
+    except Exception:
+        # Non-fatal: continue without metadata if something goes wrong
+        pass
 
     if total_companies == 0:
         task.status = 'SUCCESS'
