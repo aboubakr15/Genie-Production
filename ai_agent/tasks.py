@@ -10,7 +10,7 @@ from django.db.models import F
 CHUNK_SIZE = 20
 
 @shared_task(bind=True, acks_late=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 3, 'countdown': 60})
-def enrich_chunk_task(self, company_names, task_id, show_name=None):
+def enrich_chunk_task(self, company_names, task_id, show_name=None, category_name=None):
     """
     Processes a single chunk of companies. This task is designed to be fault-tolerant.
     If it fails, Celery will automatically retry it.
@@ -18,7 +18,7 @@ def enrich_chunk_task(self, company_names, task_id, show_name=None):
     task = EnrichmentTask.objects.get(task_id=task_id)
     
     # Perform the enrichment for the current chunk
-    enriched_results = orchestrate_enrichment_workflow(company_names, settings.GEMINI_API_KEY, task, show_name)
+    enriched_results = orchestrate_enrichment_workflow(company_names, settings.GEMINI_API_KEY, task, show_name, category_name)
 
     # Atomically update the progress after the chunk is successfully processed.
     # The F() expression creates an atomic database operation, which is safe from race conditions.
@@ -62,7 +62,7 @@ def finalize_enrichment_task(self, results, task_id):
     return f"Enrichment complete and finalized for {task.excel_sheet_name}"
 
 @shared_task(bind=True)
-def enrich_data_task(self, company_names, excel_sheet_name, user_id=None, show_name=None, local_found_count=0, **kwargs):
+def enrich_data_task(self, company_names, excel_sheet_name, user_id=None, show_name=None, category_name=None, local_found_count=0, **kwargs):
     """
     Manages the data enrichment process by creating a parallel workflow.
     """
@@ -107,7 +107,7 @@ def enrich_data_task(self, company_names, excel_sheet_name, user_id=None, show_n
 
     # Create a group of parallel tasks for each chunk
     chunk_tasks = group(
-        enrich_chunk_task.s(company_names[i:i + CHUNK_SIZE], task_id, show_name)
+        enrich_chunk_task.s(company_names[i:i + CHUNK_SIZE], task_id, show_name, category_name)
         for i in range(0, total_companies, CHUNK_SIZE)
     )
 

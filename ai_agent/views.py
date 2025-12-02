@@ -1,6 +1,6 @@
-from django.shortcuts import render, redirect
-from .forms import CompanyListForm
-from .models import EnrichmentTask
+from django.shortcuts import render, redirect, get_object_or_404
+from .forms import CompanyListForm, CategoryForm
+from .models import EnrichmentTask, Category
 from datetime import timedelta
 from django.contrib.auth.decorators import user_passes_test
 from main.custom_decorators import is_in_group
@@ -61,6 +61,13 @@ def data_enrichment_view(request):
                 
                 excel_sheet_name = form.cleaned_data['excel_sheet_name'].strip() or 'Enriched Leads'
                 show_name = form.cleaned_data.get('show_name', '').strip()
+                category_id = form.cleaned_data.get('category')
+                category = None
+                if category_id:
+                    try:
+                        category = Category.using('global').objects.get(id=category_id, is_active=True)
+                    except Category.using('global').DoesNotExist:
+                        pass
                 
                 # Validate sheet name length
                 if len(excel_sheet_name) > 31:
@@ -102,7 +109,8 @@ def data_enrichment_view(request):
                         }, status=400)
 
                 # Call the Celery task to run in the background and pass number of local companies found
-                task = enrich_data_task.delay(company_names, excel_sheet_name, user_id=request.user.id, show_name=show_name, local_found_count=len(found_local))
+                category_name = category.name if category else None
+                task = enrich_data_task.delay(company_names, excel_sheet_name, user_id=request.user.id, show_name=show_name, category_name=category_name, local_found_count=len(found_local))
                 
                 return JsonResponse({
                     'status': 'success', 
@@ -211,4 +219,58 @@ def task_dashboard_view(request):
     tasks = paginator.get_page(page_number)
     
     return render(request, 'ai_agent/task_dashboard.html', {'tasks': tasks})
+
+
+# Category Management Views
+@user_passes_test(lambda user: is_in_group(user, "ai_agent"))
+def category_list_view(request):
+    """List all categories"""
+    categories = Category.objects.all().order_by('name')
+    return render(request, 'ai_agent/category_list.html', {'categories': categories})
+
+
+@user_passes_test(lambda user: is_in_group(user, "ai_agent"))
+def category_add_view(request):
+    """Add a new category"""
+    if request.method == 'POST':
+        form = CategoryForm(request.POST)
+        if form.is_valid():
+            category = form.save()
+            messages.success(request, f'Category "{category.name}" added successfully.')
+            return redirect('ai_agent:category_list')
+    else:
+        form = CategoryForm()
+    
+    return render(request, 'ai_agent/category_form.html', {'form': form, 'action': 'Add'})
+
+
+@user_passes_test(lambda user: is_in_group(user, "ai_agent"))
+def category_edit_view(request, category_id):
+    """Edit an existing category"""
+    category = get_object_or_404(Category, id=category_id)
+    
+    if request.method == 'POST':
+        form = CategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            category = form.save()
+            messages.success(request, f'Category "{category.name}" updated successfully.')
+            return redirect('ai_agent:category_list')
+    else:
+        form = CategoryForm(instance=category)
+    
+    return render(request, 'ai_agent/category_form.html', {'form': form, 'action': 'Edit', 'category': category})
+
+
+@user_passes_test(lambda user: is_in_group(user, "ai_agent"))
+def category_delete_view(request, category_id):
+    """Delete a category"""
+    category = get_object_or_404(Category, id=category_id)
+    
+    if request.method == 'POST':
+        category_name = category.name
+        category.delete()
+        messages.success(request, f'Category "{category_name}" deleted successfully.')
+        return redirect('ai_agent:category_list')
+    
+    return render(request, 'ai_agent/category_confirm_delete.html', {'category': category})
 

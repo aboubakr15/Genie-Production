@@ -247,16 +247,12 @@ def mark_complete():
     enrichment_progress['is_complete'] = True
 
 
-def orchestrate_enrichment_workflow(company_names, api_key, task, show_name=None):
+def orchestrate_enrichment_workflow(company_names, api_key, task, show_name=None, category_name=None):
     """
     Main workflow that orchestrates the entire enrichment process
     """
     reset_enrichment_progress()
-    
-    # # Step 1: Search in databases first
-    # found_leads, not_found_leads = search_databases(company_names)
-    # print(f"📊 Database results: {len(found_leads)} found, {len(not_found_leads)} not found")
-    
+        
 
     # Step 1: Search in Local then Global databases (local search is free)
     found_leads, not_found_leads = search_databases(company_names)
@@ -265,7 +261,7 @@ def orchestrate_enrichment_workflow(company_names, api_key, task, show_name=None
     # Step 2: Enrich not found leads with AI
     ai_leads = []
     if not_found_leads:
-        ai_leads = enrich_with_ai(not_found_leads, api_key, batch_size=3, task=task, show_name=show_name)
+        ai_leads = enrich_with_ai(not_found_leads, api_key, batch_size=5, task=task, show_name=show_name, category_name=category_name)
         
         # Step 3: Save AI results to global database
         if ai_leads:
@@ -274,8 +270,12 @@ def orchestrate_enrichment_workflow(company_names, api_key, task, show_name=None
     # Step 4: Merge all results in original order
     enriched_results = merge_results(company_names, found_leads, ai_leads)
     
-    # Step 5: Retry companies missing phone numbers (single retry only)
-    enriched_results = retry_missing_phones(enriched_results, api_key, batch_size=8, task=task, show_name=show_name)
+    # Step 5: Retry companies missing phone numbers (first retry round)
+    enriched_results = retry_missing_phones(enriched_results, api_key, batch_size=8, task=task, show_name=show_name, category_name=category_name)
+    
+    # Step 6: Second retry round for companies still missing phone numbers
+    # This retry is triggered only by missing phone numbers, but also updates emails if found
+    enriched_results = retry_missing_phones_second_round(enriched_results, api_key, batch_size=10, task=task, show_name=show_name, category_name=category_name)
     
     # Mark as complete
     mark_complete()
@@ -362,7 +362,7 @@ def search_global_database(company_name):
     }
 
 
-def enrich_with_ai(company_names, api_key, batch_size, task, show_name=None):
+def enrich_with_ai(company_names, api_key, batch_size, task, show_name=None, category_name=None):
     """
     Enrich companies using AI in batches
     """
@@ -385,7 +385,8 @@ def enrich_with_ai(company_names, api_key, batch_size, task, show_name=None):
             batch_number=current_batch,
             retry_round=1,
             company_mapping=batch_mapping,
-            show_name=show_name
+            show_name=show_name,
+            category_name=category_name
         )
         
         if ai_batch:
@@ -411,7 +412,7 @@ def enrich_with_ai(company_names, api_key, batch_size, task, show_name=None):
     return results
 
 
-def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, retry_round: int, company_mapping: Dict[str, str], show_name: Optional[str] = None) -> Optional[List[Dict]]:
+def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, retry_round: int, company_mapping: Dict[str, str], show_name: Optional[str] = None, category_name: Optional[str] = None) -> Optional[List[Dict]]:
     
     # Use original company names for the prompt
     original_company_list = [company_mapping.get(comp.lower().strip(), comp) for comp in company_list]
@@ -421,11 +422,19 @@ def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, re
 
     # Build the contextual prompt part
     context_prompt = ""
-    if show_name:
-        context_prompt = f"""
-    === CONTEXTUAL SEARCH PARAMETERS - CRITICAL ===
-    *   **Event Context**: These companies are associated with the "{show_name}" event. Use this to disambiguate companies with similar names. For example, if a company name is "Acme Inc." and the event is a farming conference, prioritize the "Acme Inc." that sells agricultural equipment over one that sells software.
+    if show_name or category_name:
+        context_prompt = "\n    === CONTEXTUAL SEARCH PARAMETERS - CRITICAL ===\n"
+        
+        if show_name:
+            context_prompt += f"""    *   **Event Context**: These companies are associated with the "{show_name}" event. Use this to disambiguate companies with similar names. For example, if a company name is "Acme Inc." and the event is a farming conference, prioritize the "Acme Inc." that sells agricultural equipment over one that sells software.
     *   **NEGATIVE CONSTRAINT**: You are strictly forbidden from returning contact information (phone, email) for the event organizers or the event itself. Your focus is solely on the company.
+    """
+        
+        if category_name:
+            context_prompt += f"""    *   **Category/Industry Context**: These companies belong to the "{category_name}" category/industry. Use this information to:
+        - Filter out companies with similar names that belong to different industries
+        - Prioritize companies that match this specific category/industry
+    For example, if the category is "Technology" and you find multiple companies named "Acme", prioritize the technology company over companies in other industries like manufacturing or healthcare.
     """
 
     # Enhanced prompt with stricter instructions to prevent cumulative responses
@@ -560,7 +569,6 @@ def save_to_global_database(enriched_results):
 
         # If no contact info, skip saving this record
         if not has_contact_info:
-            print(f"🚫 Skipping {company_name} due to no contact information.")
             continue
         
         try:
@@ -645,7 +653,7 @@ def merge_results(company_names, found_leads, ai_leads):
     return enriched_results
 
 
-def retry_missing_phones(enriched_results, api_key, batch_size, task, show_name=None):
+def retry_missing_phones(enriched_results, api_key, batch_size, task, show_name=None, category_name=None):
     """
     Retry companies that are missing phone numbers using AI in batches.
     """
@@ -677,7 +685,8 @@ def retry_missing_phones(enriched_results, api_key, batch_size, task, show_name=
             batch_number=(i // batch_size) + 1,
             retry_round=2,
             company_mapping=batch_mapping,
-            show_name=show_name
+            show_name=show_name,
+            category_name=category_name
         )
         if ai_batch:
             retry_results.extend(ai_batch)
@@ -696,6 +705,91 @@ def retry_missing_phones(enriched_results, api_key, batch_size, task, show_name=
             retry_email = retry_map[company_name].get('email')
             if retry_email and str(retry_email).strip():
                 enriched_results[i]['email'] = retry_email
+
+    return enriched_results
+
+
+def retry_missing_phones_second_round(enriched_results, api_key, batch_size, task, show_name=None, category_name=None):
+    """
+    Second retry round: Only retries companies missing phone numbers (not emails).
+    Updates both phone numbers and emails if found during the retry process.
+    The key trigger is missing phone numbers only, but emails get updated if found.
+    """
+    companies_to_retry = []
+    for result in enriched_results:
+        # Only check for missing phone numbers as the trigger (not emails)
+        if not result.get('phone') or str(result.get('phone', '')).strip() == '':
+            companies_to_retry.append(result.get('company_name'))
+
+    if not companies_to_retry:
+        return enriched_results
+
+    print(f"🔄 Second retry round: Retrying {len(companies_to_retry)} companies missing phone numbers (emails will be updated if found)...")
+    time.sleep(2)
+
+    # Use the same batching/AI logic as enrich_with_ai
+    retry_results = []
+    company_mapping = {name.lower().strip(): name for name in companies_to_retry}
+    for i in range(0, len(companies_to_retry), batch_size):
+        batch = companies_to_retry[i:i + batch_size]
+        batch_mapping = {name.lower().strip(): name for name in batch}
+        
+        # Increment request count for the task
+        task.request_count += 1
+        task.save()
+
+        ai_batch = ai_search_batch(
+            batch,
+            api_key,
+            batch_number=(i // batch_size) + 1,
+            retry_round=3,  # Third round
+            company_mapping=batch_mapping,
+            show_name=show_name,
+            category_name=category_name
+        )
+        if ai_batch:
+            retry_results.extend(ai_batch)
+            # Save the results from the retry batch to the global database
+            save_to_global_database(ai_batch)
+
+    # Update the original results with retry data
+    # Update phones (the key trigger) and also update emails if found
+    retry_map = {result['company_name']: result for result in retry_results}
+    for i, result in enumerate(enriched_results):
+        company_name = result.get('company_name')
+        if company_name in retry_map:
+            retry_data = retry_map[company_name]
+            
+            # Update phone number if found (this is the key trigger)
+            retry_phone = retry_data.get('phone')
+            if retry_phone and str(retry_phone).strip():
+                enriched_results[i]['phone'] = retry_phone
+                # Update timezone if phone was found
+                if not enriched_results[i].get('time_zone'):
+                    enriched_results[i]['time_zone'] = get_timezone_for_number(retry_phone)
+            
+            # Update email if found (bonus update during phone retry)
+            retry_email = retry_data.get('email')
+            if retry_email and str(retry_email).strip():
+                enriched_results[i]['email'] = retry_email
+            
+            # Also update other fields if found (domain, key_personnel, etc.)
+            if retry_data.get('domain') and not enriched_results[i].get('domain'):
+                enriched_results[i]['domain'] = retry_data.get('domain')
+            
+            # Update key personnel if found
+            retry_key_personnel = retry_data.get('key_personnel', {})
+            if retry_key_personnel and isinstance(retry_key_personnel, dict):
+                current_personnel = enriched_results[i].get('key_personnel', {})
+                if not isinstance(current_personnel, dict):
+                    current_personnel = {}
+                
+                # Update key personnel fields if they exist in retry data
+                for key in ['name', 'phone', 'title', 'email']:
+                    if retry_key_personnel.get(key) and not current_personnel.get(key):
+                        current_personnel[key] = retry_key_personnel.get(key)
+                
+                enriched_results[i]['key_personnel'] = current_personnel
 
     return enriched_results
 

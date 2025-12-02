@@ -55,6 +55,24 @@ class GlobalContactNames(models.Model):
     def __str__(self):
         return self.name
 
+class Category(models.Model):
+    """
+    Categories for AI search to help filter companies by industry/type
+    """
+    name = models.CharField(max_length=255, unique=True, db_index=True)
+    description = models.TextField(blank=True, null=True, help_text="Optional description of the category")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        app_label = 'ai_agent'
+        verbose_name_plural = 'Categories'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
 class EnrichmentTask(models.Model):
     user_id = models.IntegerField(null=True)  # Store the user's ID directly
     task_id = models.CharField(max_length=255, unique=True)

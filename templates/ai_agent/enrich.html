@@ -131,11 +131,23 @@
                     </label>
                     {{ form.excel_sheet_name }}
                 </div>
-                <div class="form-group mb-0">
+                <div class="form-group mb-3">
                     <label for="{{ form.show_name.id_for_label }}" class="form-label d-flex align-items-center">
                         <i class="fas fa-tv me-2"></i>Show/Conference Name (Optional):
                     </label>
                     {{ form.show_name }}
+                </div>
+                <div class="form-group mb-0">
+                    <label for="{{ form.category.id_for_label }}" class="form-label d-flex align-items-center">
+                        <i class="fas fa-tags me-2"></i>Category (Optional):
+                    </label>
+                    {{ form.category }}
+                    {% if form.category.help_text %}
+                    <small class="form-text d-block mt-1" style="opacity: 0.9;">{{ form.category.help_text }}</small>
+                    {% endif %}
+                    <a href="{% url 'ai_agent:category_list' %}" class="btn btn-sm btn-light mt-2" target="_blank">
+                        <i class="fas fa-cog me-1"></i>Manage Categories
+                    </a>
                 </div>
             </div>
 
@@ -261,7 +273,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             window.location.href = data.download_url;
                         } else {
                             // Fallback to task-dashboard where user can download
-                            displayMessage('Your file is ready. Visit the <a href="/ai_agent/task-dashboard/">Tasks Dashboard</a> to download.', 'success');
+                            displayMessage('Your file is ready. Visit the <a href="/ai_agent/dashboard/">Tasks Dashboard</a> to download.', 'success');
                         }
                     } else if (data.status === 'FAILURE') {
                         clearInterval(interval);
