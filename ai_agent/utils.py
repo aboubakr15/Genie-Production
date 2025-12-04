@@ -2,6 +2,7 @@ from django.db import transaction
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.http import JsonResponse
+from django.conf import settings
 from datetime import timedelta, datetime
 from main.models import *
 import json, time, re
@@ -11,6 +12,10 @@ from google.genai import types
 import pandas as pd
 from io import BytesIO
 from .models import GlobalOrganization, GlobalPhoneNumbers, GlobalEmails, GlobalContactNames
+
+# Tunable delays for external AI calls (configured in settings for control vs. speed)
+AI_BATCH_SLEEP_SECONDS = getattr(settings, "AI_AGENT_BATCH_SLEEP_SECONDS", 1.0)
+AI_RETRY_SLEEP_SECONDS = getattr(settings, "AI_AGENT_RETRY_SLEEP_SECONDS", 1.0)
 
 def get_credit_balance():
     """Get current project credit balance"""
@@ -406,8 +411,8 @@ def enrich_with_ai(company_names, api_key, batch_size, task, show_name=None, cat
         
         # Add delay between batches to avoid rate limiting (except for last batch)
         if i + batch_size < len(company_names):
-            print(f"⏳ Waiting 2 seconds before next batch...")
-            time.sleep(2)
+            print(f"⏳ Waiting {AI_BATCH_SLEEP_SECONDS} seconds before next batch...")
+            time.sleep(AI_BATCH_SLEEP_SECONDS)
     
     return results
 
@@ -666,7 +671,7 @@ def retry_missing_phones(enriched_results, api_key, batch_size, task, show_name=
         return enriched_results
 
     print(f"🔄 Retrying {len(companies_to_retry)} companies missing phone numbers...")
-    time.sleep(2)
+    time.sleep(AI_RETRY_SLEEP_SECONDS)
 
     # Use the same batching/AI logic as enrich_with_ai
     retry_results = []
@@ -725,7 +730,7 @@ def retry_missing_phones_second_round(enriched_results, api_key, batch_size, tas
         return enriched_results
 
     print(f"🔄 Second retry round: Retrying {len(companies_to_retry)} companies missing phone numbers (emails will be updated if found)...")
-    time.sleep(2)
+    time.sleep(AI_RETRY_SLEEP_SECONDS)
 
     # Use the same batching/AI logic as enrich_with_ai
     retry_results = []

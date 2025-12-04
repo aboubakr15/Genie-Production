@@ -6,24 +6,45 @@ from django.utils import timezone
 import math
 from django.db.models import F
 
-# Define the size of each chunk
-CHUNK_SIZE = 20
+# Define the size of each chunk, allowing override from settings for easier tuning
+DEFAULT_CHUNK_SIZE = 20
+CHUNK_SIZE = max(
+    1,
+    int(getattr(settings, "AI_AGENT_CHUNK_SIZE", DEFAULT_CHUNK_SIZE))
+)
 
-@shared_task(bind=True, acks_late=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 3, 'countdown': 60})
+
+@shared_task(
+    bind=True,
+    acks_late=True,
+    autoretry_for=(Exception,),
+    retry_kwargs={'max_retries': 3, 'countdown': 60},
+    retry_backoff=True,
+    retry_jitter=True,
+)
 def enrich_chunk_task(self, company_names, task_id, show_name=None, category_name=None):
     """
     Processes a single chunk of companies. This task is designed to be fault-tolerant.
-    If it fails, Celery will automatically retry it.
+    If it fails, Celery will automatically retry it with backoff.
     """
-    task = EnrichmentTask.objects.get(task_id=task_id)
-    
+    try:
+        task = EnrichmentTask.objects.get(task_id=task_id)
+    except EnrichmentTask.DoesNotExist:
+        # If the parent task cannot be found, fail fast but don't crash the worker repeatedly
+        return []
+
     # Perform the enrichment for the current chunk
-    enriched_results = orchestrate_enrichment_workflow(company_names, settings.GEMINI_API_KEY, task, show_name, category_name)
+    enriched_results = orchestrate_enrichment_workflow(
+        company_names,
+        settings.GEMINI_API_KEY,
+        task,
+        show_name,
+        category_name,
+    )
 
     # Atomically update the progress after the chunk is successfully processed.
     # The F() expression creates an atomic database operation, which is safe from race conditions.
-    task.chunks_completed = F('chunks_completed') + 1
-    task.save(update_fields=['chunks_completed'])
+    EnrichmentTask.objects.filter(task_id=task_id).update(chunks_completed=F('chunks_completed') + 1)
     task.refresh_from_db()
 
     if task.total_chunks > 0:
@@ -33,17 +54,26 @@ def enrich_chunk_task(self, company_names, task_id, show_name=None, category_nam
 
     return enriched_results
 
-@shared_task(bind=True)
+@shared_task(bind=True, acks_late=True)
 def finalize_enrichment_task(self, results, task_id):
     """
     The final task. It collects all results, handles potential failures,
     and generates the final Excel file.
     """
-    task = EnrichmentTask.objects.get(task_id=task_id)
-    
+    try:
+        task = EnrichmentTask.objects.get(task_id=task_id)
+    except EnrichmentTask.DoesNotExist:
+        # Nothing to finalize if the parent record is gone
+        return f"Enrichment task {task_id} no longer exists."
+
     # Filter out any failed chunks (which may appear as None or exceptions)
-    successful_results = [item for sublist in results if sublist and isinstance(sublist, list) for item in sublist]
-    
+    successful_results = [
+        item
+        for sublist in (results or [])
+        if sublist and isinstance(sublist, list)
+        for item in sublist
+    ]
+
     try:
         if not successful_results:
             raise ValueError("All enrichment chunks failed.")
@@ -61,15 +91,22 @@ def finalize_enrichment_task(self, results, task_id):
 
     return f"Enrichment complete and finalized for {task.excel_sheet_name}"
 
-@shared_task(bind=True)
+@shared_task(bind=True, acks_late=True)
 def enrich_data_task(self, company_names, excel_sheet_name, user_id=None, show_name=None, category_name=None, local_found_count=0, **kwargs):
     """
     Manages the data enrichment process by creating a parallel workflow.
+    Designed to be robust for very large company lists.
     """
     task_id = self.request.id
     owner_name = 'IBH'
-    total_companies = len(company_names)
-    total_chunks = math.ceil(total_companies / CHUNK_SIZE)
+    total_companies = len(company_names or [])
+
+    # Guard against excessively large input to avoid overwhelming worker/broker
+    max_companies = int(getattr(settings, "AI_AGENT_MAX_COMPANIES_PER_TASK", 5000))
+    if total_companies > max_companies:
+        raise ValueError(f"Too many companies in a single enrichment task ({total_companies} > {max_companies}).")
+
+    total_chunks = math.ceil(total_companies / CHUNK_SIZE) if total_companies > 0 else 0
 
     task = EnrichmentTask.objects.create(
         task_id=task_id,
@@ -111,9 +148,10 @@ def enrich_data_task(self, company_names, excel_sheet_name, user_id=None, show_n
         for i in range(0, total_companies, CHUNK_SIZE)
     )
 
-    # Define a workflow: run all chunks in parallel, then run the finalizer
+    # Define a workflow: run all chunks in parallel (bounded by worker concurrency), then run the finalizer
     workflow = (chunk_tasks | finalize_enrichment_task.s(task_id=task_id))
-    
+
     workflow.apply_async()
 
     return f"Parallel enrichment started for {excel_sheet_name}"
+

@@ -61,13 +61,15 @@ def data_enrichment_view(request):
                 
                 excel_sheet_name = form.cleaned_data['excel_sheet_name'].strip() or 'Enriched Leads'
                 show_name = form.cleaned_data.get('show_name', '').strip()
-                category_id = form.cleaned_data.get('category')
+
+                # `category` field is likely a ModelChoiceField, so cleaned_data returns a Category instance
+                selected_category = form.cleaned_data.get('category')
                 category = None
-                if category_id:
+                if selected_category:
                     try:
-                        category = Category.objects.using('global').get(id=category_id, is_active=True)
+                        category = Category.objects.using('global').get(name=selected_category.name, is_active=True)
                     except Category.DoesNotExist:
-                        pass
+                        category = None
                 
                 # Validate sheet name length
                 if len(excel_sheet_name) > 31:
