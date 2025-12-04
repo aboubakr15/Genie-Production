@@ -66,7 +66,7 @@ def data_enrichment_view(request):
                 if category_id:
                     try:
                         category = Category.using('global').objects.get(id=category_id, is_active=True)
-                    except Category.using('global').DoesNotExist:
+                    except Category.DoesNotExist:
                         pass
                 
                 # Validate sheet name length
