@@ -61,12 +61,18 @@ def data_enrichment_view(request):
                 
                 excel_sheet_name = form.cleaned_data['excel_sheet_name'].strip() or 'Enriched Leads'
                 show_name = form.cleaned_data.get('show_name', '').strip()
-                category_id = form.cleaned_data.get('category')
+
+                # `category` field is likely a ModelChoiceField, so cleaned_data returns a Category instance
+                selected_category = form.cleaned_data.get('category')
                 category = None
-                if category_id:
+                if selected_category:
                     try:
-                        # Use the manager's `using` to explicitly read from the `global` database
-                        category = Category.objects.using('global').get(id=category_id, is_active=True)
+                        # Look up the corresponding Category in the `global` database.
+                        # Prefer matching by primary key if IDs are shared; fall back to name if needed.
+                        try:
+                            category = Category.objects.using('global').get(id=selected_category.id, is_active=True)
+                        except Category.DoesNotExist:
+                            category = Category.objects.using('global').get(name=selected_category.name, is_active=True)
                     except Category.DoesNotExist:
                         category = None
                 
