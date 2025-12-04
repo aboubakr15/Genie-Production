@@ -289,6 +289,7 @@ GEMINI_API_KEY = "AIzaSyBuNSlfHDLXEWfr1GUCsHWoqeLKibEyT0E"
 
 External_REDIS_URL = "redis://default:riercOvPFfeeXIGpKsMnfpgPEDltqVjf@metro.proxy.rlwy.net:45042"
 
+# Celery configuration tuned for stability under high load
 CELERY_BROKER_URL = External_REDIS_URL
 CELERY_RESULT_BACKEND = External_REDIS_URL
 CELERY_ACCEPT_CONTENT = ['json']
@@ -296,3 +297,13 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Africa/Cairo'
 
+# Limit worker-side concurrency and prefetching to avoid overloading Redis and external APIs
+CELERYD_PREFETCH_MULTIPLIER = 1
+CELERY_WORKER_CONCURRENCY = int(os.environ.get("CELERY_WORKER_CONCURRENCY", "2"))
+CELERY_WORKER_MAX_TASKS_PER_CHILD = int(os.environ.get("CELERY_WORKER_MAX_TASKS_PER_CHILD", "20"))
+
+# Default task behaviour (can still be overridden per-task)
+CELERY_TASK_ACKS_LATE = True
+CELERY_TASK_REJECT_ON_WORKER_LOST = True
+CELERY_TASK_SOFT_TIME_LIMIT = int(os.environ.get("CELERY_TASK_SOFT_TIME_LIMIT", str(60 * 15)))  # 15 minutes
+CELERY_TASK_TIME_LIMIT = int(os.environ.get("CELERY_TASK_TIME_LIMIT", str(60 * 20)))  # 20 minutes
