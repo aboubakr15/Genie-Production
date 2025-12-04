@@ -65,9 +65,10 @@ def data_enrichment_view(request):
                 category = None
                 if category_id:
                     try:
-                        category = Category.using('global').objects.get(id=category_id, is_active=True)
+                        # Use the manager's `using` to explicitly read from the `global` database
+                        category = Category.objects.using('global').get(id=category_id, is_active=True)
                     except Category.DoesNotExist:
-                        pass
+                        category = None
                 
                 # Validate sheet name length
                 if len(excel_sheet_name) > 31:
