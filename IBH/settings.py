@@ -297,13 +297,20 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Africa/Cairo'
 
-# Limit worker-side concurrency and prefetching to avoid overloading Redis and external APIs
-CELERYD_PREFETCH_MULTIPLIER = 1
-CELERY_WORKER_CONCURRENCY = int(os.environ.get("CELERY_WORKER_CONCURRENCY", "2"))
-CELERY_WORKER_MAX_TASKS_PER_CHILD = int(os.environ.get("CELERY_WORKER_MAX_TASKS_PER_CHILD", "20"))
+# Limit worker-side concurrency and prefetching to avoid overloading Redis and external APIs,
+# but keep defaults high enough for good performance. Override via env vars as needed.
+CELERYD_PREFETCH_MULTIPLIER = int(os.environ.get("CELERYD_PREFETCH_MULTIPLIER", "4"))
+CELERY_WORKER_CONCURRENCY = int(os.environ.get("CELERY_WORKER_CONCURRENCY", "6"))
+CELERY_WORKER_MAX_TASKS_PER_CHILD = int(os.environ.get("CELERY_WORKER_MAX_TASKS_PER_CHILD", "50"))
 
 # Default task behaviour (can still be overridden per-task)
 CELERY_TASK_ACKS_LATE = True
 CELERY_TASK_REJECT_ON_WORKER_LOST = True
-CELERY_TASK_SOFT_TIME_LIMIT = int(os.environ.get("CELERY_TASK_SOFT_TIME_LIMIT", str(60 * 15)))  # 15 minutes
-CELERY_TASK_TIME_LIMIT = int(os.environ.get("CELERY_TASK_TIME_LIMIT", str(60 * 20)))  # 20 minutes
+CELERY_TASK_SOFT_TIME_LIMIT = int(os.environ.get("CELERY_TASK_SOFT_TIME_LIMIT", str(60 * 5)))  # 15 minutes
+CELERY_TASK_TIME_LIMIT = int(os.environ.get("CELERY_TASK_TIME_LIMIT", str(60 * 8)))  # 20 minutes
+
+# AI agent tuning: batch sizes and delays between external API calls
+AI_AGENT_CHUNK_SIZE = int(os.environ.get("AI_AGENT_CHUNK_SIZE", "20"))
+AI_AGENT_MAX_COMPANIES_PER_TASK = int(os.environ.get("AI_AGENT_MAX_COMPANIES_PER_TASK", "10000"))
+AI_AGENT_BATCH_SLEEP_SECONDS = float(os.environ.get("AI_AGENT_BATCH_SLEEP_SECONDS", "1.0"))
+AI_AGENT_RETRY_SLEEP_SECONDS = float(os.environ.get("AI_AGENT_RETRY_SLEEP_SECONDS", "1.0"))
