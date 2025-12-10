@@ -124,11 +124,11 @@ WSGI_APPLICATION = 'IBH.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': "railway",
-        'USER': "root",
-        'PASSWORD': "nJkjXobZCpCylOnTUqNhKfehmNPuXwxC",
-        'HOST': "yamanote.proxy.rlwy.net",
-        'PORT': "13120",
+        'NAME': os.environ.get('MYSQL_DATABASE', "genie"),
+        'USER': os.environ.get('MYSQLUSER', "root"),
+        'PASSWORD': os.environ.get('MYSQLPASSWORD', "admin@ibh"),
+        'HOST': os.environ.get('MYSQLHOST', "localhost"),
+        'PORT': os.environ.get('MYSQLPORT', "3306"),
         'OPTIONS': {
             'charset': 'utf8mb4',
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
@@ -149,36 +149,6 @@ DATABASES = {
         },
         }
 }
-
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': "genie",
-#         'USER': "root",
-#         'PASSWORD': "Admin123",
-#         'HOST': "localhost",
-#         'PORT': "3306",
-#         'OPTIONS': {
-#             'charset': 'utf8mb4',
-#             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-#             'connect_timeout': 60,
-#         }},
-
-#     'global': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'railway',
-#         'USER': 'root',
-#         'PASSWORD': 'gOwOCCHfDVbbazMFqxOXISIFzExBGsvV',
-#         'HOST': 'yamanote.proxy.rlwy.net',
-#         'PORT': '38178',
-#         'OPTIONS': {
-#             'charset': 'utf8mb4',
-#             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-#             'connect_timeout': 60,
-#         },
-#         }
-# }
 
 DATABASE_ROUTERS = ['IBH.database_router.AppDatabaseRouter']
 
@@ -284,7 +254,7 @@ MESSAGE_TAGS = {
 # Gemini API Key
 GEMINI_API_KEY = "AIzaSyBuNSlfHDLXEWfr1GUCsHWoqeLKibEyT0E"
 
-External_REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379') # e.g. 'redis://localhost:6379/0'
+External_REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379')
 
 # Celery configuration tuned for stability under high load
 CELERY_BROKER_URL = External_REDIS_URL
