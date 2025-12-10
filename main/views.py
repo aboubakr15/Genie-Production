@@ -103,10 +103,13 @@ def sheet_list(request):
 
 @user_passes_test(lambda user: is_in_group(user, "operations_team_leader") or is_in_group(user, "operations_manager") or is_in_group(user, "Sales_manager"))
 def lead_details(request, pk):
-    # Get the lead instance based on the primary key (pk)
-    lead = get_object_or_404(Lead, pk=pk)
+    # Get the lead instance with prefetched related data to avoid N+1 queries
+    lead = get_object_or_404(
+        Lead.objects.prefetch_related('leadphonenumbers_set', 'leademails_set', 'leadcontactnames_set', 'sheets'),
+        pk=pk
+    )
     
-    # Retrieve all related phone numbers, emails, and contact names
+    # Retrieve all related phone numbers, emails, and contact names (already prefetched)
     phone_numbers = lead.leadphonenumbers_set.all()
     emails = lead.leademails_set.all()
     contact_names = lead.leadcontactnames_set.all()
@@ -116,13 +119,13 @@ def lead_details(request, pk):
     unique_emails = {em.value: em for em in emails}.values()
     unique_contact_names = {cn.value: cn for cn in contact_names}.values()
     
-    # Retrieve sheets associated with the lead
+    # Retrieve sheets associated with the lead (already prefetched)
     sheets = lead.sheets.all()
     
-    # Get the user's group name
+    # Get the user's group name (optimized with select_related)
     group_name = None
     if request.user.groups.exists():
-        group_name = request.user.groups.first().name
+        group_name = request.user.groups.select_related().first().name
 
     # Determine the template path based on group
     if group_name == 'operations_manager':
@@ -858,22 +861,7 @@ def send_cb_date_notifications():
             )
         except Exception as e:
             logger.error(f"Failed to create notification for user {user.username}: {e}")
-
-        # Get sales managers and notify them
-        sales_manager_group = Group.objects.get(name='sales_manager')
-        sales_managers = sales_manager_group.user_set.all()
         
-        for sales_manager in sales_managers:
-            try:
-                Notification.objects.create(
-                    sender=user,
-                    receiver=sales_manager,
-                    message=f"{user.username} has a call back due today for lead '{lead_termination.lead.name}' in show '{lead_termination.sales_show.name}'",
-                    notification_type=5
-                )
-            except Exception as e:
-                logger.error(f"Failed to create notification for sales manager {sales_manager.username}: {e}")
-
         # Notify the user's leader
         try:
             user_leader = UserLeader.objects.get(user=user).leader
@@ -896,12 +884,18 @@ def send_cb_date_notifications():
 
 @login_required
 def mark_as_read(request, notification_id):
+    from django.core.cache import cache
 
     role = request.user.groups.first().name
 
     notification = get_object_or_404(Notification, id=notification_id, receiver=request.user)
     notification.read = True
     notification.save()
+    
+    # Invalidate cache for unread notifications count
+    cache_key = f'unread_notifications_{request.user.id}'
+    cache.delete(cache_key)
+    
     return redirect(request.META.get('HTTP_REFERER', reverse(f'{role}:notifications')))
 
 

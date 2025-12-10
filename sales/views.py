@@ -91,8 +91,13 @@ def index(request):
 
 @user_passes_test(lambda user: user.groups.filter(name__in=["sales", "sales_team_leader", "sales_manager"]).exists())
 def agent_assigned_shows(request):
-    # Fetch the SalesShows assigned to the logged-in user
-    assigned_shows = SalesShow.objects.filter(Agent=request.user, is_done=False, is_recycled=False, is_archived=False).order_by('-id')
+    # Fetch the SalesShows assigned to the logged-in user with optimized queries
+    assigned_shows = SalesShow.objects.filter(
+        Agent=request.user, 
+        is_done=False, 
+        is_recycled=False, 
+        is_archived=False
+    ).select_related('sheet', 'Agent').prefetch_related('leads').order_by('-id')
 
     group_name = request.user.groups.first().name
     context = {
@@ -117,29 +122,54 @@ def show_detail(request, show_id, recycle=""):
 
     error_message = None
 
-    # Remove flag leads after save
-    leads = show.leads.all()
+    # Remove flag leads after save - Optimize with prefetch
+    leads = show.leads.prefetch_related(
+        'leadphonenumbers_set',
+        'leademails_set',
+        'leadcontactnames_set',
+        'leadscolors_set'
+    )
 
     if role.lower() == "sales":
+        # Prefetch termination codes first to avoid N+1 in the loop
+        lead_ids = list(leads.values_list('id', flat=True))
+        termination_codes_by_lead = {}
+        for tc in LeadTerminationCode.objects.filter(lead_id__in=lead_ids, sales_show=show).select_related('flag'):
+            if tc.lead_id not in termination_codes_by_lead:
+                termination_codes_by_lead[tc.lead_id] = []
+            termination_codes_by_lead[tc.lead_id].append(tc)
+        
         exclude_ids = []
-
         for lead in leads:
-            code = LeadTerminationCode.objects.filter(lead=lead, sales_show=show).last()
-            if code is not None and code.flag.name in ["FL", "CD", "IC"]:
-                exclude_ids.append(lead.id)
+            codes = termination_codes_by_lead.get(lead.id, [])
+            if codes:
+                code = codes[-1]  # Get last one (equivalent to .last())
+                if code.flag.name in ["FL", "CD", "IC"]:
+                    exclude_ids.append(lead.id)
         
         leads = leads.exclude(id__in=exclude_ids)
-
+    
+    # Prefetch termination codes for all leads in one query (for the main loop)
+    lead_ids = list(leads.values_list('id', flat=True))
+    termination_codes_map = {}
+    for tc in LeadTerminationCode.objects.filter(lead_id__in=lead_ids, sales_show=show).select_related('flag'):
+        if tc.lead_id not in termination_codes_map:
+            termination_codes_map[tc.lead_id] = []
+        termination_codes_map[tc.lead_id].append(tc)
     
     # Build a list of leads along with their related details
     leads_with_details = []
     for lead in leads:
-        phone_numbers = LeadPhoneNumbers.objects.filter(lead=lead, sheet=show.sheet)
-        emails = LeadEmails.objects.filter(lead=lead, sheet=show.sheet)
-        contact_names = LeadContactNames.objects.filter(lead=lead, sheet=show.sheet)
-        lead_color = LeadsColors.objects.filter(lead=lead, sheet=show.sheet).first()
-        lead_notes = LeadTerminationCode.objects.filter(lead=lead, sales_show=show).first()
-        lead_termination_code = LeadTerminationCode.objects.filter(lead=lead, sales_show=show).order_by("id").last()
+        # Use prefetched data instead of new queries
+        phone_numbers = [pn for pn in lead.leadphonenumbers_set.all() if pn.sheet_id == show.sheet_id]
+        emails = [em for em in lead.leademails_set.all() if em.sheet_id == show.sheet_id]
+        contact_names = [cn for cn in lead.leadcontactnames_set.all() if cn.sheet_id == show.sheet_id]
+        lead_color = next((lc for lc in lead.leadscolors_set.all() if lc.sheet_id == show.sheet_id), None)
+        
+        # Get termination codes from prefetched map
+        lead_tcs = termination_codes_map.get(lead.id, [])
+        lead_notes = lead_tcs[0] if lead_tcs else None
+        lead_termination_code = lead_tcs[-1] if lead_tcs else None
 
         leads_with_details.append({
             'lead': lead,
@@ -341,21 +371,45 @@ def view_saved_leads(request, code_id=None):
 
         return redirect(f'{role}:view-saved-leads', code_id=code.id)
 
+    # Optimize: Prefetch all related data in bulk to avoid N+1 queries
+    lead_ids = [lt.lead_id for lt in leads]
+    show_ids = [lt.sales_show_id for lt in leads]
+    sheet_ids = list(set([lt.sales_show.sheet_id for lt in leads if hasattr(lt.sales_show, 'sheet_id')]))
+    
+    # Bulk fetch phone numbers, emails, contacts
+    all_phones = {p.lead_id: [] for p in LeadPhoneNumbers.objects.filter(lead_id__in=lead_ids, sheet_id__in=sheet_ids)}
+    for p in LeadPhoneNumbers.objects.filter(lead_id__in=lead_ids, sheet_id__in=sheet_ids):
+        all_phones[p.lead_id].append(p)
+    
+    all_emails = {e.lead_id: [] for e in LeadEmails.objects.filter(lead_id__in=lead_ids, sheet_id__in=sheet_ids)}
+    for e in LeadEmails.objects.filter(lead_id__in=lead_ids, sheet_id__in=sheet_ids):
+        all_emails[e.lead_id].append(e.value)
+    
+    all_contacts = {c.lead_id: [] for c in LeadContactNames.objects.filter(lead_id__in=lead_ids, sheet_id__in=sheet_ids)}
+    for c in LeadContactNames.objects.filter(lead_id__in=lead_ids, sheet_id__in=sheet_ids):
+        all_contacts[c.lead_id].append(c.value)
+    
+    # Bulk fetch previous CB dates
+    all_cb_dates = {}
+    for hist in LeadTerminationHistory.objects.filter(lead_id__in=lead_ids, show_id__in=show_ids).exclude(cb_date__isnull=True).select_related('lead', 'show'):
+        key = (hist.lead_id, hist.show_id)
+        if key not in all_cb_dates:
+            all_cb_dates[key] = []
+        all_cb_dates[key].append(hist.cb_date)
+    
     leads_data = []
     for lead_termination in leads:
         lead = lead_termination.lead
-        phones = LeadPhoneNumbers.objects.filter(
-            lead=lead, sheet=lead_termination.sales_show.sheet)
-        emails = LeadEmails.objects.filter(
-            lead=lead, sheet=lead_termination.sales_show.sheet).values_list('value', flat=True)
-        contacts = LeadContactNames.objects.filter(
-            lead=lead, sheet=lead_termination.sales_show.sheet).values_list('value', flat=True)
         sales_show = lead_termination.sales_show
-
-        # Fetch previous cb dates from LeadTerminationHistory
-        previous_cb_dates = LeadTerminationHistory.objects.filter(
-            lead=lead, show=sales_show
-        ).exclude(cb_date__isnull=True).values_list('cb_date', flat=True).distinct()
+        sheet_id = sales_show.sheet_id if hasattr(sales_show, 'sheet_id') else None
+        
+        # Use prefetched data
+        phones = all_phones.get(lead.id, [])
+        emails = all_emails.get(lead.id, [])
+        contacts = all_contacts.get(lead.id, [])
+        
+        # Get previous CB dates from prefetched data
+        previous_cb_dates = sorted(set(all_cb_dates.get((lead.id, sales_show.id), [])))
     
         previous_cb_dates = sorted(previous_cb_dates)
 
