@@ -21,11 +21,12 @@ SECRET_KEY = 'django-insecure-x0t)8qx9buoxxbiq#v4hmxdqt&$e(t%#c0=5jj$rthyb1!042@
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Change it to True while Developing, to load your static files
-DEBUG = True
+DEBUG = False
 
 
 CSRF_TRUSTED_ORIGINS = [
     'https://genie-production-production.up.railway.app',
+    "app-service-production-4990.up.railway.app",
     'https://genie-production-x8952.sevalla.app',
     'http://127.0.0.1:8000',  # Keep localhost for development
 ]
@@ -94,8 +95,6 @@ MIDDLEWARE = [
     # "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
 
-
-
 ROOT_URLCONF = 'IBH.urls'
 
 TEMPLATES = [
@@ -122,12 +121,10 @@ WSGI_APPLICATION = 'IBH.wsgi.application'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 
-load_dotenv()  # must be before DATABASES
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': "railway",
+        'NAME': {{ Clickhouse.DATABASE_URL }},
         'USER': "root",
         'PASSWORD': "nJkjXobZCpCylOnTUqNhKfehmNPuXwxC",
         'HOST': "yamanote.proxy.rlwy.net",
@@ -137,7 +134,6 @@ DATABASES = {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'connect_timeout': 60,
         }},
-
 
     'global': {
         'ENGINE': 'django.db.backends.mysql',
@@ -288,7 +284,7 @@ MESSAGE_TAGS = {
 # Gemini API Key
 GEMINI_API_KEY = "AIzaSyBuNSlfHDLXEWfr1GUCsHWoqeLKibEyT0E"
 
-External_REDIS_URL = "redis://default:riercOvPFfeeXIGpKsMnfpgPEDltqVjf@metro.proxy.rlwy.net:45042"
+External_REDIS_URL = os.environ.get('Redis.REDIS_URL') # e.g. 'redis://localhost:6379/0'
 
 # Celery configuration tuned for stability under high load
 CELERY_BROKER_URL = External_REDIS_URL
