@@ -124,7 +124,7 @@ WSGI_APPLICATION = 'IBH.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': {{ Clickhouse.DATABASE_URL }},
+        'NAME': "railway",
         'USER': "root",
         'PASSWORD': "nJkjXobZCpCylOnTUqNhKfehmNPuXwxC",
         'HOST': "yamanote.proxy.rlwy.net",
