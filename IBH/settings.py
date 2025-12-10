@@ -284,7 +284,7 @@ MESSAGE_TAGS = {
 # Gemini API Key
 GEMINI_API_KEY = "AIzaSyBuNSlfHDLXEWfr1GUCsHWoqeLKibEyT0E"
 
-External_REDIS_URL = os.environ.get('Redis.REDIS_URL') # e.g. 'redis://localhost:6379/0'
+External_REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379') # e.g. 'redis://localhost:6379/0'
 
 # Celery configuration tuned for stability under high load
 CELERY_BROKER_URL = External_REDIS_URL
