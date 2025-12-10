@@ -32,6 +32,7 @@ CSRF_TRUSTED_ORIGINS = [
 
 ALLOWED_HOSTS = [
     'genie-production-production.up.railway.app',
+    "app-service-production-4990.up.railway.app",
     'genie-production-x8952.sevalla.app',
     '127.0.0.1',
     'localhost',
