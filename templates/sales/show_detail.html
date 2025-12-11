@@ -109,9 +109,7 @@
                                                         onchange="toggleCbDate(this, {{ lead_detail.lead.id }})">
                                                         <option value="">Select Termination Code</option>
                                                         {% for termination_code in termination_codes %}
-                                                        <option value="{{ termination_code.id }}" {% if lead_detail.tc
-                                                            and lead_detail.tc.flag.id==termination_code.id %} selected
-                                                            {% endif %}>
+                                                        <option value="{{ termination_code.id }}" {% if lead_detail.tc and lead_detail.tc.flag.id == termination_code.id %} selected {% endif %}>
                                                             {{ termination_code.name }}
                                                         </option>
                                                         {% endfor %}
@@ -121,8 +119,7 @@
                                                         style="display: {% if lead_detail.tc.flag.name == 'ST' %}block{% else %}none{% endif %};">
                                                         <option value="">Select User</option>
                                                         {% for user in target_users %}
-                                                        <option value="{{ user.id }}" {% if
-                                                            lead_detail.target_user.id==user.id %} selected {% endif %}>
+                                                        <option value="{{ user.id }}" {% if lead_detail.target_user.id == user.id %} selected {% endif %}>
                                                             {{ user.username }}
                                                         </option>
                                                         {% endfor %}
@@ -133,10 +130,7 @@
                                                 <td>
                                                     <input type="date" name="cb_date_{{ lead_detail.lead.id }}"
                                                         class="form-control cb-date"
-                                                        value="{{ lead_detail.tc.CB_date|date:'Y-m-d\TH:i' }}" {% if not
-                                                        lead_detail.tc or lead_detail.tc.flag.name !='CB' or
-                                                        lead_detail.tc.flag.name !='PR' or lead_detail.tc.flag.name
-                                                        !='IC' %} disabled {% endif %}>
+                                                        value="{{ lead_detail.tc.CB_date|date:'Y-m-d\TH:i' }}" {% if not lead_detail.tc or lead_detail.tc.flag.name != 'CB' or lead_detail.tc.flag.name != 'PR' or lead_detail.tc.flag.name != 'IC' %} disabled {% endif %}>
                                                 </td>
 
                                                 <!-- Notes Column -->
