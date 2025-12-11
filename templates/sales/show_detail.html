@@ -18,8 +18,8 @@
                             </div>
                             {% endif %}
 
-                            <form method="POST" {% if recycle == "recycle" %}action="/{{role}}/show-detail/{{show.id}}/recycle/"
-                                {%else%} action="/{{role}}/show-detail/{{show.id}}/" {% endif %}>
+                            <form method="POST"
+                                action="{% if recycle == 'recycle' %}/{{ role }}/show-detail/{{ show.id }}/recycle/{% else %}/{{ role }}/show-detail/{{ show.id }}/{% endif %}">
                                 {% csrf_token %}
                                 <div class="table-responsive" style="overflow-x: auto;"> <!-- Make table scrollable -->
                                     <table class="table table-bordered table-sm " data-toggle="table" data-search="true"
@@ -27,13 +27,18 @@
                                         <!-- Enable mobile responsiveness -->
                                         <thead>
                                             <tr>
-                                                <th data-field="company_name" style="min-width: 200px;">Company Name</th>
-                                                <th data-field="phone_numbers" style="min-width: 100px;">Phone Number / time zone</th>
+                                                <th data-field="company_name" style="min-width: 200px;">Company Name
+                                                </th>
+                                                <th data-field="phone_numbers" style="min-width: 100px;">Phone Number /
+                                                    time zone</th>
                                                 <th data-field="emails" style="min-width: 100px;">Emails</th>
-                                                <th data-field="contact_names" style="min-width: 100px;">Contact Names</th>
-                                                <th data-field="termination_code" style="min-width: 100px; width: 100px;">Termination</th>
+                                                <th data-field="contact_names" style="min-width: 100px;">Contact Names
+                                                </th>
+                                                <th data-field="termination_code"
+                                                    style="min-width: 100px; width: 100px;">Termination</th>
                                                 <th data-field="cb_date" style="min-width: 100px;">CB Date</th>
-                                                <th data-field="notes" style="min-width: 200px; width: 300px;">Notes</th>
+                                                <th data-field="notes" style="min-width: 200px; width: 300px;">Notes
+                                                </th>
                                                 <th data-field="color" style="min-width: 10px;">Color Code</th>
                                             </tr>
                                         </thead>
@@ -104,8 +109,21 @@
                                                         onchange="toggleCbDate(this, {{ lead_detail.lead.id }})">
                                                         <option value="">Select Termination Code</option>
                                                         {% for termination_code in termination_codes %}
-                                                        <option value="{{ termination_code.id }}" {% if lead_detail.tc and lead_detail.tc.flag.id == termination_code.id %} selected {% endif %}>
+                                                        <option value="{{ termination_code.id }}" {% if lead_detail.tc
+                                                            and lead_detail.tc.flag.id==termination_code.id %} selected
+                                                            {% endif %}>
                                                             {{ termination_code.name }}
+                                                        </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                    <select name="target_user_{{ lead_detail.lead.id }}"
+                                                        class="form-select target-user mt-2"
+                                                        style="display: {% if lead_detail.tc.flag.name == 'ST' %}block{% else %}none{% endif %};">
+                                                        <option value="">Select User</option>
+                                                        {% for user in target_users %}
+                                                        <option value="{{ user.id }}" {% if
+                                                            lead_detail.target_user.id==user.id %} selected {% endif %}>
+                                                            {{ user.username }}
                                                         </option>
                                                         {% endfor %}
                                                     </select>
@@ -115,20 +133,25 @@
                                                 <td>
                                                     <input type="date" name="cb_date_{{ lead_detail.lead.id }}"
                                                         class="form-control cb-date"
-                                                        value="{{ lead_detail.tc.CB_date|date:'Y-m-d' }}"
-                                                        {% if not lead_detail.tc or lead_detail.tc.flag.name != 'CB' or lead_detail.tc.flag.name != 'PR' or lead_detail.tc.flag.name != 'IC' %}disabled{% endif %}>
+                                                        value="{{ lead_detail.tc.CB_date|date:'Y-m-d\TH:i' }}" {% if not
+                                                        lead_detail.tc or lead_detail.tc.flag.name !='CB' or
+                                                        lead_detail.tc.flag.name !='PR' or lead_detail.tc.flag.name
+                                                        !='IC' %} disabled {% endif %}>
                                                 </td>
 
                                                 <!-- Notes Column -->
                                                 <td>
                                                     <div>
-                                                        <textarea name="notes_{{ lead_detail.lead.id }}" class="form-control" style="width: 100%; min-width: 200px;">{{ lead_detail.notes|default:"" }}</textarea>
+                                                        <textarea name="notes_{{ lead_detail.lead.id }}"
+                                                            class="form-control"
+                                                            style="width: 100%; min-width: 200px;">{{ lead_detail.notes|default:"" }}</textarea>
                                                     </div>
-                                                </td> 
+                                                </td>
 
                                                 <!-- Colors Column -->
                                                 <td>
-                                                    <div style="display: flex; justify-content: center; align-items: center; height: auto;">
+                                                    <div
+                                                        style="display: flex; justify-content: center; align-items: center; height: auto;">
                                                         <div style="width: 20px; height: 20px; 
                                                             background-color: {% if role == 'sales' %}white{% else %}{{ lead_detail.color }}{% endif %}; 
                                                             border: 1px solid #000;">
@@ -177,16 +200,27 @@
 
     function toggleCbDate(select, leadId) {
         const cbDateInput = $('input[name="cb_date_' + leadId + '"]');
-        const selectedTerminationCode = select.value;
-        const cbTerminationCodeId = "4"; // CB ID
-        const prTerminationCodeId = "2"; // PR ID
-        const icTerminationCodeId = "6"; // IC ID
+        const targetUserSelect = $('select[name="target_user_' + leadId + '"]');
+        const selectedTerminationCode = select.options[select.selectedIndex].text; // Get text name
+        const cbTerminationCodeId = "4"; // CB ID - keeping old logic for safety but preferring name check
 
-        if (selectedTerminationCode == cbTerminationCodeId || selectedTerminationCode == prTerminationCodeId || selectedTerminationCode == icTerminationCodeId) {
+        // Better to check by name if possible but we have IDs in value. 
+        // Let's assume the iteration in template correlates name and ID or check the text content.
+        // Actually, the previous logic used hardcoded IDs which is risky.
+        // Let's use the selected option text to overlap with names.
+
+        if (selectedTerminationCode == "CB" || selectedTerminationCode == "PR" || selectedTerminationCode == "IC") {
             cbDateInput.prop('disabled', false);
         } else {
             cbDateInput.prop('disabled', true);
             cbDateInput.val(''); // Clear the value if not CB or PR
+        }
+
+        if (selectedTerminationCode == "ST" || selectedTerminationCode == "Send To") {
+            targetUserSelect.show();
+        } else {
+            targetUserSelect.hide();
+            targetUserSelect.val('');
         }
     }
 
@@ -259,14 +293,14 @@
         }
     }
 
-    $(document).on('copy', function(e) {
-    // Log what is being copied if needed
-    console.log("Copy event triggered");
-    // You can also check the target if necessary
+    $(document).on('copy', function (e) {
+        // Log what is being copied if needed
+        console.log("Copy event triggered");
+        // You can also check the target if necessary
     });
 
     // Prevent any undesired action on mouse down
-    $(document).on('mousedown', '.list-unstyled li', function(e) {
+    $(document).on('mousedown', '.list-unstyled li', function (e) {
         e.preventDefault(); // Prevent any interference during copy
     });
 

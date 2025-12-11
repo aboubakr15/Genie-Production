@@ -1,9 +1,9 @@
-from django.contrib import messages
 from django.http import HttpResponseBadRequest
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.models import User
 from main.models import (LeadContactNames, LeadEmails, LeadPhoneNumbers, LeadTerminationCode,
-    LeadTerminationHistory, SalesShow, TerminationCode, Lead, LeadsColors, SalesLog, IncomingsCount, Notification)
+    LeadTerminationHistory, SalesShow, TerminationCode, Lead, LeadsColors, SalesLog, IncomingsCount, Notification, FlagsCount)
 from django.utils import timezone
 from .forms import *
 from django.db.models import Count, Sum
@@ -50,13 +50,13 @@ def index(request):
     ).filter(date__range=(start_date, end_date)).count()
 
     # Flags (Qualified and Non-Qualified)
-    flags_qualified = LeadTerminationCode.objects.filter(
-        user=user, flag__name='FL', is_qualified=True
-    ).filter(entry_date__range=(start_date, end_date)).count()
+    flags_qualified = FlagsCount.objects.filter(
+        user=user, is_qualified=True
+    ).filter(date__range=(start_date, end_date)).count()
 
-    flags_non_qualified = LeadTerminationCode.objects.filter(
-        user=user, flag__name='FL', is_qualified=False
-    ).filter(entry_date__range=(start_date, end_date)).count()
+    flags_non_qualified = FlagsCount.objects.filter(
+        user=user, is_qualified=False
+    ).filter(date__range=(start_date, end_date)).count()
 
     # Average #Calls (count of leads in all SalesShow objects for this user)
     avg_calls = SalesShow.objects.filter(Agent=user, is_done=True).filter(
@@ -119,6 +119,9 @@ def show_detail(request, show_id, recycle=""):
     
     # Fetch all termination codes based on user group
     termination_codes = TerminationCode.objects.all() if request.user.groups.first().name in ["sales_manager", "sales_team_leader"] else TerminationCode.objects.exclude(name="IC")
+    
+    # Send To Logic: Fetch potential target users (Team Leaders and Sales Managers)
+    target_users = User.objects.filter(groups__name__in=['sales_team_leader', 'sales_manager']).distinct()
 
     error_message = None
 
@@ -144,7 +147,7 @@ def show_detail(request, show_id, recycle=""):
             codes = termination_codes_by_lead.get(lead.id, [])
             if codes:
                 code = codes[-1]  # Get last one (equivalent to .last())
-                if code.flag.name in ["FL", "CD", "IC"]:
+                if code.flag.name in ["FL", "CD", "IC", "ST"]:
                     exclude_ids.append(lead.id)
         
         leads = leads.exclude(id__in=exclude_ids)
@@ -178,7 +181,8 @@ def show_detail(request, show_id, recycle=""):
             'contact_names': contact_names,
             'color': lead_color.color if lead_color else None,
             'notes': lead_notes.notes if lead_notes else '',
-            'tc': lead_termination_code
+            'tc': lead_termination_code,
+            'target_user': lead_termination_code.target_user if lead_termination_code else None
         })
 
 
@@ -193,6 +197,11 @@ def show_detail(request, show_id, recycle=""):
             cb_date = request.POST.get(f'cb_date_{lead.id}')
             notes = request.POST.get(f'notes_{lead.id}')
 
+            target_user_id = request.POST.get(f'target_user_{lead.id}')
+            target_user = None
+            if target_user_id:
+                target_user = User.objects.get(id=target_user_id)
+
             if termination_code_id:
                 termination_code = get_object_or_404(TerminationCode, id=termination_code_id)
                 
@@ -205,7 +214,8 @@ def show_detail(request, show_id, recycle=""):
                     cb_date=cb_date,
                     lead=lead,
                     show=show,
-                    notes = notes
+                    notes = notes,
+                    target_user=target_user
                 )
 
                 # Fetch the existing LeadTerminationCode to avoid MultipleObjectsReturned error
@@ -214,11 +224,14 @@ def show_detail(request, show_id, recycle=""):
                 ).first()
 
                 if existing_code:
+                    if existing_code.flag != termination_code:
+                        existing_code.entry_date = timezone.now()
                     # Update the existing LeadTerminationCode
                     existing_code.flag = termination_code
                     if cb_date:
                         existing_code.CB_date = cb_date
                     existing_code.notes = notes or ""
+                    existing_code.target_user = target_user
                     existing_code.save()
                 else:
                     # Create a new LeadTerminationCode
@@ -228,11 +241,20 @@ def show_detail(request, show_id, recycle=""):
                         user=show.Agent,
                         flag=termination_code,
                         CB_date=cb_date,
-                        notes=notes or ""
+                        notes=notes or "",
+                        target_user=target_user,
                     )
 
                 if termination_code.name == 'IC':
                     IncomingsCount.objects.create(user=show.Agent)
+                
+                if termination_code.name == 'FL':
+                    FlagsCount.objects.update_or_create(
+                        user=show.Agent,
+                        lead=lead,
+                        sales_show=show,
+                        defaults={'date': timezone.now()}
+                    )
 
         if save_termination_codes:  # Save changes logic
             if recycle=="recycle":
@@ -275,7 +297,9 @@ def show_detail(request, show_id, recycle=""):
         'termination_codes': termination_codes,
         'error_message': error_message,
         'recycle':recycle,
+        'recycle':recycle,
         'role':role,
+        'target_users': target_users,
     }
 
 
@@ -368,6 +392,14 @@ def view_saved_leads(request, code_id=None):
 
             lead_termination.is_qualified = is_qualified  # Set the checkbox value
             lead_termination.save()
+
+            if lead_termination.flag.name == 'FL':
+                FlagsCount.objects.update_or_create(
+                    user=lead_termination.user,
+                    lead=lead_termination.lead,
+                    sales_show=lead_termination.sales_show,
+                    defaults={'is_qualified': is_qualified}
+                )
 
         return redirect(f'{role}:view-saved-leads', code_id=code.id)
 

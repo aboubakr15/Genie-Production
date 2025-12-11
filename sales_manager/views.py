@@ -3,7 +3,7 @@ from django.contrib.auth.models import Group, User
 from django.contrib import messages
 from main.custom_decorators import is_in_group
 from main.models import (LeadEmails, LeadContactNames, LeadPhoneNumbers, SalesTeams, TerminationCode, UserLeader,
-                        LeadTerminationCode, SalesShow, LeadTerminationHistory, Lead, Notification, IncomingsCount)
+                        LeadTerminationCode, SalesShow, LeadTerminationHistory, Lead, Notification, IncomingsCount, FlagsCount)
 from django.db.models import Count, Sum, OuterRef, Subquery, Prefetch
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.contrib.auth.decorators import user_passes_test, login_required
@@ -41,15 +41,16 @@ def index(request):
     ''''' 
     incomings = IncomingsCount.objects.filter(date__range=(start_date, end_date)).count()
 
-    # Flags
-    total_flags = LeadTerminationCode.objects.filter(
-        flag__name='FL'
-    ).filter(entry_date__range=(start_date, end_date)).count()
-
-    flags_qualified = LeadTerminationCode.objects.filter(
-        flag__name='FL',
+    # Flags (Qualified and Non-Qualified)
+    flags_qualified = FlagsCount.objects.filter(
         is_qualified=True
-    ).filter(entry_date__range=(start_date, end_date)).count()
+    ).filter(date__range=(start_date, end_date)).count()
+
+    flags_non_qualified = FlagsCount.objects.filter(
+        is_qualified=False
+    ).filter(date__range=(start_date, end_date)).count()
+
+    total_flags = flags_qualified + flags_non_qualified
 
     # Avg. #Calls
     avg_calls = SalesShow.objects.filter(

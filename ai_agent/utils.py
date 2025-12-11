@@ -123,6 +123,9 @@ def can_use_feature(cost=1):
 
 def get_credit_stats():
     """Get complete credit statistics"""
+    # Lazily expire credits before calculating stats
+    expire_old_credits()
+    
     credit = get_credit_balance()
     
     # Calculate actual available balance (non-expired)

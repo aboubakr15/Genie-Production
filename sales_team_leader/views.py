@@ -2,7 +2,8 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.models import User
 from main.custom_decorators import is_in_group
 from main.models import (LeadContactNames, LeadEmails, LeadPhoneNumbers, LeadTerminationCode, IncomingsCount,
-                        LeadTerminationHistory, SalesShow, SalesTeams, TerminationCode, UserLeader, Lead, Notification)
+                        LeadTerminationHistory, SalesShow, SalesTeams, TerminationCode, UserLeader, Lead, Notification,
+                        FlagsCount)
 from django.db.models import Count, Sum
 from django.contrib.auth.decorators import user_passes_test
 from django.http import HttpResponseBadRequest
@@ -54,17 +55,16 @@ def index(request):
     ''''' 
     incomings = IncomingsCount.objects.filter(user__in=team_members).filter(date__range=(start_date, end_date)).count()
 
-    # Flags
-    total_flags = LeadTerminationCode.objects.filter(
-        user__in=team_members,
-        flag__name='FL'
-    ).filter(entry_date__range=(start_date, end_date)).count()
+    # Flags (Qualified and Non-Qualified)
+    flags_qualified = FlagsCount.objects.filter(
+        user__in=team_members, is_qualified=True
+    ).filter(date__range=(start_date, end_date)).count()
 
-    flags_qualified = LeadTerminationCode.objects.filter(
-        user__in=team_members,
-        flag__name='FL',
-        is_qualified=True
-    ).filter(entry_date__range=(start_date, end_date)).count()
+    flags_non_qualified = FlagsCount.objects.filter(
+        user__in=team_members, is_qualified=False
+    ).filter(date__range=(start_date, end_date)).count()
+
+    total_flags = flags_qualified + flags_non_qualified
 
     # Avg. #Calls
     avg_calls = SalesShow.objects.filter(
@@ -147,7 +147,7 @@ def view_team_prospect(request, code_id=None, leader_id=None):
 
     role = request.user.groups.first().name if request.user.groups.exists() else None
 
-    my_allowed = ['CB', 'PR', 'CD', 'FL', 'IC']
+    my_allowed = ['CB', 'PR', 'CD', 'FL', 'IC', 'ST']
 
     if code.name not in my_allowed:
         return HttpResponseBadRequest()
@@ -171,7 +171,10 @@ def view_team_prospect(request, code_id=None, leader_id=None):
 
     order_by = request.GET.get('order_by', '-entry_date')  # Default sorting
 
-    leads = LeadTerminationCode.objects.filter(user__in=team_members, flag=code).order_by(order_by)
+    if code.name == 'ST':
+        leads = LeadTerminationCode.objects.filter(target_user=request.user, flag=code).order_by(order_by)
+    else:
+        leads = LeadTerminationCode.objects.filter(user__in=team_members, flag=code).order_by(order_by)
     team_name = SalesTeams.objects.filter(leader=leader).first().label
 
 
@@ -254,6 +257,7 @@ def view_team_prospect(request, code_id=None, leader_id=None):
 
         leads_data.append({
             'lead': lead,
+            'sender': lead_termination.user,  # Sender of the lead
             'phones': phones,
             'emails': emails,
             'contacts': contacts,
@@ -290,6 +294,8 @@ def view_team_prospect(request, code_id=None, leader_id=None):
         return render(request, "sales_team_leader/view_team_prospect.html", context)
     elif code.name in ['FL', 'PR', 'CD']:
         return render(request, "sales_team_leader/view_team_prospect_FL_PR.html", context)
+    elif code.name == 'ST':
+        return render(request, "sales_team_leader/view_team_prospect_ST.html", context)
 
 
 @user_passes_test(lambda user: user.groups.filter(name__in=["sales_team_leader", "sales_manager"]).exists())

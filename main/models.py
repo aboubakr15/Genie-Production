@@ -169,6 +169,7 @@ class LeadTerminationCode(models.Model):
     num_rooms = models.PositiveIntegerField(null=True, blank=True)
     num_nights = models.PositiveIntegerField(null=True, blank=True)
     options = models.TextField(null=True, blank=True)
+    target_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_leads')
 
     class Meta:
         unique_together = ('lead', 'sales_show', 'flag')
@@ -195,6 +196,7 @@ class LeadTerminationHistory(models.Model):
     lead = models.ForeignKey(Lead, on_delete=models.CASCADE)
     show = models.ForeignKey(SalesShow, null=True, blank=True, on_delete=models.CASCADE)
     old_show = models.ForeignKey(OldShow, null=True, blank=True, on_delete=models.CASCADE)
+    target_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_leads_history')
 
     def clean(self):
         # Ensure only one of sales_show or old_show is set
@@ -388,3 +390,23 @@ class CreditHistory(models.Model):
         if self.expires_at:
             return timezone.now() > self.expires_at
         return False
+
+
+class FlagsCount(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    lead = models.ForeignKey(Lead, on_delete=models.CASCADE)
+    sales_show = models.ForeignKey(SalesShow, on_delete=models.CASCADE)
+    is_qualified = models.BooleanField(default=False)
+    date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('lead', 'sales_show', 'user')
+
+    def save(self, *args, **kwargs):
+        from IBH.settings import TIME_ZONE 
+        cairo_tz = pytz.timezone(TIME_ZONE)
+        # Ensure date is timezone aware if not already
+        if not self.date:
+             self.date = timezone.now()
+        self.date = timezone.localtime(self.date, cairo_tz)
+        super().save(*args, **kwargs)

@@ -21,7 +21,7 @@ SECRET_KEY = 'django-insecure-x0t)8qx9buoxxbiq#v4hmxdqt&$e(t%#c0=5jj$rthyb1!042@
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Change it to True while Developing, to load your static files
-DEBUG = False
+DEBUG = True
 
 
 CSRF_TRUSTED_ORIGINS = [
