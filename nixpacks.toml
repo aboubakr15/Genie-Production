@@ -7,7 +7,7 @@ aptPkgs = ["python3", "python3-venv", "pkg-config", "libmariadb-dev", "build-ess
 
 [phases.install]
 # Use python3 directly to create the virtual environment and install packages.
-cmds = ["python3 -m venv --copies /opt/venv && . /opt/venv/bin/activate && pip install -r requirements.txt && python3 manage.py migrate && python3 manage.py collectstatic --no-input"]
+cmds = ["python3 -m venv --copies /opt/venv && . /opt/venv/bin/activate && pip install -r requirements.txt && python3 manage.py migrate main && python3 manage.py collectstatic --no-input"]
 
 [cron.expire_credits]
 schedule = "0 0 * * *"
