@@ -9,7 +9,7 @@ from main.custom_decorators import is_in_group
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from main.custom_decorators import is_in_group
 import logging
-from django.db.models import OuterRef, Subquery, Q, Count
+from django.db.models import OuterRef, Subquery, Q, Count, Max
 from django.utils import timezone
 from .forms import PriceRequestForm
 from django.http import HttpResponseRedirect
@@ -730,26 +730,55 @@ def update_price_requests(request):
 
 @user_passes_test(lambda user: is_in_group(user, "operations_manager") or is_in_group(user, "sales_manager"))
 def manage_referrals(request):
-    referrals_list = Referral.objects.all().order_by("-entry_date")
-
-    # Create a dictionary to store unique referrals based on lead and sheet
-    unique_referrals = {}
-    for referral in referrals_list:
-        if referral.lead is not None and referral.sheet is not None:  # Ensure lead and sheet are not None
-            key = (referral.lead.id, referral.sheet.id)  # Use lead and sheet as a unique key
-            if key not in unique_referrals:
-                unique_referrals[key] = referral
-
-    # Now unique_referrals contains only the latest referral per lead and sheet combination
-    referrals_list_2 = list(unique_referrals.values())
-
-    paginator = Paginator(referrals_list_2, 30)  # 30 referrals per page
-
+    # Get search query
+    search_query = request.GET.get('search', '').strip()
+    
+    # Get the latest referral for each (lead, sheet) combination using subquery
+    # This is much more efficient than loading everything into memory
+    latest_referrals = Referral.objects.filter(
+        lead__isnull=False,
+        sheet__isnull=False
+    ).values('lead', 'sheet').annotate(
+        latest_date=Max('entry_date')
+    )
+    
+    # Get the actual referral objects that match these latest dates
+    referrals_list = Referral.objects.filter(
+        lead__isnull=False,
+        sheet__isnull=False
+    ).filter(
+        Q(lead__in=[r['lead'] for r in latest_referrals]) &
+        Q(sheet__in=[r['sheet'] for r in latest_referrals])
+    ).select_related('lead', 'sheet')  # Optimize foreign key queries
+    
+    # Further filter to ensure we only get the latest per combination
+    unique_refs = {}
+    for ref in referrals_list:
+        key = (ref.lead.id, ref.sheet.id)
+        if key not in unique_refs or ref.entry_date > unique_refs[key].entry_date:
+            unique_refs[key] = ref
+    
+    referrals_list = list(unique_refs.values())
+    
+    # Apply search filter
+    if search_query:
+        referrals_list = [
+            r for r in referrals_list 
+            if search_query.lower() in r.lead.name.lower() or 
+               search_query.lower() in r.sheet.name.lower()
+        ]
+    
+    # Sort by entry date descending
+    referrals_list.sort(key=lambda x: x.entry_date, reverse=True)
+    
+    # Paginate
+    paginator = Paginator(referrals_list, 30)
     page_number = request.GET.get('page')
     referrals = paginator.get_page(page_number)
 
     return render(request, 'operations_manager/manage_referrals.html', {
         'referrals': referrals,
+        'search_query': search_query,
     })
 
 

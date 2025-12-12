@@ -10,6 +10,34 @@
             <div class="card-body">
               <h5 class="card-title">Referrals Sheet</h5>
 
+              <!-- Search Form -->
+              <form method="GET" class="mb-4">
+                <div class="row g-2">
+                  <div class="col-md-10">
+                    <input 
+                      type="text" 
+                      name="search" 
+                      class="form-control" 
+                      placeholder="Search by Lead or Sheet name..." 
+                      value="{{ search_query }}"
+                    >
+                  </div>
+                  <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                      <i class="fas fa-search"></i> Search
+                    </button>
+                  </div>
+                </div>
+                {% if search_query %}
+                <div class="mt-2">
+                  <a href="?" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-times"></i> Clear Search
+                  </a>
+                  <span class="text-muted ms-2">Searching for: <strong>{{ search_query }}</strong></span>
+                </div>
+                {% endif %}
+              </form>
+
               <!-- Existing Referrals Section -->
               <table class="table table-bordered table-hover">
                 <thead class="thead-light">
@@ -28,7 +56,13 @@
                   </tr>
                   {% empty %}
                   <tr>
-                    <td colspan="3" class="text-center">No referrals found.</td>
+                    <td colspan="3" class="text-center">
+                      {% if search_query %}
+                        No referrals found matching "{{ search_query }}".
+                      {% else %}
+                        No referrals found.
+                      {% endif %}
+                    </td>
                   </tr>
                   {% endfor %}
                 </tbody>
@@ -40,10 +74,10 @@
                 <ul class="pagination justify-content-center">
                   {% if referrals.has_previous %}
                   <li class="page-item">
-                    <a class="page-link" href="?page=1">&laquo; First</a>
+                    <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}">&laquo; First</a>
                   </li>
                   <li class="page-item">
-                    <a class="page-link" href="?page={{ referrals.previous_page_number }}">&lsaquo; Previous</a>
+                    <a class="page-link" href="?page={{ referrals.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">&lsaquo; Previous</a>
                   </li>
                   {% else %}
                   <li class="page-item disabled">
@@ -60,10 +94,10 @@
 
                   {% if referrals.has_next %}
                   <li class="page-item">
-                    <a class="page-link" href="?page={{ referrals.next_page_number }}">Next &rsaquo;</a>
+                    <a class="page-link" href="?page={{ referrals.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Next &rsaquo;</a>
                   </li>
                   <li class="page-item">
-                    <a class="page-link" href="?page={{ referrals.paginator.num_pages }}">Last &raquo;</a>
+                    <a class="page-link" href="?page={{ referrals.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}">Last &raquo;</a>
                   </li>
                   {% else %}
                   <li class="page-item disabled">
