@@ -177,6 +177,15 @@ def view_team_prospect(request, code_id=None, leader_id=None):
         leads = LeadTerminationCode.objects.filter(user__in=team_members, flag=code).order_by(order_by)
     team_name = SalesTeams.objects.filter(leader=leader).first().label
 
+    # Search Logic
+    search_query = request.GET.get('search_query', '')
+    if search_query:
+        from django.db.models import Q
+        leads = leads.filter(
+            Q(lead__name__icontains=search_query) | 
+            Q(lead__leadphonenumbers__value__icontains=search_query)
+        ).distinct()
+
 
     if request.method == 'POST':
         for lead_termination in leads:
@@ -239,7 +248,7 @@ def view_team_prospect(request, code_id=None, leader_id=None):
         else:
             return redirect('sales_manager:view-team-prospect-with-leader', code_id=code.id, leader_id=leader_id)
         
-    paginator = Paginator(leads, 50)  # Show 50 leads per page
+    paginator = Paginator(leads, 20)  # Show 20 leads per page
     page = request.GET.get('page')
     try:
         leads_page = paginator.page(page)
@@ -323,7 +332,8 @@ def view_team_prospect(request, code_id=None, leader_id=None):
         'cb_code_id':TerminationCode.objects.get(name="CB").id,
         'role':role,
         'team_name':team_name,
-        'leader':leader
+        'leader':leader,
+        'search_query': search_query
     }
 
     if code.name in ['CB', 'IC']:

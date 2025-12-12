@@ -333,6 +333,15 @@ def view_saved_leads(request, code_id=None):
     
     leads = LeadTerminationCode.objects.filter(user=request.user, flag=code).order_by(order_by)
 
+    # Search Logic
+    search_query = request.GET.get('search_query', '')
+    if search_query:
+        from django.db.models import Q
+        leads = leads.filter(
+            Q(lead__name__icontains=search_query) | 
+            Q(lead__leadphonenumbers__value__icontains=search_query)
+        ).distinct()
+
 
     if request.method == 'POST':
         for lead_termination in leads:
@@ -403,7 +412,7 @@ def view_saved_leads(request, code_id=None):
 
         return redirect(f'{role}:view-saved-leads', code_id=code.id)
 
-    paginator = Paginator(leads, 50)  # Show 50 leads per page
+    paginator = Paginator(leads, 20)  # Show 20 leads per page
     page = request.GET.get('page')
     try:
         leads_page = paginator.page(page)
@@ -486,7 +495,8 @@ def view_saved_leads(request, code_id=None):
         'termination_codes': termination_codes,
         'termination_codes_selection': termination_codes_selection,
         'selected_code': code,
-        'role': role
+        'role': role,
+        'search_query': search_query
     }
 
     template_name = "sales/view_saved_leads.html" if code.name in [

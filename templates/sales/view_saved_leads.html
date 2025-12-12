@@ -34,13 +34,41 @@
     }
 
     /* Column Widths */
-    .table th:nth-child(1) { width: 10%; } /* Entry Date */
-    .table th:nth-child(2) { width: 15%; } /* Company Name */
-    .table th:nth-child(3) { width: 20%; } /* Phone No. */
-    .table th:nth-child(4) { width: 15%; } /* Email */
-    .table th:nth-child(5) { width: 15%; } /* DM Names */
-    .table th:nth-child(6) { width: 12%; } /* Termination Code */
-    .table th:nth-child(7) { width: 13%; } /* CB Date */
+    .table th:nth-child(1) {
+        width: 10%;
+    }
+
+    /* Entry Date */
+    .table th:nth-child(2) {
+        width: 15%;
+    }
+
+    /* Company Name */
+    .table th:nth-child(3) {
+        width: 20%;
+    }
+
+    /* Phone No. */
+    .table th:nth-child(4) {
+        width: 15%;
+    }
+
+    /* Email */
+    .table th:nth-child(5) {
+        width: 15%;
+    }
+
+    /* DM Names */
+    .table th:nth-child(6) {
+        width: 12%;
+    }
+
+    /* Termination Code */
+    .table th:nth-child(7) {
+        width: 13%;
+    }
+
+    /* CB Date */
 
     /* Custom Row Styling */
     .table-custom-row td {
@@ -89,8 +117,9 @@
         <ul class="nav nav-tabs border-0 mb-4" id="myTab" role="tablist">
             {% for code in termination_codes %}
             <li class="nav-item" role="presentation">
-                <a class="nav-link text-dark {% if code.id == selected_code.id %}active bg-light{% endif %}" id="tab-{{ code.id }}-tab"
-                    href="/{{ role }}/view-saved-leads/{{ code.id }}" role="tab" aria-controls="tab-{{ code.id }}"
+                <a class="nav-link text-dark {% if code.id == selected_code.id %}active bg-light{% endif %}"
+                    id="tab-{{ code.id }}-tab" href="/{{ role }}/view-saved-leads/{{ code.id }}" role="tab"
+                    aria-controls="tab-{{ code.id }}"
                     aria-selected="{% if code.id == selected_code.id %}true{% else %}false{% endif %}"
                     style="border-radius: 8px; transition: background-color 0.3s ease;">
                     {{ code.name }}
@@ -101,19 +130,43 @@
 
         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
             <h4 class="text-dark mb-2">{{ selected_code.full_name }}</h4>
-            <div class="dropdown">
-                <button class="btn btn-outline-primary dropdown-toggle" type="button" id="orderByDropdown" data-bs-toggle="dropdown"
-                    aria-expanded="false" style="border-radius: 8px;">
-                    Order By
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="orderByDropdown">
-                    <li><a class="dropdown-item order-option" href="?order_by=CB_date"><i class="fa fa-sort-up"></i> CB Date</a></li>
-                    <li><a class="dropdown-item order-option" href="?order_by=-CB_date"><i class="fa fa-sort-down"></i> CB Date</a></li>
-                    <li><a class="dropdown-item order-option" href="?order_by=entry_date"><i class="fa fa-sort-up"></i> Entry Date</a></li>
-                    <li><a class="dropdown-item order-option" href="?order_by=-entry_date"><i class="fa fa-sort-down"></i> Entry Date</a></li>
-                </ul>
+            <div class="d-flex align-items-center">
+                <!-- Search Form -->
+                <form method="GET" class="d-flex me-3">
+                    {% if request.GET.order_by %}
+                    <input type="hidden" name="order_by" value="{{ request.GET.order_by }}">
+                    {% endif %}
+                    <input type="text" name="search_query" class="form-control me-2" placeholder="Search Name or Phone"
+                        value="{{ search_query }}" style="border-radius: 8px;">
+                    <button type="submit" class="btn btn-primary" style="border-radius: 8px;">Search</button>
+                    {% if search_query %}
+                    <a href="?{% if request.GET.order_by %}order_by={{ request.GET.order_by }}{% endif %}"
+                        class="btn btn-secondary ms-2" style="border-radius: 8px;">Clear</a>
+                    {% endif %}
+                </form>
+
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle" type="button" id="orderByDropdown"
+                        data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 8px;">
+                        Order By
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="orderByDropdown">
+                        <li><a class="dropdown-item order-option"
+                                href="?order_by=CB_date{% if search_query %}&search_query={{ search_query }}{% endif %}"><i
+                                    class="fa fa-sort-up"></i> CB Date</a></li>
+                        <li><a class="dropdown-item order-option"
+                                href="?order_by=-CB_date{% if search_query %}&search_query={{ search_query }}{% endif %}"><i
+                                    class="fa fa-sort-down"></i> CB Date</a></li>
+                        <li><a class="dropdown-item order-option"
+                                href="?order_by=entry_date{% if search_query %}&search_query={{ search_query }}{% endif %}"><i
+                                    class="fa fa-sort-up"></i> Entry Date</a></li>
+                        <li><a class="dropdown-item order-option"
+                                href="?order_by=-entry_date{% if search_query %}&search_query={{ search_query }}{% endif %}"><i
+                                    class="fa fa-sort-down"></i> Entry Date</a></li>
+                    </ul>
+                </div>
             </div>
-        </div>        
+        </div>
 
         <div class="tab-content mt-3" id="myTabContent">
             <div class="tab-pane fade show active" id="tab-{{ selected_code.id }}" role="tabpanel"
@@ -127,7 +180,8 @@
                     </button>
                     {% csrf_token %}
                     <div class="table-responsive">
-                        <table class="table table-striped table-bordered table-hover" style="background-color: #fff; border-radius: 8px; overflow: hidden;">
+                        <table class="table table-striped table-bordered table-hover"
+                            style="background-color: #fff; border-radius: 8px; overflow: hidden;">
                             <thead>
                                 <tr>
                                     <th>Entry Date</th>
@@ -153,8 +207,10 @@
                                         <div class="input-group">
                                             <input type="text" id="phone-number-input-{{ lead_data.lead.id }}"
                                                 class="form-control form-control-sm" placeholder="Add Phone Number">
-                                            <button type="button" onclick="addPhoneNumber({{ lead_data.lead.id }}, {{ lead_data.sales_show.sheet.id }})"
-                                                class="btn btn-outline-success btn-sm" style="border-radius: 0 6px 6px 0;">
+                                            <button type="button"
+                                                onclick="addPhoneNumber({{ lead_data.lead.id }}, {{ lead_data.sales_show.sheet.id }})"
+                                                class="btn btn-outline-success btn-sm"
+                                                style="border-radius: 0 6px 6px 0;">
                                                 Add
                                             </button>
                                         </div>
@@ -168,8 +224,10 @@
                                         <div class="input-group">
                                             <input type="email" id="email-input-{{ lead_data.lead.id }}"
                                                 class="form-control form-control-sm" placeholder="Add Email">
-                                            <button type="button" onclick="addEmail({{ lead_data.lead.id }}, {{ lead_data.sales_show.sheet.id }})"
-                                                class="btn btn-outline-success btn-sm" style="border-radius: 0 6px 6px 0;">
+                                            <button type="button"
+                                                onclick="addEmail({{ lead_data.lead.id }}, {{ lead_data.sales_show.sheet.id }})"
+                                                class="btn btn-outline-success btn-sm"
+                                                style="border-radius: 0 6px 6px 0;">
                                                 Add
                                             </button>
                                         </div>
@@ -183,8 +241,10 @@
                                         <div class="input-group">
                                             <input type="text" id="contact-name-input-{{ lead_data.lead.id }}"
                                                 class="form-control form-control-sm" placeholder="Add Contact Name">
-                                            <button type="button" onclick="addContactName({{ lead_data.lead.id }}, {{ lead_data.sales_show.sheet.id }})"
-                                                class="btn btn-outline-success btn-sm" style="border-radius: 0 6px 6px 0;">
+                                            <button type="button"
+                                                onclick="addContactName({{ lead_data.lead.id }}, {{ lead_data.sales_show.sheet.id }})"
+                                                class="btn btn-outline-success btn-sm"
+                                                style="border-radius: 0 6px 6px 0;">
                                                 Add
                                             </button>
                                         </div>
@@ -194,7 +254,8 @@
                                             class="form-control termination-code-select"
                                             data-lead-id="{{ lead_data.lead.id }}" style="border-radius: 6px;">
                                             {% for code in termination_codes_selection %}
-                                            <option value="{{ code.id }}" {% if code.full_name == lead_data.termination %}selected{% endif %}>
+                                            <option value="{{ code.id }}" {% if code.full_name==lead_data.termination
+                                                %}selected{% endif %}>
                                                 {{ code.name }}
                                             </option>
                                             {% endfor %}
@@ -208,10 +269,12 @@
                                             {% endfor %}
                                         </ul>
                                         {% endif %}
-                                        <input {% if lead_data.termination != "Call back" and lead_data.termination != "Incoming" %} disabled {% endif %} type="date"
+                                        <input {% if lead_data.termination !="Call back" and lead_data.termination
+                                            !="Incoming" %} disabled {% endif %} type="date"
                                             name="cb_date_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
                                             value="{{ lead_data.cb_date|date:'Y-m-d' }}" class="form-control cb-date"
-                                            id="cb_date_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}" style="border-radius: 6px;" />
+                                            id="cb_date_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
+                                            style="border-radius: 6px;" />
                                     </td>
                                 </tr>
                                 <tr class="table-custom-row">
@@ -220,8 +283,10 @@
                                             <div class="mb-2"><strong>Show:</strong> {{ lead_data.sales_show }}</div>
                                             <div>
                                                 <strong>Special Notes:</strong>
-                                                <textarea name="notes_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
-                                                    class="form-control mt-2" style="border-radius: 6px; resize: vertical; min-height: 60px;">{{ lead_data.notes|default:"" }}</textarea>
+                                                <textarea
+                                                    name="notes_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
+                                                    class="form-control mt-2"
+                                                    style="border-radius: 6px; resize: vertical; min-height: 60px;">{{ lead_data.notes|default:"" }}</textarea>
                                             </div>
                                         </div>
                                     </td>
@@ -232,22 +297,27 @@
                     </div>
                 </form>
                 {% else %}
-                <div class="alert alert-warning p-3" style="border-radius: 8px;">No leads available for this termination code.</div>
+                <div class="alert alert-warning p-3" style="border-radius: 8px;">No leads available for this termination
+                    code.</div>
                 {% endif %}
             </div>
-            
+
             <!-- Pagination Controls -->
             {% if leads_page.has_other_pages %}
             <nav aria-label="Page navigation" class="mt-4">
                 <ul class="pagination justify-content-center">
                     {% if leads_page.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="?page=1{% if request.GET.order_by %}&order_by={{ request.GET.order_by }}{% endif %}" aria-label="First">
+                        <a class="page-link"
+                            href="?page=1{% if request.GET.order_by %}&order_by={{ request.GET.order_by }}{% endif %}{% if search_query %}&search_query={{ search_query }}{% endif %}"
+                            aria-label="First">
                             <span aria-hidden="true">&laquo; First</span>
                         </a>
                     </li>
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ leads_page.previous_page_number }}{% if request.GET.order_by %}&order_by={{ request.GET.order_by }}{% endif %}" aria-label="Previous">
+                        <a class="page-link"
+                            href="?page={{ leads_page.previous_page_number }}{% if request.GET.order_by %}&order_by={{ request.GET.order_by }}{% endif %}{% if search_query %}&search_query={{ search_query }}{% endif %}"
+                            aria-label="Previous">
                             <span aria-hidden="true">&lsaquo; Previous</span>
                         </a>
                     </li>
@@ -261,17 +331,22 @@
                     {% endif %}
 
                     <li class="page-item disabled">
-                        <span class="page-link">Page {{ leads_page.number }} of {{ leads_page.paginator.num_pages }}</span>
+                        <span class="page-link">Page {{ leads_page.number }} of {{ leads_page.paginator.num_pages
+                            }}</span>
                     </li>
 
                     {% if leads_page.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ leads_page.next_page_number }}{% if request.GET.order_by %}&order_by={{ request.GET.order_by }}{% endif %}" aria-label="Next">
+                        <a class="page-link"
+                            href="?page={{ leads_page.next_page_number }}{% if request.GET.order_by %}&order_by={{ request.GET.order_by }}{% endif %}{% if search_query %}&search_query={{ search_query }}{% endif %}"
+                            aria-label="Next">
                             <span aria-hidden="true">Next &rsaquo;</span>
                         </a>
                     </li>
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ leads_page.paginator.num_pages }}{% if request.GET.order_by %}&order_by={{ request.GET.order_by }}{% endif %}" aria-label="Last">
+                        <a class="page-link"
+                            href="?page={{ leads_page.paginator.num_pages }}{% if request.GET.order_by %}&order_by={{ request.GET.order_by }}{% endif %}{% if search_query %}&search_query={{ search_query }}{% endif %}"
+                            aria-label="Last">
                             <span aria-hidden="true">Last &raquo;</span>
                         </a>
                     </li>

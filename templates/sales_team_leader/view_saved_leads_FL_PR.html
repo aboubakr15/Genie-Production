@@ -123,17 +123,41 @@
 
         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
             <h4 class="text-dark mb-2">{{ selected_code.full_name }}</h4>
-            <div class="dropdown">
-                <button class="btn btn-outline-primary dropdown-toggle" type="button" id="orderByDropdown"
-                    data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 8px;">
-                    Order By
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="orderByDropdown">
-                    <li><a class="dropdown-item" href="?order_by=CB_date">CB Date ↑</a></li>
-                    <li><a class="dropdown-item" href="?order_by=-CB_date">CB Date ↓</a></li>
-                    <li><a class="dropdown-item" href="?order_by=entry_date">Entry Date ↑</a></li>
-                    <li><a class="dropdown-item" href="?order_by=-entry_date">Entry Date ↓</a></li>
-                </ul>
+            <div class="d-flex align-items-center">
+                <!-- Search Form -->
+                <form method="GET" class="d-flex me-3">
+                    {% if request.GET.order_by %}
+                    <input type="hidden" name="order_by" value="{{ request.GET.order_by }}">
+                    {% endif %}
+                    <input type="text" name="search_query" class="form-control me-2" placeholder="Search Name or Phone"
+                        value="{{ search_query }}" style="border-radius: 8px;">
+                    <button type="submit" class="btn btn-primary" style="border-radius: 8px;">Search</button>
+                    {% if search_query %}
+                    <a href="?{% if request.GET.order_by %}order_by={{ request.GET.order_by }}{% endif %}"
+                        class="btn btn-secondary ms-2" style="border-radius: 8px;">Clear</a>
+                    {% endif %}
+                </form>
+
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle" type="button" id="orderByDropdown"
+                        data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 8px;">
+                        Order By
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="orderByDropdown">
+                        <li><a class="dropdown-item"
+                                href="?order_by=CB_date{% if search_query %}&search_query={{ search_query }}{% endif %}">CB
+                                Date ↑</a></li>
+                        <li><a class="dropdown-item"
+                                href="?order_by=-CB_date{% if search_query %}&search_query={{ search_query }}{% endif %}">CB
+                                Date ↓</a></li>
+                        <li><a class="dropdown-item"
+                                href="?order_by=entry_date{% if search_query %}&search_query={{ search_query }}{% endif %}">Entry
+                                Date ↑</a></li>
+                        <li><a class="dropdown-item"
+                                href="?order_by=-entry_date{% if search_query %}&search_query={{ search_query }}{% endif %}">Entry
+                                Date ↓</a></li>
+                    </ul>
+                </div>
             </div>
         </div>
 
@@ -220,7 +244,8 @@
                                         <select name="termination_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
                                             class="form-control">
                                             {% for code in termination_codes_selection %}
-                                            <option value="{{ code.id }}" {% if code.full_name == lead_data.termination %}selected{% endif %}>
+                                            <option value="{{ code.id }}" {% if code.full_name==lead_data.termination
+                                                %}selected{% endif %}>
                                                 {{ code.name }}
                                             </option>
                                             {% endfor %}
@@ -235,8 +260,10 @@
                                         <select name="status_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
                                             class="form-control">
                                             <option value="" {% if not lead_data.status %}selected{% endif %}></option>
-                                            <option value="booked" {% if lead_data.status == 'booked' %}selected{% endif %}>Booked</option>
-                                            <option value="not_booked" {% if lead_data.status == 'not_booked' %}selected{% endif %}>Not Booked</option>
+                                            <option value="booked" {% if lead_data.status=='booked' %}selected{% endif
+                                                %}>Booked</option>
+                                            <option value="not_booked" {% if lead_data.status=='not_booked' %}selected{%
+                                                endif %}>Not Booked</option>
                                         </select>
                                     </td>
                                     <td><input type="number"
@@ -274,14 +301,14 @@
                     {% if leads_page.has_previous %}
                     <li class="page-item">
                         <a class="page-link"
-                            href="?page=1{% if request.GET.order_by %}&order_by={{ request.GET.order_by }}{% endif %}"
+                            href="?page=1{% if request.GET.order_by %}&order_by={{ request.GET.order_by }}{% endif %}{% if search_query %}&search_query={{ search_query }}{% endif %}"
                             aria-label="First">
                             <span aria-hidden="true">&laquo; First</span>
                         </a>
                     </li>
                     <li class="page-item">
                         <a class="page-link"
-                            href="?page={{ leads_page.previous_page_number }}{% if request.GET.order_by %}&order_by={{ request.GET.order_by }}{% endif %}"
+                            href="?page={{ leads_page.previous_page_number }}{% if request.GET.order_by %}&order_by={{ request.GET.order_by }}{% endif %}{% if search_query %}&search_query={{ search_query }}{% endif %}"
                             aria-label="Previous">
                             <span aria-hidden="true">&lsaquo; Previous</span>
                         </a>
@@ -303,14 +330,14 @@
                     {% if leads_page.has_next %}
                     <li class="page-item">
                         <a class="page-link"
-                            href="?page={{ leads_page.next_page_number }}{% if request.GET.order_by %}&order_by={{ request.GET.order_by }}{% endif %}"
+                            href="?page={{ leads_page.next_page_number }}{% if request.GET.order_by %}&order_by={{ request.GET.order_by }}{% endif %}{% if search_query %}&search_query={{ search_query }}{% endif %}"
                             aria-label="Next">
                             <span aria-hidden="true">Next &rsaquo;</span>
                         </a>
                     </li>
                     <li class="page-item">
                         <a class="page-link"
-                            href="?page={{ leads_page.paginator.num_pages }}{% if request.GET.order_by %}&order_by={{ request.GET.order_by }}{% endif %}"
+                            href="?page={{ leads_page.paginator.num_pages }}{% if request.GET.order_by %}&order_by={{ request.GET.order_by }}{% endif %}{% if search_query %}&search_query={{ search_query }}{% endif %}"
                             aria-label="Last">
                             <span aria-hidden="true">Last &raquo;</span>
                         </a>
