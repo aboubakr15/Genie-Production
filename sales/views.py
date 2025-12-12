@@ -403,10 +403,22 @@ def view_saved_leads(request, code_id=None):
 
         return redirect(f'{role}:view-saved-leads', code_id=code.id)
 
+    paginator = Paginator(leads, 50)  # Show 50 leads per page
+    page = request.GET.get('page')
+    try:
+        leads_page = paginator.page(page)
+    except PageNotAnInteger:
+        leads_page = paginator.page(1)
+    except EmptyPage:
+        leads_page = paginator.page(paginator.num_pages)
+
     # Optimize: Prefetch all related data in bulk to avoid N+1 queries
-    lead_ids = [lt.lead_id for lt in leads]
-    show_ids = [lt.sales_show_id for lt in leads]
-    sheet_ids = list(set([lt.sales_show.sheet_id for lt in leads if hasattr(lt.sales_show, 'sheet_id')]))
+    # ONLY for the leads on the current page
+    lead_ids = [lt.lead_id for lt in leads_page]
+    show_ids = [lt.sales_show_id for lt in leads_page]
+    
+    # We need sheet_ids for the current page's shows
+    sheet_ids = list(set([lt.sales_show.sheet_id for lt in leads_page if hasattr(lt.sales_show, 'sheet_id')]))
     
     # Bulk fetch phone numbers, emails, contacts
     all_phones = {p.lead_id: [] for p in LeadPhoneNumbers.objects.filter(lead_id__in=lead_ids, sheet_id__in=sheet_ids)}
@@ -428,9 +440,9 @@ def view_saved_leads(request, code_id=None):
         if key not in all_cb_dates:
             all_cb_dates[key] = []
         all_cb_dates[key].append(hist.cb_date)
-    
+
     leads_data = []
-    for lead_termination in leads:
+    for lead_termination in leads_page:
         lead = lead_termination.lead
         sales_show = lead_termination.sales_show
         sheet_id = sales_show.sheet_id if hasattr(sales_show, 'sheet_id') else None
@@ -470,6 +482,7 @@ def view_saved_leads(request, code_id=None):
 
     context = {
         'leads_data': leads_data,
+        'leads_page': leads_page,
         'termination_codes': termination_codes,
         'termination_codes_selection': termination_codes_selection,
         'selected_code': code,

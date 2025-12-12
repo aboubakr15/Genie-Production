@@ -239,21 +239,56 @@ def view_team_prospect(request, code_id=None, leader_id=None):
         else:
             return redirect('sales_manager:view-team-prospect-with-leader', code_id=code.id, leader_id=leader_id)
         
+    paginator = Paginator(leads, 50)  # Show 50 leads per page
+    page = request.GET.get('page')
+    try:
+        leads_page = paginator.page(page)
+    except PageNotAnInteger:
+        leads_page = paginator.page(1)
+    except EmptyPage:
+        leads_page = paginator.page(paginator.num_pages)
+    
+    # leads_data = []
+
+    lead_ids = [l.lead.id for l in leads_page]
+    show_ids = [l.sales_show.id for l in leads_page]
+    sheet_ids = [l.sales_show.sheet.id for l in leads_page]
+
+    # Bulk fetch phones, emails, and contacts
+    all_phones = {p.lead_id: [] for p in LeadPhoneNumbers.objects.filter(lead_id__in=lead_ids, sheet_id__in=sheet_ids)}
+    for p in LeadPhoneNumbers.objects.filter(lead_id__in=lead_ids, sheet_id__in=sheet_ids):
+        all_phones[p.lead_id].append(p)
+    
+    all_emails = {e.lead_id: [] for e in LeadEmails.objects.filter(lead_id__in=lead_ids, sheet_id__in=sheet_ids)}
+    for e in LeadEmails.objects.filter(lead_id__in=lead_ids, sheet_id__in=sheet_ids):
+        all_emails[e.lead_id].append(e.value)
+    
+    all_contacts = {c.lead_id: [] for c in LeadContactNames.objects.filter(lead_id__in=lead_ids, sheet_id__in=sheet_ids)}
+    for c in LeadContactNames.objects.filter(lead_id__in=lead_ids, sheet_id__in=sheet_ids):
+        all_contacts[c.lead_id].append(c.value)
+    
+    # Bulk fetch previous CB dates
+    all_cb_dates = {}
+    for hist in LeadTerminationHistory.objects.filter(lead_id__in=lead_ids, show_id__in=show_ids).exclude(cb_date__isnull=True).select_related('lead', 'show'):
+        key = (hist.lead_id, hist.show_id)
+        if key not in all_cb_dates:
+            all_cb_dates[key] = []
+        all_cb_dates[key].append(hist.cb_date)
+
     leads_data = []
-    for lead_termination in leads:
+    for lead_termination in leads_page:
         lead = lead_termination.lead
-        phones = LeadPhoneNumbers.objects.filter(lead=lead, sheet=lead_termination.sales_show.sheet)
-        emails = LeadEmails.objects.filter(lead=lead, sheet=lead_termination.sales_show.sheet).values_list('value', flat=True)
-        contacts = LeadContactNames.objects.filter(lead=lead, sheet=lead_termination.sales_show.sheet).values_list('value', flat=True)
         sales_show = lead_termination.sales_show
 
-        # Fetch previous cb dates from LeadTerminationHistory
-        previous_cb_dates = LeadTerminationHistory.objects.filter(
-            lead=lead, show=sales_show
-        ).exclude(cb_date__isnull=True).values_list('cb_date', flat=True).distinct()
-    
-        previous_cb_dates = sorted(previous_cb_dates)
+        # Use prefetched data
+        phones = all_phones.get(lead.id, [])
+        emails = all_emails.get(lead.id, [])
+        contacts = all_contacts.get(lead.id, [])
+        
+        # Get previous CB dates from prefetched data
+        previous_cb_dates = sorted(set(all_cb_dates.get((lead.id, sales_show.id), [])))
 
+        previous_cb_dates = sorted(previous_cb_dates)
 
         leads_data.append({
             'lead': lead,
@@ -281,6 +316,7 @@ def view_team_prospect(request, code_id=None, leader_id=None):
 
     context = {
         'leads_data': leads_data,
+        'leads_page': leads_page,
         'termination_codes': termination_codes,
         'termination_codes_selection':termination_codes_selection,
         'selected_code': code,

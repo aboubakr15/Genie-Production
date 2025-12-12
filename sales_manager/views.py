@@ -283,6 +283,15 @@ def search(request):
     query = request.GET.get('query', '').strip() if request.method == 'GET' else request.POST.get('query', '').strip()
     search_by = request.GET.get('search_by', '') if request.method == 'GET' else request.POST.get('search_by', '')
 
+    # If no query or search_by is provided, return an empty page
+    if not query or not search_by:
+        return render(request, template_path, {
+            'shows_only': False,
+            'leads_with_shows': [],
+            'query': query,
+            'search_by': search_by,
+        })
+
     leads_with_shows = []
     shows_queryset = None
 
@@ -309,7 +318,6 @@ def search(request):
     leads_queryset = Lead.objects.filter(sales_shows__Agent__isnull=False)
 
     if query and search_by:
-        leads_queryset = Lead.objects.filter(sales_shows_Agent_isnull=False)
         if search_by == 'lead_name':
             leads_queryset = leads_queryset.filter(name__icontains=query)
 
@@ -362,18 +370,6 @@ def search(request):
             for lead in leads_queryset:
                 for show in lead.filtered_sales_shows:
                     leads_with_shows.append((lead, show))
-    else:
-        leads_queryset = leads_queryset.prefetch_related(
-            Prefetch(
-                'sales_shows',
-                queryset=SalesShow.objects.filter(Agent__isnull=False).select_related('Agent'),
-                to_attr='filtered_sales_shows'
-            )
-        ).distinct()
-
-        for lead in leads_queryset:
-            for show in lead.filtered_sales_shows:
-                leads_with_shows.append((lead, show))
 
     # --- Pagination ---
     paginator = Paginator(leads_with_shows, 20)

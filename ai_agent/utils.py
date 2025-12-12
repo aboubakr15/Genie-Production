@@ -955,7 +955,6 @@ def save_excel_for_task(task, enriched_results, sheet_name="Enriched Leads"):
 def clean_sheet_name(name):
     """
     Clean sheet name to be Excel-compliant
-    Excel sheet names must be <= 200 characters and cannot contain : \ / ? * [ ]
     """
     import re
     # Remove invalid characters
