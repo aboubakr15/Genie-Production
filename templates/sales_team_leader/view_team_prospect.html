@@ -139,7 +139,7 @@
             {% for code in termination_codes %}
             <li class="nav-item" role="presentation">
                 <a class="nav-link text-dark {% if code.id == selected_code.id %}active bg-light{% endif %}"
-                    id="tab-{{ code.id }}-tab" {% if role=="sales_team_leader" %}
+                    id="tab-{{ code.id }}-tab" {% if role == "sales_team_leader" %}
                     href="{% url 'sales_team_leader:view-team-prospect-with-id' code.id %}" {% else %}
                     href="{% url 'sales_manager:view-team-prospect-with-leader' code.id leader.id %}" {% endif %}
                     role="tab" aria-controls="tab-{{ code.id }}"
@@ -276,8 +276,7 @@
                                             name="termination_code_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
                                             class="form-control termination-code-select" style="border-radius: 6px;">
                                             {% for code in termination_codes_selection %}
-                                            <option value="{{ code.id }}" {% if lead_data.termination==code.full_name
-                                                %}selected{% endif %}>
+                                            <option value="{{ code.id }}" {% if lead_data.termination == code.full_name %}selected{% endif %}>
                                                 {{ code.name }}
                                             </option>
                                             {% endfor %}
@@ -354,8 +353,7 @@
                     {% endif %}
 
                     <li class="page-item disabled">
-                        <span class="page-link">Page {{ leads_page.number }} of {{ leads_page.paginator.num_pages
-                            }}</span>
+                        <span class="page-link">Page {{ leads_page.number }} of {{ leads_page.paginator.num_pages }}</span>
                     </li>
 
                     {% if leads_page.has_next %}
