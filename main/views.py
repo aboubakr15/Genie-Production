@@ -723,10 +723,6 @@ def log_inactivity(request):
         
         user = request.user
         
-        # Check if user is in the required groups
-        if not user.groups.filter(name__in=['sales', 'sales_team_leader']).exists():
-            return JsonResponse({"status": "failure", "message": "User not authorized"}, status=403)
-        
         # Parse JSON data
         try:
             data = json.loads(request.body)
@@ -740,14 +736,16 @@ def log_inactivity(request):
         
         # Log the inactivity
         try:
-            # Create SalesLog entry
-            SalesLog.objects.create(
-                message=message,
-                date=timezone.now(),
-                user=user
-            )
+            # Check if user is in sales or sales_team_leader for SalesLog
+            if user.groups.filter(name__in=['sales', 'sales_team_leader']).exists():
+                # Create SalesLog entry
+                SalesLog.objects.create(
+                    message=message,
+                    date=timezone.now(),
+                    user=user
+                )
             
-            # Create general Log entry
+            # Create general Log entry for all users
             Log.objects.create(
                 message=f"{user.username} was inactive for 5 minutes"
             )

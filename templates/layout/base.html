@@ -14,7 +14,9 @@
 
   <!-- Google Fonts - Preconnect for faster loading -->
   <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
 
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -73,7 +75,7 @@
         margin-left: 80px;
       }
 
-      .sidebar:hover + .main {
+      .sidebar:hover+.main {
         margin-left: 300px;
       }
     }
@@ -160,6 +162,7 @@
         transform: translateY(-20px);
         opacity: 0;
       }
+
       to {
         transform: translateY(0);
         opacity: 1;
@@ -193,20 +196,20 @@
   {% include "layout/header.html" %}
   {% include 'layout/sidebar.html' %}
   <main id="main" class="main">
-  
-  <!-- Message Display -->
-  {% if messages %}
-      <div class="container mt-4">
-          {% for message in messages %}
-              <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                  {{ message }}
-                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-              </div>
-          {% endfor %}
-      </div>
-  {% endif %}
 
-  {% block content %} {% endblock %}
+    <!-- Message Display -->
+    {% if messages %}
+    <div class="container mt-4">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% block content %} {% endblock %}
   </main>
 </body>
 
@@ -229,44 +232,48 @@
 
 <script>
 
-(function () {
-  let timeout; // Use `let` to prevent global variable issues
+  (function () {
+    let timeout; // Use `let` to prevent global variable issues
 
-  function resetTimeout() {
-    clearTimeout(timeout);
-    // Set a timeout to log inactivity after 5 minutes (300000 milliseconds)
-    timeout = setTimeout(logInactivity, 300000); // Adjusted to 5 minutes
-  }
+    function resetTimeout() {
+      clearTimeout(timeout);
+      // Set a timeout to log inactivity after 5 minutes (300000 milliseconds)
+      timeout = setTimeout(logInactivity, 300000); // Adjusted to 5 minutes
+    }
 
-  function logInactivity() {
-    console.log("Logging user inactivity...");
+    function logInactivity() {
+      console.log("Logging user inactivity...");
 
-    fetch("{% url 'main:log_inactivity' %}", {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": "{{ csrf_token }}",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        message: "User inactive for 5 minutes",
-      }),
-    })
-      .then((response) => {
-        if (response.ok) {
-          console.log("Inactivity logged successfully.");
-        } else {
-          console.error("Logging inactivity failed:", response);
-        }
+      fetch("{% url 'main:log_inactivity' %}", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": "{{ csrf_token }}",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: "User inactive for 5 minutes",
+        }),
       })
-      .catch((error) => console.error("Error logging inactivity:", error));
-  }
+        .then((response) => {
+          if (response.ok) {
+            console.log("Inactivity logged successfully.");
+          } else {
+            console.error("Logging inactivity failed:", response);
+          }
+        })
+        .catch((error) => console.error("Error logging inactivity:", error));
+    }
 
-  // Reset the inactivity timeout whenever there is mouse movement
-  document.addEventListener("mousemove", resetTimeout);
+    // Reset the inactivity timeout whenever there is any user activity
+    const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
 
-  // Start the inactivity timer
-  resetTimeout();
-})();
+    events.forEach(event => {
+      document.addEventListener(event, resetTimeout);
+    });
+
+    // Start the inactivity timer
+    resetTimeout();
+  })();
 
 </script>
 
