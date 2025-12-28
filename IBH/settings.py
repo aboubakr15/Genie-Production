@@ -1,12 +1,3 @@
-"""
-Django settings for IBH project.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/5.0/topics/settings/
-
-For the full list of settings and their values, see
-https://docs.djangoproject.com/en/5.0/ref/settings/
-"""
 import tempfile
 from pathlib import Path
 import os
@@ -21,7 +12,7 @@ SECRET_KEY = 'django-insecure-x0t)8qx9buoxxbiq#v4hmxdqt&$e(t%#c0=5jj$rthyb1!042@
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Change it to True while Developing, to load your static files
-DEBUG = True
+DEBUG = False
 
 
 CSRF_TRUSTED_ORIGINS = [
@@ -253,9 +244,9 @@ MESSAGE_TAGS = {
 
 
 # Gemini API Key
-GEMINI_API_KEY = "AIzaSyBuNSlfHDLXEWfr1GUCsHWoqeLKibEyT0E"
+GEMINI_API_KEY = "mock_api_key_for_development_purposes_only"
 
-External_REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379')
+External_REDIS_URL = os.environ.get('REDIS_URL', 'redis://default:riercOvPFfeeXIGpKsMnfpgPEDltqVjf@metro.proxy.rlwy.net:45042')
 
 # Celery configuration tuned for stability under high load
 CELERY_BROKER_URL = External_REDIS_URL
