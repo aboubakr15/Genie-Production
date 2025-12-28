@@ -129,11 +129,11 @@ DATABASES = {
 
     'global': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'railway',
-        'USER': 'root',
-        'PASSWORD': 'gOwOCCHfDVbbazMFqxOXISIFzExBGsvV',
-        'HOST': 'yamanote.proxy.rlwy.net',
-        'PORT': '38178',
+        'NAME': os.environ.get('MYSQL_DATABASE_global', "global"),
+        'USER': os.environ.get('MYSQLUSER_global', "root"),
+        'PASSWORD': os.environ.get('MYSQLPASSWORD_global', "Admin123"),
+        'HOST': os.environ.get('MYSQLHOST_global', "localhost"),
+        'PORT': os.environ.get('MYSQLPORT_global', "3306"),
         'OPTIONS': {
             'charset': 'utf8mb4',
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
