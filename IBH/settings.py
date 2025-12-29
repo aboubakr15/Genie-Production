@@ -244,7 +244,7 @@ MESSAGE_TAGS = {
 
 
 # Gemini API Key
-GEMINI_API_KEY = "mock_api_key_for_development_purposes_only"
+GEMINI_API_KEY = os.environ.get('google_api_key', 'mock_key_for_development')
 
 External_REDIS_URL = os.environ.get('REDIS_URL', 'redis://default:riercOvPFfeeXIGpKsMnfpgPEDltqVjf@metro.proxy.rlwy.net:45042')
 
