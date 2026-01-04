@@ -534,7 +534,7 @@ def ai_search_batch(company_list: List[str], api_key: str, batch_number: int, re
 
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash-lite",
+            model="gemini-2.5-flash",
             contents=prompt,
             config=config
         )
