@@ -175,6 +175,9 @@ def view_team_prospect(request, code_id=None, leader_id=None):
         leads = LeadTerminationCode.objects.filter(target_user=request.user, flag=code).order_by(order_by)
     else:
         leads = LeadTerminationCode.objects.filter(user__in=team_members, flag=code).order_by(order_by)
+
+    leads = leads.select_related('lead', 'sales_show__sheet', 'sales_show__Agent', 'flag', 'target_user', 'user')
+
     team_name = SalesTeams.objects.filter(leader=leader).first().label
 
     # Search Logic
@@ -183,7 +186,9 @@ def view_team_prospect(request, code_id=None, leader_id=None):
         from django.db.models import Q
         leads = leads.filter(
             Q(lead__name__icontains=search_query) | 
-            Q(lead__leadphonenumbers__value__icontains=search_query)
+            Q(lead__leadphonenumbers__value__icontains=search_query) |
+            Q(sales_show__name__icontains=search_query) |
+            Q(lead__leadcontactnames__value__icontains=search_query)
         ).distinct()
     
     # Fetch potential target users (Team Leaders and Sales Managers)

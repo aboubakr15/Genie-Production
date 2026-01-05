@@ -331,7 +331,7 @@ def view_saved_leads(request, code_id=None):
     
     order_by = request.GET.get('order_by', '-entry_date')  # Default sorting
     
-    leads = LeadTerminationCode.objects.filter(user=request.user, flag=code).order_by(order_by)
+    leads = LeadTerminationCode.objects.filter(user=request.user, flag=code).select_related('lead', 'sales_show__sheet', 'sales_show__Agent', 'flag', 'target_user').order_by(order_by)
 
     # Search Logic
     search_query = request.GET.get('search_query', '')
@@ -339,7 +339,9 @@ def view_saved_leads(request, code_id=None):
         from django.db.models import Q
         leads = leads.filter(
             Q(lead__name__icontains=search_query) | 
-            Q(lead__leadphonenumbers__value__icontains=search_query)
+            Q(lead__leadphonenumbers__value__icontains=search_query) |
+            Q(sales_show__name__icontains=search_query) |
+            Q(lead__leadcontactnames__value__icontains=search_query)
         ).distinct()
 
 
