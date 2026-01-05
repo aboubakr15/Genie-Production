@@ -343,6 +343,9 @@ def view_saved_leads(request, code_id=None):
         ).distinct()
 
 
+    # Fetch potential target users (Team Leaders and Sales Managers)
+    target_users = User.objects.filter(groups__name__in=['sales_team_leader', 'sales_manager']).distinct()
+
     if request.method == 'POST':
         for lead_termination in leads:
             lead_id = lead_termination.lead.id
@@ -357,6 +360,11 @@ def view_saved_leads(request, code_id=None):
             notes = request.POST.get(f'notes_{lead_id}_{sales_show_id}')
             cb_date = request.POST.get(f'cb_date_{lead_id}_{sales_show_id}')
             is_qualified = request.POST.get(f'is_qualified_{lead_id}_{sales_show_id}') == 'on'
+
+            target_user_id = request.POST.get(f'target_user_{lead_id}_{sales_show_id}')
+            target_user = None
+            if target_user_id:
+                target_user = User.objects.get(id=target_user_id)
 
             new_code = None
 
@@ -381,6 +389,8 @@ def view_saved_leads(request, code_id=None):
                 lead_termination.CB_date = cb_date
             if notes:
                 lead_termination.notes = notes
+            
+            lead_termination.target_user = target_user
 
             latest_termination = LeadTerminationHistory.objects.filter(lead=lead_termination.lead).order_by('-entry_date').first()
 
@@ -395,7 +405,8 @@ def view_saved_leads(request, code_id=None):
                     cb_date=cb_date,
                     lead=lead_termination.lead,
                     show=lead_termination.sales_show,
-                    notes=notes
+                    notes=notes,
+                    target_user=target_user
                 )
 
 
@@ -486,6 +497,7 @@ def view_saved_leads(request, code_id=None):
             'Agent': sales_show.Agent,
             'is_qualified': lead_termination.is_qualified,  
             'entry_date': lead_termination.entry_date,
+            'target_user': lead_termination.target_user,
         })
 
 
@@ -496,7 +508,8 @@ def view_saved_leads(request, code_id=None):
         'termination_codes_selection': termination_codes_selection,
         'selected_code': code,
         'role': role,
-        'search_query': search_query
+        'search_query': search_query,
+        'target_users': target_users,
     }
 
     template_name = "sales/view_saved_leads.html" if code.name in [

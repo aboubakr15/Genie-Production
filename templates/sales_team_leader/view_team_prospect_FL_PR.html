@@ -360,10 +360,21 @@
                                     <td>
                                         <select
                                             name="termination_code_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
-                                            class="form-control termination-code-select" style="border-radius: 6px;">
+                                            class="form-control termination-code-select" style="border-radius: 6px;"
+                                            onchange="toggleTermination(this, {{ lead_data.lead.id }}, {{ lead_data.sales_show_id }})">
                                             {% for code in termination_codes_selection %}
                                             <option value="{{ code.id }}" {% if code.full_name == lead_data.termination %}selected{% endif %}>
                                                 {{ code.name }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                        <select name="target_user_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
+                                            class="form-control target-user-select mt-1"
+                                            style="border-radius: 6px; display: {% if lead_data.termination == 'Sent to team leader' or lead_data.termination == 'ST' %}block{% else %}none{% endif %};">
+                                            <option value="">Select User</option>
+                                            {% for user in target_users %}
+                                            <option value="{{ user.id }}" {% if lead_data.target_user.id == user.id %} selected {% endif %}>
+                                                {{ user.username }}
                                             </option>
                                             {% endfor %}
                                         </select>
@@ -543,7 +554,22 @@
 
         addItem('.add-phone', 'phone-number-input', 'phone-numbers', "{% url 'api:add_phone_number' %}", 'phone number');
         addItem('.add-email', 'email-input', 'emails', "{% url 'api:add_email' %}", 'email');
+        addItem('.add-email', 'email-input', 'emails', "{% url 'api:add_email' %}", 'email');
         addItem('.add-contact', 'contact-name-input', 'contact-names', "{% url 'api:add_contact_name' %}", 'contact name');
     });
+
+    function toggleTermination(select, leadId, showId) {
+        const selectedOption = select.options[select.selectedIndex].text;
+        const cbDateInput = $(`#cb_date_${leadId}_${showId}`);
+        const targetUserSelect = $(`select[name="target_user_${leadId}_${showId}"]`);
+
+        // Check for ST code to show target user dropdown
+        if (['ST', 'Sent to team leader', 'Send To'].some(code => selectedOption.includes(code) || selectedOption === code)) {
+            targetUserSelect.show();
+        } else {
+            targetUserSelect.hide();
+            targetUserSelect.val('');
+        }
+    }
 </script>
 {% endblock %}

@@ -185,6 +185,9 @@ def view_team_prospect(request, code_id=None, leader_id=None):
             Q(lead__name__icontains=search_query) | 
             Q(lead__leadphonenumbers__value__icontains=search_query)
         ).distinct()
+    
+    # Fetch potential target users (Team Leaders and Sales Managers)
+    target_users = User.objects.filter(groups__name__in=['sales_team_leader', 'sales_manager']).distinct()
 
 
     if request.method == 'POST':
@@ -199,6 +202,11 @@ def view_team_prospect(request, code_id=None, leader_id=None):
             termination_code_id = request.POST.get(f'termination_code_{lead_id}_{sales_show_id}')
             cb_date = request.POST.get(f'cb_date_{lead_id}_{sales_show_id}')
             is_qualified = request.POST.get(f'is_qualified_{lead_id}') == 'on'  # Check if the checkbox is checked
+
+            target_user_id = request.POST.get(f'target_user_{lead_id}_{sales_show_id}')
+            target_user = None
+            if target_user_id:
+                target_user = User.objects.get(id=target_user_id)
 
             if isinstance(cb_date, str):
                 cb_date = cb_date.strip() if cb_date.strip() else None
@@ -220,6 +228,7 @@ def view_team_prospect(request, code_id=None, leader_id=None):
             if notes:
                 lead_termination.notes = notes
             
+            lead_termination.target_user = target_user
 
             latest_termination = LeadTerminationHistory.objects.filter(lead=lead_termination.lead).order_by('-entry_date').first()
 
@@ -235,7 +244,8 @@ def view_team_prospect(request, code_id=None, leader_id=None):
                     cb_date=cb_date,
                     lead=lead_termination.lead,
                     show=lead_termination.sales_show,
-                    notes=notes
+                    notes=notes,
+                    target_user=target_user
                 )
 
 
@@ -320,7 +330,8 @@ def view_team_prospect(request, code_id=None, leader_id=None):
             'is_qualified': lead_termination.is_qualified,
             'sales_show_id': sales_show.id,
             'sales_show': sales_show,
-            'entry_date': lead_termination.entry_date
+            'entry_date': lead_termination.entry_date,
+            'target_user': lead_termination.target_user,
         })
 
     context = {
@@ -333,7 +344,8 @@ def view_team_prospect(request, code_id=None, leader_id=None):
         'role':role,
         'team_name':team_name,
         'leader':leader,
-        'search_query': search_query
+        'search_query': search_query,
+        'target_users': target_users,
     }
 
     if code.name in ['CB', 'IC']:
