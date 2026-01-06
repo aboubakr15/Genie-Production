@@ -1,0 +1,303 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+
+<main>
+    <div class="container">
+        <section class="section">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ show.name }}</h5>
+
+                            <!-- Display error message if present -->
+                            {% if error_message %}
+                            <div class="alert alert-danger">
+                                {{ error_message }}
+                            </div>
+                            {% endif %}
+
+                            <form method="POST"
+                                action="{% if recycle == 'recycle' %}/{{ role }}/show-detail/{{ show.id }}/recycle/{% else %}/{{ role }}/show-detail/{{ show.id }}/{% endif %}">
+                                {% csrf_token %}
+                                <div class="table-responsive" style="overflow-x: auto;"> <!-- Make table scrollable -->
+                                    <table class="table table-bordered table-sm " data-toggle="table" data-search="true"
+                                        data-show-columns="true" data-mobile-responsive="true">
+                                        <!-- Enable mobile responsiveness -->
+                                        <thead>
+                                            <tr>
+                                                <th data-field="company_name" style="min-width: 200px;">Company Name
+                                                </th>
+                                                <th data-field="phone_numbers" style="min-width: 100px;">Phone Number /
+                                                    time zone</th>
+                                                <th data-field="emails" style="min-width: 100px;">Emails</th>
+                                                <th data-field="contact_names" style="min-width: 100px;">Contact Names
+                                                </th>
+                                                <th data-field="termination_code"
+                                                    style="min-width: 100px; width: 100px;">Termination</th>
+                                                <th data-field="cb_date" style="min-width: 100px;">CB Date</th>
+                                                <th data-field="notes" style="min-width: 200px; width: 300px;">Notes
+                                                </th>
+                                                <th data-field="color" style="min-width: 10px;">Color Code</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for lead_detail in leads_with_details %}
+                                            <tr>
+                                                <td>{{ lead_detail.lead.name }}</td>
+
+                                                <!-- Phone Numbers Column -->
+                                                <td>
+                                                    <ul id="phone-numbers-{{ lead_detail.lead.id }}"
+                                                        class="list-unstyled">
+                                                        {% for phone in lead_detail.phone_numbers %}
+                                                        <li>{{ phone.value }} : {{ phone.time_zone }} </li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                    <div class="input-group">
+                                                        <input type="text"
+                                                            id="phone-number-input-{{ lead_detail.lead.id }}"
+                                                            class="form-control form-control-sm"
+                                                            placeholder="Add Phone Number">
+                                                        <button type="button"
+                                                            onclick="addPhoneNumber({{ lead_detail.lead.id }})"
+                                                            class="btn btn-primary btn-sm">Add</button>
+                                                    </div>
+                                                </td>
+
+                                                <!-- Emails Column -->
+                                                <td>
+                                                    <ul id="emails-{{ lead_detail.lead.id }}" class="list-unstyled">
+                                                        {% for email in lead_detail.emails %}
+                                                        <li>{{ email.value }}</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                    <div class="input-group">
+                                                        <input type="text" id="email-input-{{ lead_detail.lead.id }}"
+                                                            class="form-control form-control-sm"
+                                                            placeholder="Add Email">
+                                                        <button type="button"
+                                                            onclick="addEmail({{ lead_detail.lead.id }})"
+                                                            class="btn btn-primary btn-sm">Add</button>
+                                                    </div>
+                                                </td>
+
+                                                <!-- Contact Names Column -->
+                                                <td>
+                                                    <ul id="contact-names-{{ lead_detail.lead.id }}"
+                                                        class="list-unstyled">
+                                                        {% for contact_name in lead_detail.contact_names %}
+                                                        <li>{{ contact_name.value }}</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                    <div class="input-group">
+                                                        <input type="text"
+                                                            id="contact-name-input-{{ lead_detail.lead.id }}"
+                                                            class="form-control form-control-sm"
+                                                            placeholder="Add Contact Name">
+                                                        <button type="button"
+                                                            onclick="addContactName({{ lead_detail.lead.id }})"
+                                                            class="btn btn-primary btn-sm">Add</button>
+                                                    </div>
+                                                </td>
+
+                                                <!-- Termination Code Column -->
+                                                <td>
+                                                    <select name="termination_code_{{ lead_detail.lead.id }}"
+                                                        class="form-select termination-code"
+                                                        onchange="toggleCbDate(this, {{ lead_detail.lead.id }})">
+                                                        <option value="">Select Termination Code</option>
+                                                        {% for termination_code in termination_codes %}
+                                                        <option value="{{ termination_code.id }}" {% if lead_detail.tc and lead_detail.tc.flag.id == termination_code.id %} selected {% endif %}>
+                                                            {{ termination_code.name }}
+                                                        </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                    <select name="target_user_{{ lead_detail.lead.id }}"
+                                                        class="form-select target-user mt-2"
+                                                        style="display: {% if lead_detail.tc.flag.name == 'ST' %}block{% else %}none{% endif %};">
+                                                        <option value="">Select User</option>
+                                                        {% for user in target_users %}
+                                                        <option value="{{ user.id }}" {% if lead_detail.target_user.id == user.id %} selected {% endif %}>
+                                                            {{ user.username }}
+                                                        </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </td>
+
+                                                <!-- CB Date Column -->
+                                                <td>
+                                                    <input type="date" name="cb_date_{{ lead_detail.lead.id }}"
+                                                        class="form-control cb-date"
+                                                        value="{{ lead_detail.tc.CB_date|date:'Y-m-d\TH:i' }}" {% if not lead_detail.tc or lead_detail.tc.flag.name != 'CB' or lead_detail.tc.flag.name != 'PR' or lead_detail.tc.flag.name != 'IC' %} disabled {% endif %}>
+                                                </td>
+
+                                                <!-- Notes Column -->
+                                                <td>
+                                                    <div>
+                                                        <textarea name="notes_{{ lead_detail.lead.id }}"
+                                                            class="form-control"
+                                                            style="width: 100%; min-width: 200px;">{{ lead_detail.notes|default:"" }}</textarea>
+                                                    </div>
+                                                </td>
+
+                                                <!-- Colors Column -->
+                                                <td>
+                                                    <div
+                                                        style="display: flex; justify-content: center; align-items: center; height: auto;">
+                                                        <div style="width: 20px; height: 20px; 
+                                                            background-color: {% if role == 'sales' %}white{% else %}{{ lead_detail.color }}{% endif %}; 
+                                                            border: 1px solid #000;">
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+
+                                    </table>
+                                </div> <!-- End of table-responsive div -->
+
+                                <!-- Save Termination Codes Button -->
+                                <button value="true" type="submit" name="save_termination_codes"
+                                    class="btn btn-success">
+                                    Save Changes
+                                </button>
+
+                                {% if show.Agent == request.user %}
+                                {% if recycle == "recycle" %}
+                                <button value="true" type="submit" name="mark_as_done"
+                                    class="btn btn-danger {% if show.is_done_rec %}disabled{% endif %}">
+                                    Mark as Done Recycle
+                                </button>
+                                {% else %}
+                                <button value="true" type="submit" name="mark_as_done"
+                                    class="btn btn-danger {% if show.is_done %}disabled{% endif %}">
+                                    Mark as Done
+                                </button>
+                                {% endif %}
+                                {% endif %}
+
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<script>
+
+    console.log("Table: ", table)
+
+    function toggleCbDate(select, leadId) {
+        const cbDateInput = $('input[name="cb_date_' + leadId + '"]');
+        const targetUserSelect = $('select[name="target_user_' + leadId + '"]');
+        const selectedTerminationCode = select.options[select.selectedIndex].text; // Get text name
+        const cbTerminationCodeId = "4"; // CB ID - keeping old logic for safety but preferring name check
+
+        // Better to check by name if possible but we have IDs in value. 
+        // Let's assume the iteration in template correlates name and ID or check the text content.
+        // Actually, the previous logic used hardcoded IDs which is risky.
+        // Let's use the selected option text to overlap with names.
+
+        if (selectedTerminationCode == "CB" || selectedTerminationCode == "PR" || selectedTerminationCode == "IC") {
+            cbDateInput.prop('disabled', false);
+        } else {
+            cbDateInput.prop('disabled', true);
+            cbDateInput.val(''); // Clear the value if not CB or PR
+        }
+
+        if (selectedTerminationCode == "ST" || selectedTerminationCode == "Send To") {
+            targetUserSelect.show();
+        } else {
+            targetUserSelect.hide();
+            targetUserSelect.val('');
+        }
+    }
+
+    function addPhoneNumber(leadId) {
+        const phoneNumberInput = $('#phone-number-input-' + leadId).val();
+        if (phoneNumberInput) {
+            $.ajax({
+                url: "{% url 'api:add_phone_number' %}",
+                method: "POST",
+                data: {
+                    'lead_id': leadId,
+                    'value': phoneNumberInput,
+                    'sheet_id': "{{ show.sheet.id }}",
+                    'csrfmiddlewaretoken': '{{ csrf_token }}',
+                },
+                success: function (response) {
+                    $('#phone-numbers-' + leadId).append('<li>' + response.phone_number + '</li>');
+                    $('#phone-number-input-' + leadId).val('');
+                },
+                error: function (error) {
+                    alert('Error adding phone number: ' + error.responseJSON.errors.value);
+                }
+            });
+        }
+    }
+
+    function addEmail(leadId) {
+        const emailInput = $('#email-input-' + leadId).val();
+        if (emailInput) {
+            $.ajax({
+                url: "{% url 'api:add_email' %}",
+                method: "POST",
+                data: {
+                    'lead_id': leadId,
+                    'value': emailInput,
+                    'sheet_id': "{{ show.sheet.id }}",
+                    'csrfmiddlewaretoken': '{{ csrf_token }}',
+                },
+                success: function (response) {
+                    $('#emails-' + leadId).append('<li>' + response.email + '</li>');
+                    $('#email-input-' + leadId).val('');
+                },
+                error: function (error) {
+                    alert('Error adding email: ' + error.responseJSON.errors.value);
+                }
+            });
+        }
+    }
+
+    function addContactName(leadId) {
+        const contactNameInput = $('#contact-name-input-' + leadId).val();
+        if (contactNameInput) {
+            $.ajax({
+                url: "{% url 'api:add_contact_name' %}",
+                method: "POST",
+                data: {
+                    'lead_id': leadId,
+                    'value': contactNameInput,
+                    'sheet_id': "{{ show.sheet.id }}",
+                    'csrfmiddlewaretoken': '{{ csrf_token }}',
+                },
+                success: function (response) {
+                    $('#contact-names-' + leadId).append('<li>' + response.contact_name + '</li>');
+                    $('#contact-name-input-' + leadId).val('');
+                },
+                error: function (error) {
+                    alert('Error adding contact name: ' + error.responseJSON.errors.value);
+                }
+            });
+        }
+    }
+
+    $(document).on('copy', function (e) {
+        // Log what is being copied if needed
+        console.log("Copy event triggered");
+        // You can also check the target if necessary
+    });
+
+    // Prevent any undesired action on mouse down
+    $(document).on('mousedown', '.list-unstyled li', function (e) {
+        e.preventDefault(); // Prevent any interference during copy
+    });
+
+</script>
+
+{% endblock %}

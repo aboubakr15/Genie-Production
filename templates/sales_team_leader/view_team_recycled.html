@@ -1,0 +1,39 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h3 class="mb-4">Recycled Shows for The Team: <strong>{{ team_name }}</strong></h3>
+
+    {% if team_members %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Team Members</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th scope="col">Username</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for member in team_members %}
+                            <tr>
+                                <td>
+                                    <a href="/{{role}}/view-team-member-recycled/{{member.user__id}}/new" >
+                                        {{ member.user__username }}
+                                    </a>
+                                </td>
+                            </txr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            No team members found.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

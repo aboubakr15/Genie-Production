@@ -1,0 +1,39 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h3 class="mb-4">Recycled Shows by Team</h3>
+
+    {% if teams %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Teams</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th scope="col">Team Name</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for team in teams %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'sales_manager:view-team-recycled' team.leader.id %}">
+                                        {{team.label}} ( Leader: {{team.leader.username}})
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            No teams found.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<!-- Include the loading template -->
+{% include "main/loading.html" %}
+
+<div class="container mt-5">
+    <h1 class="mb-4">Upload Folder</h1>
+
+    {% if success %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ success }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endif %}
+
+    {% if skipped_files %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            Some files were skipped: {{ skipped_files|join:", " }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endif %}
+
+    {% if errors %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            Errors occurred while processing files:
+            <ul>
+                {% for error in errors %}
+                    <li>{{ error.0 }}: {{ error.1 }}</li>
+                {% endfor %}
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" class="border p-4 rounded bg-light shadow-sm" id="folderUploadForm">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="folderUpload" class="form-label">Select a Folder</label>
+            <input type="file" id="folderUpload" name="files" webkitdirectory directory multiple 
+                   class="form-control" required>
+            <div class="form-text">Choose a folder containing the files you want to upload.</div>
+        </div>
+        <button type="submit" class="btn btn-primary" id="uploadBtn">Upload Folder</button>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('folderUploadForm');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const folderInput = document.getElementById('folderUpload');
+    
+    // Show file count when folder is selected
+    folderInput.addEventListener('change', function() {
+        const fileCount = this.files.length;
+        if (fileCount > 0) {
+            uploadBtn.innerHTML = `Upload Folder (${fileCount} files)`;
+        } else {
+            uploadBtn.innerHTML = 'Upload Folder';
+        }
+    });
+    
+    // Handle form submission
+    form.addEventListener('submit', function(e) {
+        const fileCount = folderInput.files.length;
+        
+        if (fileCount === 0) {
+            e.preventDefault();
+            alert('Please select a folder to upload.');
+            return;
+        }
+        
+        // Show loading animation with custom text
+        LoadingManager.show({
+            text: 'Uploading Files',
+            subtext: `Processing ${fileCount} files... This may take a moment.`,
+            animation: 'folder' // Use the folder animation for file uploads, u can use spinner, pulse or other animations as needed
+        });
+        
+        // Add loading class to button
+        uploadBtn.classList.add('btn-loading');
+        uploadBtn.disabled = true;
+        
+        // Note: The form will submit normally and the page will reload
+        // The loading animation will be hidden when the new page loads
+    });
+    
+    // Hide loading on page load (in case of redirect back to this page)
+    window.addEventListener('load', function() {
+        if (LoadingManager) {
+            LoadingManager.hide();
+        }
+    });
+    
+    // Handle browser back button
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+            if (LoadingManager) {
+                LoadingManager.hide();
+            }
+            // Reset button state
+            uploadBtn.classList.remove('btn-loading');
+            uploadBtn.disabled = false;
+        }
+    });
+});
+</script>
+
+{% endblock %}

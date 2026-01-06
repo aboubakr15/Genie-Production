@@ -1,0 +1,187 @@
+{% extends "layout/base.html" %}
+{% load custom_filters %}
+{% block content %}
+<main>
+    <div class="container">
+
+        <!-- Search form -->
+        <form method="GET" class="mt-3 mb-3">
+            <div class="input-group">
+                <input type="text" name="search" class="form-control" placeholder="Search Sales Shows" 
+                       value="{{ search_term }}">
+                <button class="btn btn-primary" type="submit">Search</button>
+            </div>
+        </form>
+
+        {% if unassigned_shows %}
+        <!-- Form for assigning multiple shows -->
+        <form method="POST" action="{% url 'operations_manager:assign_sales_show' %}" id="assignForm">
+            {% csrf_token %}
+
+            <!-- Action buttons -->
+            <div class="d-flex justify-content-between mt-3">
+                <div>
+                    <button type="submit" class="btn btn-primary me-2">Assign Selected</button>
+                    <select name="agent_id" class="form-select d-inline-block w-auto" required>
+                        <option value="">Select Agent</option>
+                        {% for agent in sales_agents %}
+                        <option value="{{ agent.id }}">{{ agent.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" form="archiveForm" class="btn btn-danger">Archive Selected</button>
+            </div>
+
+            <table class="table table-bordered mt-3">
+                <thead>
+                    <tr>
+                        <th scope="col" style="width: 30px;">
+                            <input type="checkbox" id="selectAll">
+                        </th>
+                        <th scope="col">Show Name</th>
+                        <th scope="col">Leads Count</th>
+                        <th scope="col">(EST, CEN, PAC)</th>
+                        <!-- <th scope="col">Actions</th> -->
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for show in unassigned_shows %}
+                    <tr>
+                        <td>
+                            <input type="checkbox" name="selected_shows" value="{{ show.id }}" class="show-checkbox">
+                        </td>
+                        <td>
+                            <a href="{% url 'operations_manager:show-detail' show.id %}" class="btn btn-primary">
+                                {{ show.name }}
+                            </a>
+                        </td>
+                        <td>{{ show.leads.count }}</td>
+                        <td>
+                            {% with counts=timezone_counts|get_item:show.id %}
+                            ({{ counts.est|default:0 }}, {{ counts.cen|default:0 }}, {{ counts.pac|default:0 }})
+                            {% endwith %}
+                        </td>
+                        <!-- <td>
+                            <form method="POST" action="{% url 'operations_manager:archive-sales-show' show.id %}"
+                                style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="active_label" value="{{ active_label }}">
+                                <button type="submit" class="btn btn-danger btn-sm">Archive</button>
+                            </form>
+                        </td> -->
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </form>
+
+        <!-- Archive Form (hidden, handled by JavaScript) -->
+        <form method="POST" action="{% url 'operations_manager:archive_sales_show_bulk' %}" id="archiveForm">
+            {% csrf_token %}
+        </form>
+
+        <!-- Pagination controls -->
+        {% if unassigned_shows.has_other_pages %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if unassigned_shows.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if active_label %}&label={{ active_label }}{% endif %}{% if search_term %}&search={{ search_term|urlencode }}{% endif %}">« First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ unassigned_shows.previous_page_number }}{% if active_label %}&label={{ active_label }}{% endif %}{% if search_term %}&search={{ search_term|urlencode }}{% endif %}">‹ Previous</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">« First</span>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link">‹ Previous</span>
+                </li>
+                {% endif %}
+
+                <li class="page-item disabled">
+                    <span class="page-link">Page {{ unassigned_shows.number }} of {{ unassigned_shows.paginator.num_pages }}</span>
+                </li>
+
+                {% if unassigned_shows.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ unassigned_shows.next_page_number }}{% if active_label %}&label={{ active_label }}{% endif %}{% if search_term %}&search={{ search_term|urlencode }}{% endif %}">Next ›</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ unassigned_shows.paginator.num_pages }}{% if active_label %}&label={{ active_label }}{% endif %}{% if search_term %}&search={{ search_term|urlencode }}{% endif %}">Last »</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Next ›</span>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link">Last »</span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <p>No Sales Shows available for the selected label.</p>
+        {% endif %}
+    </div>
+</main>
+
+<script>
+    // Handle bulk actions
+    document.addEventListener('DOMContentLoaded', function() {
+        // Select All checkbox
+        document.getElementById('selectAll').addEventListener('change', function(e) {
+            document.querySelectorAll('.show-checkbox').forEach(checkbox => {
+                checkbox.checked = e.target.checked;
+            });
+        });
+
+        // Handle form submissions with selected checkboxes
+        function prepareFormSubmission(form, selectedIds) {
+            // Remove existing hidden inputs
+            const existingInputs = form.querySelectorAll('input[name="selected_shows"]');
+            existingInputs.forEach(input => input.remove());
+
+            // Add new hidden inputs for each selected ID
+            selectedIds.forEach(id => {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'selected_shows';
+                hiddenInput.value = id;
+                form.appendChild(hiddenInput);
+            });
+        }
+
+        // Assign form handler
+        document.getElementById('assignForm').addEventListener('submit', function(e) {
+            const selectedIds = Array.from(document.querySelectorAll('.show-checkbox:checked'))
+                .map(checkbox => checkbox.value);
+            
+            if (selectedIds.length === 0) {
+                e.preventDefault();
+                alert('Please select at least one show to assign');
+                return;
+            }
+
+            prepareFormSubmission(this, selectedIds);
+        });
+
+        // Archive form handler
+        document.getElementById('archiveForm').addEventListener('submit', function(e) {
+            const selectedIds = Array.from(document.querySelectorAll('.show-checkbox:checked'))
+                .map(checkbox => checkbox.value);
+
+            if (selectedIds.length === 0) {
+                e.preventDefault();
+                alert('Please select at least one show to archive');
+                return;
+            }
+
+            prepareFormSubmission(this, selectedIds);
+        });
+    });
+</script>
+{% endblock %}

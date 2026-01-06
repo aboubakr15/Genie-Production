@@ -1,0 +1,59 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<main>
+  <div class="container">
+    <section class="section">
+      <div class="pagetitle">
+        <h1>Sheet Details - {{ sheet.name }}</h1>
+      </div>
+      <div class="row justify-content-center">
+        <div class="col-lg-12">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title" style="font-size: 1.2rem;">All Leads</h5>
+
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Phone Numbers / Time Zone</th>
+                    <th scope="col">Emails</th>
+                    <th scope="col">Contact Names</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for lead in leads %}
+                  <tr>
+                    <td>{{ lead.name }}</td>
+                    <td>
+                      {% for phone in lead.leadphonenumbers_set.filter(sheet=sheet) %}
+                      {{ phone.value }} : {{ phone.time_zone }}<br>
+                      {% endfor %}
+                    </td>
+                    <td>
+                      {% for email in lead.leademails_set.filter(sheet=sheet) %}
+                      {{ email.value }}<br>
+                      {% endfor %}
+                    </td>
+                    <td>
+                      {% for contact in lead.leadcontactnames_set.filter(sheet=sheet) %}
+                      {{ contact.value }}<br>
+                      {% endfor %}
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="7">No leads available</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+{% endblock %}

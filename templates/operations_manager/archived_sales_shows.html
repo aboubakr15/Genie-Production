@@ -1,0 +1,104 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<main>
+    <div class="container-fluid">
+        <section class="section">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Archived Sales Shows</h5>
+
+                            <form method="GET" action="" class="mb-4">
+                                <div class="input-group">
+                                    <input type="text" name="q" class="form-control" placeholder="Search archived sales shows..." value="{{ request.GET.q }}">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search"></i> Search
+                                    </button>
+                                </div>
+                            </form>
+
+                            {% if page_obj.object_list %}
+                            <div class="table-responsive">
+                                <table class="table table-bordered mt-3">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Show Name</th>
+                                            <th scope="col">Leads Count</th>
+                                            <th scope="col">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for show in page_obj.object_list %}
+                                        <tr>
+                                            <td>{{ show.name }}</td>
+                                            <td>{{ show.leads.count }}</td>
+                                            <td>
+                                                <a href="{% url 'operations_manager:show-detail' show.id %}" class="btn btn-info">View</a>
+                                                
+                                                <!-- Button to unarchive the show -->
+                                                <form method="POST" action="{% url 'operations_manager:unarchive-sales-show' show.id %}" style="display:inline;">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-warning">Unarchive</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p>No archived shows found.</p>
+                            {% endif %}
+
+                            <!-- Pagination controls -->
+                            {% if page_obj.has_other_pages %}
+                            <nav aria-label="Page navigation">
+                                <ul class="pagination justify-content-center">
+                                    {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1">&laquo; First</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&laquo; First</span>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <span class="page-link">Previous</span>
+                                    </li>
+                                    {% endif %}
+
+                                    <li class="page-item disabled">
+                                        <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                                    </li>
+
+                                    {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">Next</span>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <span class="page-link">Last</span>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+{% endblock %}

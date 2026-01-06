@@ -1,0 +1,27 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<main>
+  <div class="container">
+    <section class="section">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title" style="font-size: 1.2rem;">Are you sure you want to delete this lead?</h5>
+              <p>Lead: {{ lead.name }}</p>
+              <form method="post">
+                {% csrf_token %}
+                <div class="text-center">
+                  <button type="submit" class="btn btn-danger" style="font-size: 1.2rem;">Delete</button>
+                  <a href="{% url 'operations_team_leader:manage-leads' %}" class="btn btn-secondary" style="font-size: 1.2rem;">Cancel</a>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+{% endblock %}

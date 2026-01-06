@@ -1,0 +1,43 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+    <main>
+        <div class="container">
+            <section class="section">
+                <div class="row justify-content-center">
+                    <div class="col-lg-12">
+                      <div class="card">
+                        <div class="card-body">
+                          <h4 class="card-title" style="font-size: 1.5rem;">Edit Lead Details</h4>
+                          <form method="post" action="">
+                            {% csrf_token %}
+                            <div class="form-group mb-3">
+                              <label for="company_name">Company Name</label>
+                              <input type="text" class="form-control" id="company_name" name="company_name" value="{{ company_name }}" readonly>
+                            </div>
+                            <div class="form-group mb-3">
+                              <label for="phone_number">Phone Number</label>
+                              <input type="text" class="form-control" id="phone_number" name="phone_number" value="{{ phone_number }}">
+                            </div>
+                            <div class="form-group mb-3">
+                              <label for="direct_cell_number">Direct / Cell Number</label>
+                              <input type="text" class="form-control" id="direct_cell_number" name="direct_cell_number" value="{{ direct_cell_number }}">
+                            </div>
+                            <div class="form-group mb-3">
+                              <label for="email">Email</label>
+                              <input type="email" class="form-control" id="email" name="email" value="{{ email }}">
+                            </div>
+                            <div class="form-group mb-3">
+                              <label for="contact_name">Contact Name</label>
+                              <input type="text" class="form-control" id="contact_name" name="contact_name" value="{{ contact_name }}">
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-primary mb-3">Save Changes</button>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+{% endblock %}

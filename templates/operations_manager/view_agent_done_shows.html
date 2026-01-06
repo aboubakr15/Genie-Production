@@ -1,0 +1,55 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h3 class="mb-4">Done Shows for: <strong>{{ agent.username }}</strong></h3>
+
+    {% if shows %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Done Shows</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th scope="col">Show Name</th>
+                            <th scope="col">Recycle</th>
+                            <th scope="col">Reassign</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for show in shows %}
+                            <tr>
+                                <td>{{ show.name }}</td>
+                                <td>
+                                    {% if show.is_recycled %}
+                                        <span class="badge bg-success">Recycled</span>
+                                    {% else %}
+                                        <form method="POST" action="{% url 'operations_manager:view-agent-done-shows' agent.id %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="show_id" value="{{ show.id }}">
+                                            <button type="submit" class="btn btn-warning btn-sm">Recycle</button>
+                                        </form>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <form method="POST" action="{% url 'operations_manager:reassign-sales-show' %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="show_id" value="{{ show.id }}">
+                                        <button type="submit" class="btn btn-secondary btn-sm">Reassign</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            No done shows found for this agent.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,128 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card p-4">
+        <h1 class="mb-4">Price Requests</h1>
+
+        <!-- Bootstrap Tabs for Filtering Requests (if applicable) -->
+        <ul class="nav nav-tabs" id="priceRequestTab" role="tablist">
+            <!-- Example tabs for filtering -->
+            <li class="nav-item">
+                <a class="nav-link active" id="all-requests-tab" href="#" role="tab" aria-controls="all-requests"
+                    aria-selected="true">All Requests</a>
+            </li>
+        </ul>
+
+        <div class="tab-content mt-3" id="priceRequestTabContent">
+            <div class="tab-pane fade show active" id="all-requests" role="tabpanel" aria-labelledby="all-requests-tab">
+                {% if price_requests %}
+                <form method="POST" action="{% url 'operations_manager:update_price_requests' %}">
+                    {% csrf_token %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Lead Name</th>
+                                    <th>Request Date</th>
+                                    <th>Show Name</th>
+                                    <th>Options</th>
+                                    <th>Status</th>
+                                    <th>Number of Rooms</th>
+                                    <th>Number of Nights</th>
+                                    <th>Notes</th>
+                                    <th>E-mail Status</th>
+                                    <th>Lead Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in price_requests %}
+                                <tr>
+                                    <td>{{ request.lead.name }}</td>
+                                    <td>{{ request.request_date|date:"Y-m-d H:i:s" }}</td>
+                                    <td>{{ request.show.name }}</td>
+                                    <td>{{ request.options }}</td>
+                                    <td>{{ request.status }}</td>
+                                    <td>{{ request.num_rooms }}</td>
+                                    <td>{{ request.num_nights }}</td>
+                                    <td>{{ request.notes }}</td>
+                                    <td>
+                                        <select name="email_status_{{ request.id }}" class="form-control">
+                                            <option value="" {% if not request.email_status %}selected{% endif %}></option> <!-- Empty default option -->
+                                            <option value="sent" {% if request.email_status == 'sent' %}selected{% endif %}>Sent</option>
+                                            <option value="not_sent" {% if request.email_status == 'not_sent' %}selected{% endif %}>Not Sent</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <select name="lead_status_{{ request.id }}" class="form-control">
+                                            <option value="" {% if not request.lead_status %}selected{% endif %}></option> <!-- Empty default option -->
+                                            <option value="deal" {% if request.lead_status == 'deal' %}selected{% endif %}>Deal</option>
+                                            <option value="pending" {% if request.lead_status == 'pending' %}selected{% endif %}>Pending</option>
+                                            <option value="dead" {% if request.lead_status == 'dead' %}selected{% endif %}>Dead</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-3">Save Changes</button>
+                </form>
+                <!-- Pagination controls -->
+                {% if price_requests.has_other_pages %}
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if price_requests.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">&laquo; First</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ price_requests.previous_page_number }}">&lsaquo; Previous</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">&laquo; First</span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link">&lsaquo; Previous</span>
+                        </li>
+                        {% endif %}
+
+                        <li class="page-item disabled">
+                            <span class="page-link">Page {{ price_requests.number }} of {{ price_requests.paginator.num_pages }}</span>
+                        </li>
+
+                        {% if price_requests.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ price_requests.next_page_number }}">Next &rsaquo;</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ price_requests.paginator.num_pages }}">Last &raquo;</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Next &rsaquo;</span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link">Last &raquo;</span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                {% else %}
+                <div class="alert alert-warning" role="alert">
+                    No price requests available.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+<script>
+    $(document).ready(function () {
+        // Optional JavaScript functionality for tabs or dropdowns
+    });
+</script>

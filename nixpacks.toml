@@ -1,0 +1,20 @@
+# nixpacks.toml
+
+[phases.setup]
+# Switch to Apt for system packages, as it can be more reliable for C-based Python libraries.
+# We use 'python3' which will install the default system Python available in the build image.
+aptPkgs = ["python3", "python3-venv", "pkg-config", "libmariadb-dev", "build-essential"]
+
+[phases.install]
+# Use python3 directly to create the virtual environment and install packages.
+cmds = [
+    "python3 -m venv --copies /opt/venv && . /opt/venv/bin/activate && pip install -r requirements.txt && python manage.py collectstatic --no-input && gunicorn IBH.wsgi:application"
+]
+
+[cron.expire_credits]
+schedule = "0 0 * * *"
+command = "python manage.py expire_credits"
+
+[cron.send_hourly_notifications]
+schedule = "0 * * * *"
+command = "python manage.py send_hourly_notifications"

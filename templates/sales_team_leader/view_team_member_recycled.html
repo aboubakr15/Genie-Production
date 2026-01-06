@@ -1,0 +1,103 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h3 class="mb-4">Recycled Shows for: <strong>{{ member.username }}</strong></h3>
+
+    <!-- Bootstrap Tabs -->
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link {% if label == 'new' %}active{% endif %}" href="/{{role}}/view-team-member-recycled/{{member.id}}/new">
+                New
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="/{{role}}/view-team-member-recycled/{{member.id}}/done" class="nav-link {% if label == 'done' %}active{% endif %}">
+                Done
+            </a>
+        </li>
+    </ul>
+
+    <div class="tab-content mt-3" id="myTabContent">
+        <div class="tab-pane fade {% if label == 'new' %}show active{% endif %}" id="new" role="tabpanel" aria-labelledby="new-tab">
+            {% if shows %}
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">New Recycled Shows</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Show Name</th>
+                                    {% if label == "new" %}
+                                        <th>
+                                            Show details
+                                        </th>
+                                    {% else %}
+                                        <th>
+                                            Done recycle date
+                                        </th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for show in shows %}
+                                    <tr>
+                                        <td>{{ show.name }}</td>
+                                        {% if label == "new" %}
+                                        <td>
+                                            <a class="btn btn-primary" href="/{{role}}/show-detail/{{show.id}}">
+                                                Show Details
+                                            </a>
+                                        </td>
+                                        {% else %}
+                                            <td>
+                                                {{show.done_rec_date}}
+                                            </td>
+                                        {% endif %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-info" role="alert">
+                    No new recycled shows found for this member.
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="tab-pane fade {% if label == 'done' %}show active{% endif %}" id="done" role="tabpanel" aria-labelledby="done-tab">
+            {% if shows %}
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Done Recycled Shows</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Show Name</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for show in shows %}
+                                    <tr>
+                                        <td>{{ show.name }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-info" role="alert">
+                    No done recycled shows found for this member.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

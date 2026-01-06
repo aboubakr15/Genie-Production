@@ -1,0 +1,101 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<main>
+    <div class="container">
+        <section class="section">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        
+                        <div class="card-header d-flex justify-content-between align-items-center" 
+                             style="background-color: #111827 !important; border-bottom: 1px solid #374151;">
+                            
+                            <h5 class="card-title mb-0" style="font-size: 1.5rem; color: #00F0FF;">Logs List</h5>
+                            
+                            <form method="get" class="mb-0">
+                                <div class="form-group row justify-content-center">
+                                    <div class="input-group">
+                                        <input type="text" name="q" value="{{ query }}" placeholder="Search logs..." 
+                                               class="form-control" 
+                                               style="font-size: 1.2rem; background-color: #1F2937; border: 1px solid #374151; color: white;">
+                                        <button type="submit" class="btn btn-primary">Search</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="card-body" style="background-color: #111827;">
+                            {% if logs %}
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" style="color: #00F0FF;">Log Message</th>
+                                        <th scope="col" style="color: #00F0FF;">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for log in logs %}
+                                    <tr>
+                                        <td style="color: white;">{{ log.message }}</td>
+                                        <td style="color: #9ca3af;">{{ log.date|date:"F j, Y, g:i a" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+
+                            {% if logs.has_other_pages %}
+                            <nav aria-label="Logs pagination" class="mt-4">
+                                <ul class="pagination justify-content-center">
+                                    {% if logs.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}">&laquo; First</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ logs.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">&lsaquo; Previous</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&laquo; First</span>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&lsaquo; Previous</span>
+                                    </li>
+                                    {% endif %}
+
+                                    <li class="page-item disabled">
+                                        <span class="page-link" style="background-color: #1F2937; border-color: #374151; color: white;">
+                                            Page {{ logs.number }} of {{ logs.paginator.num_pages }}
+                                        </span>
+                                    </li>
+
+                                    {% if logs.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ logs.next_page_number }}{% if query %}&q={{ query }}{% endif %}">Next &rsaquo;</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ logs.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}">Last &raquo;</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">Next &rsaquo;</span>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <span class="page-link">Last &raquo;</span>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                            {% endif %}
+                            
+                            {% else %}
+                                <p class="text-center mt-3" style="color: #9ca3af;">No logs found.</p>
+                            {% endif %}                        
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+{% endblock %}

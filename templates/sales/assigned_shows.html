@@ -1,0 +1,55 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<main>
+    <div class="container">
+        <section class="section">
+            <div class="row">
+                <div class="col-lg-12">
+                    <h5 class="mb-4">Assigned Shows</h5>
+
+                    <div class="row">
+                        {% if assigned_shows %}
+                        {% for show in assigned_shows %}
+                        <div class="col-md-12 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body d-flex flex-column">
+                                    <!-- Show name -->
+                                    <h5 class="card-title">{{ show.name }}</h5>
+
+                                    <!-- View details button -->
+                                    <div class="mt-auto">
+                                        {% if request.user.groups.first %}
+                                            {% with group_name=request.user.groups.first.name %}
+                                                {% if group_name == "sales" %}
+                                                    <a href="{% url 'sales:show-detail' show.id %}" class="btn btn-primary">
+                                                        View Details
+                                                    </a>
+                                                {% elif group_name == "sales_team_leader" %}
+                                                    <a href="{% url 'sales_team_leader:show-detail' show.id %}" class="btn btn-primary">
+                                                        View Details
+                                                    </a>
+                                                {% elif group_name == "sales_manager" %}
+                                                    <a href="{% url 'sales_manager:show-detail' show.id %}" class="btn btn-primary">
+                                                        View Details
+                                                    </a>
+                                                {% endif %}
+                                            {% endwith %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="col-lg-12">
+                            <p>No Shows assigned to you.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+{% endblock content %}

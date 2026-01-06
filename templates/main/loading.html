@@ -1,0 +1,315 @@
+<style>
+    /* Global Loading Styles */
+    :root {
+        --primary-purple: #6f42c1;
+        --light-purple: #8b5cf6;
+        --dark-purple: #5a2d91;
+        --accent-blue: #4dabf7;
+        --bg-gray: #f8f9fa;
+    }
+
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        z-index: 9999;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+
+    .loading-overlay.show {
+        display: flex;
+    }
+
+    /* Folder upload animation */
+    .folder-upload-animation {
+        position: relative;
+        width: 120px;
+        height: 100px;
+        margin-bottom: 30px;
+    }
+
+    .folder-icon {
+        width: 100px;
+        height: 80px;
+        background: linear-gradient(135deg, var(--primary-purple), var(--light-purple));
+        border-radius: 8px 8px 4px 4px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(111, 66, 193, 0.3);
+    }
+
+    .folder-icon::before {
+        content: '';
+        position: absolute;
+        top: -8px;
+        left: 0;
+        width: 30px;
+        height: 16px;
+        background: linear-gradient(135deg, var(--primary-purple), var(--light-purple));
+        border-radius: 4px 4px 0 0;
+    }
+
+    .folder-icon::after {
+        content: '';
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        width: 80px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+    }
+
+    /* Floating files animation */
+    .floating-file {
+        position: absolute;
+        width: 20px;
+        height: 24px;
+        background: linear-gradient(135deg, var(--accent-blue), #339af0);
+        border-radius: 2px;
+        opacity: 0;
+        animation: floatUp 2s infinite ease-in-out;
+    }
+
+    .floating-file:nth-child(1) {
+        top: 20px;
+        left: 110px;
+        animation-delay: 0s;
+    }
+
+    .floating-file:nth-child(2) {
+        top: 30px;
+        left: 105px;
+        animation-delay: 0.3s;
+    }
+
+    .floating-file:nth-child(3) {
+        top: 25px;
+        left: 115px;
+        animation-delay: 0.6s;
+    }
+
+    .floating-file:nth-child(4) {
+        top: 35px;
+        left: 108px;
+        animation-delay: 0.9s;
+    }
+
+    @keyframes floatUp {
+        0% {
+            opacity: 0;
+            transform: translateY(0) scale(0.8);
+        }
+        50% {
+            opacity: 1;
+            transform: translateY(-20px) scale(1);
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(-40px) scale(0.8);
+        }
+    }
+
+    /* Progress bar */
+    .upload-progress {
+        width: 300px;
+        height: 6px;
+        background: rgba(111, 66, 193, 0.1);
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+
+    .upload-progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-purple), var(--light-purple));
+        border-radius: 3px;
+        width: 0%;
+        animation: progressPulse 1.5s infinite ease-in-out;
+    }
+
+    @keyframes progressPulse {
+        0%, 100% {
+            width: 0%;
+        }
+        50% {
+            width: 100%;
+        }
+    }
+
+    /* Loading text */
+    .loading-text {
+        font-size: 18px;
+        color: var(--primary-purple);
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    .loading-subtext {
+        font-size: 14px;
+        color: #6c757d;
+        text-align: center;
+        max-width: 300px;
+    }
+
+    /* Pulsing dots */
+    .loading-dots {
+        display: inline-block;
+    }
+
+    .loading-dots::after {
+        content: '';
+        animation: dots 1.5s infinite;
+    }
+
+    @keyframes dots {
+        0%, 20% {
+            content: '';
+        }
+        40% {
+            content: '.';
+        }
+        60% {
+            content: '..';
+        }
+        80%, 100% {
+            content: '...';
+        }
+    }
+
+    /* Alternative animations for different contexts */
+    .spinner-animation {
+        width: 60px;
+        height: 60px;
+        border: 4px solid rgba(111, 66, 193, 0.1);
+        border-top: 4px solid var(--primary-purple);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .pulse-animation {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, var(--primary-purple), var(--light-purple));
+        border-radius: 50%;
+        animation: pulse 1.5s ease-in-out infinite;
+        margin-bottom: 20px;
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(0.8);
+            opacity: 0.5;
+        }
+        50% {
+            transform: scale(1.2);
+            opacity: 1;
+        }
+        100% {
+            transform: scale(0.8);
+            opacity: 0.5;
+        }
+    }
+</style>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-content">
+        <!-- Default folder animation -->
+        <div class="folder-upload-animation" id="folderAnimation">
+            <div class="folder-icon"></div>
+            <div class="floating-file"></div>
+            <div class="floating-file"></div>
+            <div class="floating-file"></div>
+            <div class="floating-file"></div>
+        </div>
+        
+        <!-- Alternative spinner animation -->
+        <div class="spinner-animation" id="spinnerAnimation" style="display: none;"></div>
+        
+        <!-- Alternative pulse animation -->
+        <div class="pulse-animation" id="pulseAnimation" style="display: none;"></div>
+    </div>
+    
+    <div class="upload-progress">
+        <div class="upload-progress-bar"></div>
+    </div>
+    
+    <div class="loading-text" id="loadingText">Processing<span class="loading-dots"></span></div>
+    <div class="loading-subtext" id="loadingSubtext">Please wait while we process your request...</div>
+</div>
+
+<script>
+    // Global Loading Manager
+    window.LoadingManager = {
+        overlay: null,
+        loadingText: null,
+        loadingSubtext: null,
+        
+        init: function() {
+            this.overlay = document.getElementById('loadingOverlay');
+            this.loadingText = document.getElementById('loadingText');
+            this.loadingSubtext = document.getElementById('loadingSubtext');
+        },
+        
+        show: function(options = {}) {
+            if (!this.overlay) this.init();
+            
+            // Set custom text if provided
+            if (options.text) {
+                this.loadingText.innerHTML = options.text + '<span class="loading-dots"></span>';
+            }
+            if (options.subtext) {
+                this.loadingSubtext.textContent = options.subtext;
+            }
+            
+            // Set animation type
+            this.setAnimation(options.animation || 'folder');
+            
+            // Show overlay
+            this.overlay.classList.add('show');
+        },
+        
+        hide: function() {
+            if (this.overlay) {
+                this.overlay.classList.remove('show');
+            }
+        },
+        
+        setAnimation: function(type) {
+            const animations = ['folderAnimation', 'spinnerAnimation', 'pulseAnimation'];
+            
+            // Hide all animations
+            animations.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) element.style.display = 'none';
+            });
+            
+            // Show selected animation
+            let selectedAnimation = 'folderAnimation'; // default
+            if (type === 'spinner') selectedAnimation = 'spinnerAnimation';
+            if (type === 'pulse') selectedAnimation = 'pulseAnimation';
+            
+            const element = document.getElementById(selectedAnimation);
+            if (element) element.style.display = 'block';
+        }
+    };
+    
+    // Initialize when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        LoadingManager.init();
+    });
+</script>

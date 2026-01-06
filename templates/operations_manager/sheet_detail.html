@@ -1,0 +1,53 @@
+{% extends "layout/base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Leads in Sheet: {{ sheet.name }}</h1>
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Lead Name</th>
+                        <th>Time Zone</th>
+                        <th>Phone Numbers</th>
+                        <th>Emails</th>
+                        <th>Contact Names</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lead in leads %}
+                    <tr>
+                        <td>{{ lead.name }}</td>
+                        <td>
+                            {% for phone in lead.leadphonenumbers_set.all %}
+                                {% if phone.sheet_id == sheet.id %}
+                                    {{ phone.value }} : {{ phone.time_zone }} {% if not forloop.last %}, {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                        <td>
+                            {% for email in lead.leademails_set.all %}
+                                {% if email.sheet_id == sheet.id %}
+                                    {{ email.value }}{% if not forloop.last %}, {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                        <td>
+                            {% for contact in lead.leadcontactnames_set.all %}
+                                {% if contact.sheet_id == sheet.id %}
+                                    {{ contact.value }}{% if not forloop.last %}, {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">No leads found for this sheet</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock content %}

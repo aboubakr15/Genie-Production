@@ -1,0 +1,104 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<main>
+    <div class="container">
+        <section class="section">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Completed Sheets</h5>
+
+                            {% if done_sheets %}
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Name</th>
+                                        <th scope="col">Done By</th>
+                                        <th scope="col">Number of Leads</th>
+                                        <th scope="col">Done Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for sheet in done_sheets %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'administrator:view-sheet' sheet.id %}">{{ sheet.name }}</a>
+                                        </td>
+                                        <td>
+                                            {% if sheet.user %}
+                                            {{ sheet.user.username }}
+                                            {% else %}
+                                            Unknown
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ sheet.leads.count }}</td>
+                                        <td>{{ sheet.done_date|date:"d-m-Y H:i" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+
+                            <!-- Pagination controls -->
+                            {% if done_sheets.has_other_pages %}
+                            <nav aria-label="Page navigation">
+                                <ul class="pagination justify-content-center">
+                                    {% if done_sheets.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% if q %}&q={{ q }}{% endif %}">
+                                            &laquo; First
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ done_sheets.previous_page_number }}{% if q %}&q={{ q }}{% endif %}">
+                                            &lsaquo; Previous
+                                        </a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&laquo; First</span>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&lsaquo; Previous</span>
+                                    </li>
+                                    {% endif %}
+
+                                    <li class="page-item disabled">
+                                        <span class="page-link">Page {{ done_sheets.number }} of {{ done_sheets.paginator.num_pages }}</span>
+                                    </li>
+
+                                    {% if done_sheets.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ done_sheets.next_page_number }}{% if q %}&q={{ q }}{% endif %}">
+                                            Next &rsaquo;
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ done_sheets.paginator.num_pages }}{% if q %}&q={{ q }}{% endif %}">
+                                            Last &raquo;
+                                        </a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">Next &rsaquo;</span>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <span class="page-link">Last &raquo;</span>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                            {% endif %}
+
+                            {% else %}
+                            <p>No completed sheets found.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+{% endblock content %}

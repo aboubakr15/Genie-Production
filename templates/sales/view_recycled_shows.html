@@ -1,0 +1,41 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h3 class="mb-4">Recycled Shows</h3>
+
+    {% if shows %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Recycled Shows</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th scope="col">Show Name</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for show in shows %}
+                            <tr>
+                                <td>{{ show.name }}</td>
+                                <td>
+                                    <a href="{% url 'sales:show-detail-recycle' show.id 'recycle' %}" class="btn btn-primary btn-sm">
+                                        View Details
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            No recycled shows available.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

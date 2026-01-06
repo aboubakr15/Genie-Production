@@ -1,0 +1,56 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="card p-2">
+        <div class="card-header mb-4">
+            <h1>Notification Details</h1>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered">
+                <tbody>
+                    <tr>
+                        <th scope="row">Message:</th>
+                        <td>{{ notification.message }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Sent By:</th>
+                        <td>{{ notification.sender }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Created At:</th>
+                        <td>{{ notification.created_at }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            {% if notification.notification_type == 1 %}
+            <h3 class="mt-4">Uploaded Sheets</h3>
+            {% if sheets %}
+            <ul class="list-group list-group-flush">
+                {% for sheet in sheets %}
+                <li class="list-group-item"> {{ sheet.name }} </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-muted">No sheets uploaded.</p>
+            {% endif %}
+            {% endif %}
+
+            {% if notification.notification_type == 4 %}
+            <h3 class="mt-4">Sheet {{ sheet.name }} is Accepted</h3>
+            <ul class="list-group list-group-flush">
+                {% if notification.is_accepted %}
+                <li class="list-group-item">
+                    <a href="{% url 'leads:download-auto-fill-result' notification.id %}"
+                        class="btn btn-primary">Download Result</a>
+                </li>
+                {% else %}
+                <li class="list-group-item text-muted">Result has been downloaded</li>
+                {% endif %}
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

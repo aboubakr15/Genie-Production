@@ -1,0 +1,74 @@
+{% extends "layout/clear_base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+    body {
+        background-color: #050A14;
+        background-image: radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.1), transparent 60%);
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .login-card {
+        background: rgba(17, 24, 39, 0.9);
+        border: 1px solid #00F0FF;
+        border-radius: 20px;
+        box-shadow: 0 0 30px rgba(0, 240, 255, 0.15);
+        padding: 3rem;
+        width: 100%;
+        max-width: 450px;
+    }
+    .form-control {
+        background: #1F2937;
+        border: 1px solid #374151;
+        color: white;
+        padding: 12px;
+    }
+    .form-control:focus {
+        background: #1F2937;
+        color: white;
+        border-color: #00F0FF;
+        box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+    }
+    .btn-login {
+        background: linear-gradient(90deg, #FFC800, #FFD700);
+        color: black;
+        font-weight: bold;
+        width: 100%;
+        padding: 12px;
+        margin-top: 20px;
+        border: none;
+        text-transform: uppercase;
+    }
+</style>
+
+<div class="container d-flex justify-content-center">
+    <div class="login-card text-center">
+        <img src="{% static 'assets/Genie_logo.jpeg' %}" alt="Genie Logo" style="width: 120px; margin-bottom: 20px;">
+        
+        <h3 style="color: white; margin-bottom: 30px;">Welcome Back</h3>
+
+        <form method="POST" novalidate>
+            {% csrf_token %}
+            
+            {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+            {% endif %}
+
+            <div class="mb-3 text-start">
+                <label class="text-white mb-1">Username</label>
+                <input type="text" name="username" class="form-control" placeholder="Enter username" required>
+            </div>
+
+            <div class="mb-3 text-start">
+                <label class="text-white mb-1">Password</label>
+                <input type="password" name="password" class="form-control" placeholder="Enter password" required>
+            </div>
+
+            <button type="submit" class="btn btn-login">Login</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

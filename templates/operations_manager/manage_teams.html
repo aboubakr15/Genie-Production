@@ -1,0 +1,85 @@
+{% extends "layout/base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Manage Teams</h1>
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="mt-4">Operations Team Leaders</h2>
+            <div>
+                <a href="{% url 'operations_manager:assign-lead-to-leader' %}" class="btn btn-primary">
+                    <i class="bi bi-plus"></i> Assign to team
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Team Leader</th>
+                        <th>Members</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for leader in operations_team_leader %}
+                    <tr>
+                        <td>{{ leader.username }}</td>
+                        <td>
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Member</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% with leader.team_members.all as members %}
+                                        {% for member in members %}
+                                        <tr>
+                                            <td>{{ member.user.username }}</td>
+                                            <td>
+                                                <form method="post" action="{% url 'operations_manager:manage-leads-teams' %}">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="leader_id" value="{{ leader.id }}">
+                                                    <input type="hidden" name="user_id" value="{{ member.user.id }}">
+                                                    <button type="submit" name="remove_member" class="btn btn-danger btn-sm">Remove</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="2">No members assigned</td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% endwith %}
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2">No operations team leaders found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>    
+        <div class="card-footer">
+            <div class="pagination">
+                <span class="step-links">
+                    {% if operations_team_leader.has_previous %}
+                        <a href="?page_operations=1">&laquo; first</a>
+                        <a href="?page_operations={{ operations_team_leader.previous_page_number }}">previous</a>
+                    {% endif %}
+                    <span class="current">
+                        Page {{ operations_team_leader.number }} of {{ operations_team_leader.paginator.num_pages }}.
+                    </span>
+                    {% if operations_team_leader.has_next %}
+                        <a href="?page_operations={{ operations_team_leader.next_page_number }}">next</a>
+                        <a href="?page_operations={{ operations_team_leader.paginator.num_pages }}">last &raquo;</a>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

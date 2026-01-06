@@ -1,0 +1,56 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<main>
+    <div class="container">
+        <section class="section">
+            <div class="pagetitle">
+                <h1>Ready Show - {{ show.name }}</h1>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Leads in Show</h5>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Company Name</th>
+                                        <th>Phone Numbers / Time Zone</th>
+                                        <th>Emails</th>
+                                        <th>Contact Names</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for lead in leads %}
+                                    <tr>
+                                        <td>{{ lead.company_name }}</td>
+                                        <td>
+                                            {% for phone in lead.phone_numbers %}
+                                                {{ phone.value }} : {{ phone.time_zone }}<br>
+                                            {% endfor %}
+                                        </td>
+                                        <td>
+                                            {% for email in lead.emails %}
+                                                {{ email }}<br>
+                                            {% endfor %}
+                                        </td>
+                                        <td>
+                                            {% for name in lead.contact_names %}
+                                                {{ name }}<br>
+                                            {% endfor %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="5">No leads found for this show.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+{% endblock %}

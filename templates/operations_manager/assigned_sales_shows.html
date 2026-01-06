@@ -1,0 +1,141 @@
+{% extends "layout/base.html" %}
+{% block content %}
+<main>
+    <div class="container">
+        <!-- Tabs for filtering by label -->
+        <ul class="nav nav-tabs">
+            <li class="nav-item">
+                <a class="nav-link {% if active_label == 'EHUB' %}active{% endif %}"
+                    href="{% url 'operations_manager:assigned-sales-shows' 'EHUB' %}">EHUB</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if active_label == 'EHUB2' %}active{% endif %}"
+                    href="{% url 'operations_manager:assigned-sales-shows' 'EHUB2' %}">EHUB2</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if active_label == 'EP' %}active{% endif %}"
+                    href="{% url 'operations_manager:assigned-sales-shows' 'EP' %}">EP</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if active_label == 'UK' %}active{% endif %}"
+                    href="{% url 'operations_manager:assigned-sales-shows' 'UK' %}">UK</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if active_label == 'ASIA' %}active{% endif %}"
+                    href="{% url 'operations_manager:assigned-sales-shows' 'ASIA' %}">ASIA</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if active_label == 'EUROPE' %}active{% endif %}"
+                    href="{% url 'operations_manager:assigned-sales-shows' 'EUROPE' %}">EUROPE</a>
+            </li>
+        </ul>
+
+        <!-- Search Bar -->
+        <form method="GET" class="mt-3 mb-3">
+            <div class="input-group">
+                <input type="text" name="search" class="form-control" placeholder="Search by show name or agent"
+                       value="{{ search_term }}">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </div>
+        </form>
+
+        <!-- Display Sales Shows -->
+        {% if assigned_shows %}
+        <form method="POST" action="{% url 'operations_manager:assign_sales_show' %}">
+            {% csrf_token %}
+            <table class="table table-bordered mt-3">
+                <thead>
+                    <tr>
+                        <th scope="col">Show Name</th>
+                        <th scope="col">Leads Count</th>
+                        <th scope="col">Assigned Agent</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Archive</th> <!-- Added Archive column -->
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for show in assigned_shows %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'operations_manager:show-detail' show.id %}" class="btn btn-primary">
+                                {{ show.name }}
+                            </a>
+                        </td>
+                        <td>{{ show.leads.count }}</td>
+                        <td>
+                            {% if show.Agent %}
+                            {{ show.Agent.username }}
+                            {% else %}
+                            Not Assigned
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if show.is_done %}
+                            <span class="badge bg-success">Done</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">Not Done</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <!-- Archive Button Form -->
+                            <form method="POST" action="{% url 'operations_manager:archive-sales-show' show.id %}"
+                                  style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="active_label" value="{{ active_label }}">
+                                <button type="submit" class="btn btn-danger btn-sm">Archive</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </form>
+
+        <!-- Pagination controls -->
+        {% if assigned_shows.has_other_pages %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if assigned_shows.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if active_label %}&label={{ active_label }}{% endif %}{% if search_term %}&search={{ search_term|urlencode }}{% endif %}">« First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ assigned_shows.previous_page_number }}{% if active_label %}&label={{ active_label }}{% endif %}{% if search_term %}&search={{ search_term|urlencode }}{% endif %}">‹ Previous</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">« First</span>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link">‹ Previous</span>
+                </li>
+                {% endif %}
+
+                <li class="page-item disabled">
+                    <span class="page-link">Page {{ assigned_shows.number }} of {{ assigned_shows.paginator.num_pages }}</span>
+                </li>
+
+                {% if assigned_shows.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ assigned_shows.next_page_number }}{% if active_label %}&label={{ active_label }}{% endif %}{% if search_term %}&search={{ search_term|urlencode }}{% endif %}">Next ›</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ assigned_shows.paginator.num_pages }}{% if active_label %}&label={{ active_label }}{% endif %}{% if search_term %}&search={{ search_term|urlencode }}{% endif %}">Last »</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Next ›</span>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link">Last »</span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        {% else %}
+        <p>No Sales Shows available for the selected label or search query.</p>
+        {% endif %}
+    </div>
+</main>
+{% endblock %}

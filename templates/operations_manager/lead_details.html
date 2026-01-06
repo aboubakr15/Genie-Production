@@ -1,0 +1,97 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<main>
+  <div class="container">
+    <section class="section">
+      <div class="row">
+        <div class="col-lg-12">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">{{ lead.name }}</h5>
+
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th scope="col">Contact Information</th>
+                    <th scope="col">Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Phone Numbers</td>
+                    <td>
+                      <ul>
+                        {% for phone_number in phone_numbers %}
+                        <li>{{ phone_number.value }} : {{ phone_number.time_zone }}</li>
+                        {% empty %}
+                        <li>No phone numbers available.</li>
+                        {% endfor %}
+                      </ul>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Emails</td>
+                    <td>
+                      <ul>
+                        {% for email in emails %}
+                        <li>{{ email.value }}</li>
+                        {% empty %}
+                        <li>No emails available.</li>
+                        {% endfor %}
+                      </ul>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Contact Names</td>
+                    <td>
+                      <ul>
+                        {% for contact_name in contact_names %}
+                        <li>{{ contact_name.value }}</li>
+                        {% empty %}
+                        <li>No contact names available.</li>
+                        {% endfor %}
+                      </ul>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <h6>Shows Attended or Will Attend:</h6>
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th scope="col">Show Name</th>
+                    <th scope="col">Done By</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for sheet in sheets %}
+                  <tr>
+                    <td>{{ sheet.name }}</td>
+                    <td>{{ sheet.user.username }}</td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="2">No sheets linked to this lead.</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+
+              <div class="mt-4">
+                <a href="{% url 'operations_manager:lead-history' lead.id %}" class="btn btn-info">View History</a>
+                <a href="{% url 'operations_manager:edit-lead' lead.id %}" class="btn btn-warning">Edit Lead</a>
+                <form method="post" action="{% url 'operations_manager:delete-lead' lead.id %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-danger">Delete Lead</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+{% endblock %}

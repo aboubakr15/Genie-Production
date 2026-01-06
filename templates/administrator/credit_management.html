@@ -1,0 +1,310 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<style>
+    /* LOCAL OVERRIDES FOR THIS PAGE */
+    
+    /* 1. COMPACT CARD DESIGN */
+    .card {
+        background-color: #111827 !important;
+        border: 1px solid #374151 !important;
+        color: white !important;
+        overflow: hidden; /* Fixes content crossing edges */
+    }
+    .card-header {
+        background-color: #111827 !important;
+        border-bottom: 1px solid #374151 !important;
+        padding: 0.75rem 1rem; /* Compact header */
+    }
+    .card-title {
+        color: #00F0FF !important;
+        font-size: 1.25rem !important; /* Slightly smaller title */
+        margin: 0;
+    }
+    
+    /* 2. TEXT VISIBILITY (Darker/Solid Grey) */
+    .text-label-grey {
+        color: #9ca3af !important; /* Solid Slate Grey */
+        font-weight: 600;          /* Bold to make it pop */
+    }
+    .form-label, strong {
+        color: #9ca3af !important;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    /* 3. GLOWING ICONS */
+    .glow-icon {
+        color: #00F0FF;
+        transition: all 0.3s ease;
+        text-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+    }
+    .btn:hover .glow-icon {
+        color: #ffffff;
+        text-shadow: 0 0 12px #00F0FF;
+        transform: scale(1.1);
+    }
+
+    /* 4. COMPACT INPUTS */
+    .form-control, .form-control:read-only {
+        background-color: #1F2937 !important;
+        border: 1px solid #374151 !important;
+        color: white !important;
+        font-size: 0.95rem;
+        padding: 0.4rem 0.8rem;
+    }
+    .form-control:focus {
+        border-color: #00F0FF !important;
+        box-shadow: 0 0 8px rgba(0, 240, 255, 0.2) !important;
+    }
+
+    /* 5. TABLE STYLES */
+    .table {
+        color: #e5e7eb !important;
+        border-color: #374151;
+        font-size: 0.9rem;
+    }
+    .table th {
+        color: #00F0FF !important;
+        border-bottom: 1px solid #374151;
+        white-space: nowrap;
+    }
+    .table td {
+        border-bottom: 1px solid #374151;
+        vertical-align: middle;
+    }
+
+    /* 6. STATUS COLORS */
+    .text-genie-success {
+        color: #10b981 !important;
+        text-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+    }
+    .text-genie-danger {
+        color: #ef4444 !important;
+        text-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+    }
+</style>
+
+<main>
+  <div class="container">
+    <section class="section">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          
+          <div class="card mb-3">
+            <div class="card-header">
+              <h5 class="card-title">Credit Status</h5>
+            </div>
+            <div class="card-body py-3">
+              <div class="row g-3"> <div class="col-md-6">
+                  <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
+                    <strong class="text-label-grey">Current Balance:</strong>
+                    <span class="fs-5 fw-bold {% if credit_stats.current_balance > 0 %}text-genie-success{% else %}text-genie-danger{% endif %}">
+                      {{ credit_stats.current_balance }}
+                    </span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <strong class="text-label-grey">Added This Month:</strong>
+                    <span class="fw-bold text-genie-success">{{ credit_stats.total_added_this_month }}</span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
+                    <strong class="text-label-grey">Used This Month:</strong>
+                    <span class="fw-bold text-genie-danger">{{ credit_stats.total_used_this_month }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <strong class="text-label-grey">Last Reset:</strong>
+                    <span class="text-muted small">{{ credit_stats.last_reset|date:"M d, H:i" }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card mb-3">
+            <div class="card-header">
+              <h5 class="card-title">Add Credits</h5>
+            </div>
+            <div class="card-body py-3">
+              <form method="post" novalidate class="needs-validation">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_credits">
+
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label for="amount" class="form-label">Amount</label>
+                        <input
+                            type="number"
+                            name="amount"
+                            id="amount"
+                            class="form-control {% if form.errors.amount %}is-invalid{% endif %}"
+                            required
+                            min="1"
+                            step="1"
+                            placeholder="0"
+                        />
+                    </div>
+                    <div class="col-md-8">
+                        <label for="description" class="form-label">Description (Optional)</label>
+                        <input type="text" name="description" id="description" class="form-control" placeholder="Reason for credits...">
+                    </div>
+                </div>
+
+                <div class="text-end mt-3">
+                  <button type="submit" class="btn btn-primary btn-sm px-4" style="border-radius: 4px; font-weight: 700;">
+                    <i class="bi bi-plus-circle glow-icon me-1" style="color: black !important;"></i> Add Credits
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="card mb-3">
+            <div class="card-header">
+              <h5 class="card-title">Credit Management</h5>
+            </div>
+            <div class="card-body py-3">
+              <div class="row g-2">
+                <div class="col-md-6">
+                  <form method="post" onsubmit="return confirm('Are you sure you want to reset monthly counters?');">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="reset_counters">
+                    <button type="submit" class="btn btn-outline-info btn-sm w-100 py-2" style="border-color: #00F0FF; color: #00F0FF;">
+                      <i class="bi bi-arrow-clockwise glow-icon me-2"></i> Reset Monthly
+                    </button>
+                  </form>
+                </div>
+                <div class="col-md-6">
+                  <form method="post" onsubmit="return confirm('WARNING: This will set credit balance to ZERO. Are you sure?');">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="expire_credits">
+                    <button type="submit" class="btn btn-outline-danger btn-sm w-100 py-2">
+                      <i class="bi bi-exclamation-triangle glow-icon me-2 text-danger"></i> Expire All
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card mb-3">
+            <div class="card-header">
+              <h5 class="card-title">Monthly Summary</h5>
+            </div>
+            <div class="card-body py-3">
+              <div class="row g-3 text-center">
+                <div class="col-4">
+                  <div class="border rounded p-2" style="border-color: #374151 !important; background: #1F2937;">
+                    <h6 class="small text-label-grey mb-1">Transactions</h6>
+                    <h5 style="color: #00F0FF; margin:0;">{{ monthly_summary.transactions_count }}</h5>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="border rounded p-2" style="border-color: #374151 !important; background: #1F2937;">
+                    <h6 class="small text-label-grey mb-1">Added</h6>
+                    <h5 class="text-genie-success" style="margin:0;">{{ monthly_summary.added_this_month }}</h5>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="border rounded p-2" style="border-color: #374151 !important; background: #1F2937;">
+                    <h6 class="small text-label-grey mb-1">Used</h6>
+                    <h5 class="text-genie-danger" style="margin:0;">{{ monthly_summary.used_this_month }}</h5>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="card-title">Recent History (Last 7 Days)</h5>
+            </div>
+            <div class="card-body p-0"> {% if recent_history %}
+                <div class="table-responsive"> <table class="table table-striped mb-0">
+                    <thead>
+                      <tr>
+                        <th class="ps-3">Date</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Description</th>
+                        <th class="pe-3">User</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for transaction in recent_history %}
+                        <tr>
+                          <td class="ps-3">{{ transaction.created_at|date:"M d, H:i" }}</td>
+                          <td>
+                            <span class="badge 
+                              {% if transaction.transaction_type == 'purchase' %}bg-success
+                              {% elif transaction.transaction_type == 'usage' %}bg-danger
+                              {% else %}bg-secondary{% endif %}" style="font-size: 0.75rem;">
+                              {{ transaction.get_transaction_type_display }}
+                            </span>
+                          </td>
+                          <td class="{% if transaction.amount > 0 %}text-genie-success{% elif transaction.amount < 0 %}text-genie-danger{% endif %}">
+                            {% if transaction.amount > 0 %}+{% endif %}{{ transaction.amount }}
+                          </td>
+                          <td><small>{{ transaction.description }}</small></td>
+                          <td class="pe-3">{{ transaction.user.username|default:"System" }}</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              {% else %}
+                <p class="text-muted text-center py-3 m-0">No recent transactions</p>
+              {% endif %}
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+{% if messages %}
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+  {% for message in messages %}
+    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="toast-header" style="background-color: #1F2937; color: white; border-bottom: 1px solid #374151;">
+        <strong class="me-auto" style="color: #00F0FF;">Credit System</strong>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+      <div class="toast-body" style="font-size: 0.95rem; background-color: #111827; color: white;">
+        {{ message }}
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<script>
+  (function () {
+    'use strict';
+    var forms = document.querySelectorAll('.needs-validation');
+    Array.prototype.slice.call(forms)
+      .forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+          if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          form.classList.add('was-validated');
+        }, false);
+      });
+  })();
+
+  document.addEventListener('DOMContentLoaded', function() {
+    var toasts = document.querySelectorAll('.toast');
+    toasts.forEach(function(toast) {
+      setTimeout(function() {
+        var bsToast = new bootstrap.Toast(toast);
+        bsToast.hide();
+      }, 5000);
+    });
+  });
+</script>
+{% endblock %}

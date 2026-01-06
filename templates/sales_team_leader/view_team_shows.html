@@ -1,0 +1,26 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h3 class="mb-4">
+        Shows for your team: <strong>{{ team_name }}</strong>
+    </h3>
+
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Team Members</h5>
+        </div>
+        <div class="card-body">
+            <ul class="list-group p-4">
+                {% for member in team_members %}
+                    <li class="list-group-item">
+                        <a href="/{{role}}/view-team-member-shows/{{member.user__id}}/new" class="text-decoration-none">
+                            {{ member.user__username }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

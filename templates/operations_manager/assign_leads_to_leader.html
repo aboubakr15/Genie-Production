@@ -1,0 +1,41 @@
+{% extends "layout/base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Assign Leads members to Leas team leader</h1>
+
+    <div class="card">
+        <div class="card-header">
+            <h4>Assign Users to Teams</h4>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="{{ form.user.id_for_label }}" class="form-label">Select User</label>
+                    <select name="{{ form.user.name }}" id="{{ form.user.id_for_label }}" class="form-select">
+                        {% for choice in form.user.field.queryset %}
+                            <option value="{{ choice.id }}" {% if choice.id == form.user.value %}selected{% endif %}>
+                                {{ choice }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.leader.id_for_label }}" class="form-label">Select Leader</label>
+                    <select name="{{ form.leader.name }}" id="{{ form.leader.id_for_label }}" class="form-select">
+                        {% for choice in form.leader.field.queryset %}
+                            <option value="{{ choice.id }}" {% if choice.id == form.leader.value %}selected{% endif %}>
+                                {{ choice }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Assign User</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}

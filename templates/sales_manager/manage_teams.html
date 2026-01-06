@@ -1,0 +1,114 @@
+{% extends "layout/base.html" %}
+{% load custom_filters %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Teams Management</h1>
+    {% if messages %}
+    <div>
+        {% for message in messages %}
+        <div class="alert 
+                {% if message.tags %}alert-danger{% else %}alert-info{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="mt-4">Sales Team Leaders</h2>
+            <div>
+                <a href="{% url 'sales_manager:assign-sales-to-leader' %}" class="btn btn-primary">
+                    <i class="bi bi-plus"></i> Assign to team
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Team Leader</th>
+                        <th>Members</th>
+                        <th>Assign Team</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for leader in sales_leaders %}
+                    <tr>
+                        <td>{{ leader.username }}</td>
+                        <td>
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Member</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% with leader.team_members.all as members %}
+                                    {% for member in members %}
+                                    <tr>
+                                        <td>{{ member.user.username }}</td>
+                                        <td>
+                                            <form method="post" action="{% url 'sales_manager:manage-sales-teams' %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="leader_id" value="{{ leader.id }}">
+                                                <input type="hidden" name="user_id" value="{{ member.user.id }}">
+                                                <button type="submit" name="remove_member"
+                                                    class="btn btn-danger btn-sm">Remove</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="2">No members assigned</td>
+                                    </tr>
+                                    {% endfor %}
+                                    {% endwith %}
+                                </tbody>
+                            </table>
+                        </td>
+                        <td>
+                            <form method="post" action="{% url 'sales_manager:manage-sales-teams' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="leader_id" value="{{ leader.id }}">
+                                <select name="team_label" class="form-select">
+                                    <option value="" {% if not team.label %}selected{% endif %}></option> <!-- Empty default option -->
+                                    {% for label, display in team_labels %}
+                                    {% with current_teams|get_item:leader.id as team %}
+                                    <option value="{{ label }}" {% if team.label == label %}selected{% endif %}>{{ display }}</option>
+                                    {% endwith %}
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" name="assign_team" class="btn btn-primary btn-sm mt-2">Assign</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4">No sales team leaders found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer">
+            <div class="pagination">
+                <span class="step-links">
+                    {% if sales_leaders.has_previous %}
+                    <a href="?page_sales=1">&laquo; first</a>
+                    <a href="?page_sales={{ sales_leaders.previous_page_number }}">previous</a>
+                    {% endif %}
+                    <span class="current">
+                        Page {{ sales_leaders.number }} of {{ sales_leaders.paginator.num_pages }}.
+                    </span>
+                    {% if sales_leaders.has_next %}
+                    <a href="?page_sales={{ sales_leaders.next_page_number }}">next</a>
+                    <a href="?page_sales={{ sales_leaders.paginator.num_pages }}">last &raquo;</a>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

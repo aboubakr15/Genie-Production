@@ -1,0 +1,433 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+
+<style>
+    .table-responsive {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        overflow-x: hidden;
+    }
+
+    .table {
+        width: 100%;
+        margin-bottom: 0;
+        table-layout: fixed;
+    }
+
+    .table th {
+        background: var(--bg-gradient);
+        color: white;
+        font-weight: 500;
+        padding: 12px 8px;
+        vertical-align: middle;
+        word-wrap: break-word;
+        font-size: 0.9rem;
+    }
+
+    .table td {
+        padding: 12px 8px;
+        vertical-align: middle;
+        word-wrap: break-word;
+        font-size: 0.9rem;
+    }
+
+    .table:not(.flag-mode) th:nth-child(1) {
+        width: 7%;
+    }
+
+    /* Entry Date */
+    .table:not(.flag-mode) th:nth-child(2) {
+        width: 12%;
+    }
+
+    /* Company Name */
+    .table:not(.flag-mode) th:nth-child(3) {
+        width: 20%;
+    }
+
+    /* Phone No. */
+    .table:not(.flag-mode) th:nth-child(4) {
+        width: 17%;
+    }
+
+    /* Email */
+    .table:not(.flag-mode) th:nth-child(5) {
+        width: 12%;
+    }
+
+    /* DM Names */
+    .table:not(.flag-mode) th:nth-child(6) {
+        width: 12%;
+    }
+
+    /* Termination Code */
+    .table:not(.flag-mode) th:nth-child(7) {
+        width: 12%;
+    }
+
+    /* CB Date */
+    .table:not(.flag-mode) th:nth-child(8) {
+        width: 8%;
+    }
+
+    /* Sales Agent */
+
+    .table-custom-row td {
+        padding: 0 !important;
+    }
+
+    .sub-row {
+        background-color: #E6F0FA;
+        border-radius: 6px;
+        padding: 15px;
+        margin: 0;
+        width: 100%;
+    }
+
+    .form-control {
+        width: 100%;
+        font-size: 0.9rem;
+        padding: 6px 8px;
+    }
+
+    .input-group {
+        display: flex;
+    }
+
+    .input-group .form-control {
+        border-radius: 6px 0 0 6px;
+    }
+
+    .input-group .btn {
+        border-radius: 0 6px 6px 0;
+    }
+
+    .container {
+        max-width: 100%;
+        padding: 0 15px;
+        margin: 0 auto;
+    }
+
+    .card {
+        margin: 0;
+        overflow: hidden;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    select {
+        padding: 6px 8px;
+        font-size: 0.9rem;
+    }
+
+    @media (max-width: 1400px) {
+
+        .table th,
+        .table td {
+            font-size: 0.85rem;
+        }
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="card p-4 shadow-sm" style="background-color: #F8FAFC; border-radius: 12px;">
+        <h1 class="text-primary fw-bold">Team Prospect: {{ team_name }}</h1>
+
+        <ul class="nav nav-tabs border-0 mb-4" id="myTab" role="tablist">
+            {% for code in termination_codes %}
+            <li class="nav-item" role="presentation">
+                <a class="nav-link text-dark {% if code.id == selected_code.id %}active bg-light{% endif %}"
+                    id="tab-{{ code.id }}-tab" {% if role == "sales_team_leader" %}
+                    href="{% url 'sales_team_leader:view-team-prospect-with-id' code.id %}" {% else %}
+                    href="{% url 'sales_manager:view-team-prospect-with-leader' code.id leader.id %}" {% endif %}
+                    role="tab" aria-controls="tab-{{ code.id }}"
+                    aria-selected="{% if code.id == selected_code.id %}true{% else %}false{% endif %}"
+                    style="border-radius: 8px; transition: background-color 0.3s ease;">
+                    {{ code.name }}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+            <h4 class="text-dark mb-2">{{ selected_code.full_name }}</h4>
+            <div class="d-flex align-items-center">
+                <!-- Search Form -->
+                <form method="GET" class="d-flex me-3">
+                    {% if request.GET.order_by %}
+                    <input type="hidden" name="order_by" value="{{ request.GET.order_by }}">
+                    {% endif %}
+                    <input type="text" name="search_query" class="form-control me-2" placeholder="Search Name or Phone"
+                        value="{{ search_query }}" style="border-radius: 8px;">
+                    <button type="submit" class="btn btn-primary" style="border-radius: 8px;">Search</button>
+                    {% if search_query %}
+                    <a href="?{% if request.GET.order_by %}order_by={{ request.GET.order_by }}{% endif %}"
+                        class="btn btn-secondary ms-2" style="border-radius: 8px;">Clear</a>
+                    {% endif %}
+                </form>
+
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle" type="button" id="orderByDropdown"
+                        data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 8px;">
+                        Order By
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="orderByDropdown">
+                        <li><a class="dropdown-item order-option"
+                                href="?order_by=CB_date{% if search_query %}&search_query={{ search_query }}{% endif %}"><i
+                                    class="fa fa-sort-up"></i> CB
+                                Date</a></li>
+                        <li><a class="dropdown-item order-option"
+                                href="?order_by=-CB_date{% if search_query %}&search_query={{ search_query }}{% endif %}"><i
+                                    class="fa fa-sort-down"></i>
+                                CB Date</a></li>
+                        <li><a class="dropdown-item order-option"
+                                href="?order_by=entry_date{% if search_query %}&search_query={{ search_query }}{% endif %}"><i
+                                    class="fa fa-sort-up"></i>
+                                Entry Date</a></li>
+                        <li><a class="dropdown-item order-option"
+                                href="?order_by=-entry_date{% if search_query %}&search_query={{ search_query }}{% endif %}"><i
+                                    class="fa fa-sort-down"></i> Entry Date</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content mt-3" id="myTabContent">
+            <div class="tab-pane fade show active" id="tab-{{ selected_code.id }}" role="tabpanel"
+                aria-labelledby="tab-{{ selected_code.id }}-tab">
+                {% if leads_data|length > 0 %}
+                <form method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success mb-3" style="border-radius: 8px; padding: 8px 20px;">
+                        <i class="fas fa-save me-2"></i>Save Changes
+                    </button>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered table-hover"
+                            style="background-color: #fff; border-radius: 8px; overflow: hidden;">
+                            <thead class="table-primary">
+                                <tr>
+                                    <th>Entry Date</th>
+                                    <th>Company Name</th>
+                                    <th>Phone No. / Time Zone</th>
+                                    <th>E-mail</th>
+                                    <th>DM Names</th>
+                                    <th>Termination Code</th>
+                                    <th>CB Date</th>
+                                    <th>Agent</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for lead_data in leads_data %}
+                                <tr>
+                                    <td>{{ lead_data.entry_date|date:"Y-m-d H:i" }}</td>
+                                    <td>{{ lead_data.lead.name }}</td>
+                                    <td>
+                                        <ul id="phone-numbers-{{ lead_data.lead.id }}" class="list-unstyled mb-2">
+                                            {% for phone in lead_data.phones %}
+                                            <li>{{ phone.value }} : {{ phone.time_zone }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                        <div class="input-group">
+                                            <input type="text" id="phone-number-input-{{ lead_data.lead.id }}"
+                                                class="form-control form-control-sm" placeholder="Add Phone Number"
+                                                data-lead-id="{{ lead_data.lead.id }}"
+                                                data-sheet-id="{{ lead_data.sales_show.sheet.id }}">
+                                            <button type="button" class="btn btn-outline-success btn-sm add-phone">
+                                                Add
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <ul id="emails-{{ lead_data.lead.id }}" class="list-unstyled mb-2">
+                                            {% for email in lead_data.emails %}
+                                            <li>{{ email }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                        <div class="input-group">
+                                            <input type="email" id="email-input-{{ lead_data.lead.id }}"
+                                                class="form-control form-control-sm" placeholder="Add Email"
+                                                data-lead-id="{{ lead_data.lead.id }}"
+                                                data-sheet-id="{{ lead_data.sales_show.sheet.id }}">
+                                            <button type="button" class="btn btn-outline-success btn-sm add-email">
+                                                Add
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <ul id="contact-names-{{ lead_data.lead.id }}" class="list-unstyled mb-2">
+                                            {% for contact in lead_data.contacts %}
+                                            <li>{{ contact }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                        <div class="input-group">
+                                            <input type="text" id="contact-name-input-{{ lead_data.lead.id }}"
+                                                class="form-control form-control-sm" placeholder="Add Contact Name"
+                                                data-lead-id="{{ lead_data.lead.id }}"
+                                                data-sheet-id="{{ lead_data.sales_show.sheet.id }}">
+                                            <button type="button" class="btn btn-outline-success btn-sm add-contact">
+                                                Add
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <select
+                                            name="termination_code_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
+                                            class="form-control termination-code-select" style="border-radius: 6px;">
+                                            {% for code in termination_codes_selection %}
+                                            <option value="{{ code.id }}" {% if lead_data.termination == code.full_name %}selected{% endif %}>
+                                                {{ code.name }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                    <td>
+                                        {% if lead_data.previous_cb_dates %}
+                                        <ul class="list-unstyled mb-2">
+                                            {% for old_cb_date in lead_data.previous_cb_dates %}
+                                            <li><strong>{{ old_cb_date|date:"Y-m-d H:i" }}</strong></li>
+                                            {% endfor %}
+                                        </ul>
+                                        {% endif %}
+                                        <input type="date"
+                                            name="cb_date_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
+                                            value="{{ lead_data.cb_date|date:'Y-m-d' }}" class="form-control cb-date"
+                                            id="cb_date_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
+                                            style="border-radius: 6px;" />
+                                    </td>
+                                    <td>{{ lead_data.Agent }}</td>
+                                </tr>
+                                <tr class="table-custom-row">
+                                    <td colspan="9">
+                                        <div class="sub-row"
+                                            style="background-color: #E6F0FA; border-radius: 6px; overflow-y: auto;">
+                                            <div><strong>Show:</strong> {{ lead_data.sales_show }}</div>
+                                            <div>
+                                                <strong>Special Notes:</strong>
+                                                <textarea
+                                                    name="notes_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
+                                                    class="form-control"
+                                                    style="border-radius: 6px; resize: vertical; min-height: 60px;">{{ lead_data.notes|default:"" }}</textarea>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </form>
+                {% else %}
+                <div class="alert alert-warning p-3" style="border-radius: 8px;">No leads available for this termination
+                    code.</div>
+                {% endif %}
+            </div>
+
+            <!-- Pagination Controls -->
+            {% if leads_page.has_other_pages %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if leads_page.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link"
+                            href="?page=1{% if request.GET.order_by %}&order_by={{ request.GET.order_by }}{% endif %}{% if search_query %}&search_query={{ search_query }}{% endif %}"
+                            aria-label="First">
+                            <span aria-hidden="true">&laquo; First</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link"
+                            href="?page={{ leads_page.previous_page_number }}{% if request.GET.order_by %}&order_by={{ request.GET.order_by }}{% endif %}{% if search_query %}&search_query={{ search_query }}{% endif %}"
+                            aria-label="Previous">
+                            <span aria-hidden="true">&lsaquo; Previous</span>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">&laquo; First</span>
+                    </li>
+                    <li class="page-item disabled">
+                        <span class="page-link">&lsaquo; Previous</span>
+                    </li>
+                    {% endif %}
+
+                    <li class="page-item disabled">
+                        <span class="page-link">Page {{ leads_page.number }} of {{ leads_page.paginator.num_pages }}</span>
+                    </li>
+
+                    {% if leads_page.has_next %}
+                    <li class="page-item">
+                        <a class="page-link"
+                            href="?page={{ leads_page.next_page_number }}{% if request.GET.order_by %}&order_by={{ request.GET.order_by }}{% endif %}{% if search_query %}&search_query={{ search_query }}{% endif %}"
+                            aria-label="Next">
+                            <span aria-hidden="true">Next &rsaquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link"
+                            href="?page={{ leads_page.paginator.num_pages }}{% if request.GET.order_by %}&order_by={{ request.GET.order_by }}{% endif %}{% if search_query %}&search_query={{ search_query }}{% endif %}"
+                            aria-label="Last">
+                            <span aria-hidden="true">Last &raquo;</span>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Next &rsaquo;</span>
+                    </li>
+                    <li class="page-item disabled">
+                        <span class="page-link">Last &raquo;</span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        function addItem(buttonClass, inputIdPrefix, listIdPrefix, apiUrl, itemName) {
+            $(document).on('click', buttonClass, function () {
+                const $button = $(this);
+                const $input = $button.siblings('input');
+                const leadId = $input.data('lead-id');
+                const sheetId = $input.data('sheet-id');
+                const value = $input.val().trim();
+
+                if (!value) {
+                    alert(`Please enter a ${itemName}.`);
+                    return;
+                }
+
+                $.ajax({
+                    url: apiUrl,
+                    method: 'POST',
+                    data: {
+                        lead_id: leadId,
+                        sheet_id: sheetId,
+                        value: value,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                    success: function () {
+                        $(`#${listIdPrefix}-${leadId}`).append(`<li>${value}</li>`);
+                        $input.val('');
+                        alert(`${itemName} added successfully!`);
+                    },
+                    error: function (xhr) {
+                        const errorMsg = xhr.responseJSON && xhr.responseJSON.errors
+                            ? xhr.responseJSON.errors.value
+                            : `Error adding ${itemName}. Please try again.`;
+                        alert(errorMsg);
+                    }
+                });
+            });
+        }
+
+        addItem('.add-phone', 'phone-number-input', 'phone-numbers', "{% url 'api:add_phone_number' %}", 'phone number');
+        addItem('.add-email', 'email-input', 'emails', "{% url 'api:add_email' %}", 'email');
+        addItem('.add-contact', 'contact-name-input', 'contact-names', "{% url 'api:add_contact_name' %}", 'contact name');
+    });
+</script>
+{% endblock %}

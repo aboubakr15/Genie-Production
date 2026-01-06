@@ -1,0 +1,194 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<main>
+    <div class="container">
+        <section class="section">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">X Shows</h5>
+                            <form method="get" action="">
+                                <div class="input-group mb-3">
+                                    <input type="text" name="q" class="form-control" placeholder="Search by sheet name"
+                                        value="{{ q|default:'' }}">
+                                    <button class="btn btn-primary" type="submit">Search</button>
+                                </div>
+                            </form>
+
+                            <h5 class="card-title mt-4">Shows</h5>
+                            {% if page_obj %}
+
+                            <!-- Form to process selected sheets -->
+                            <form method="post" action="{% url 'administrator:cut-multiple-x-sheets' %}" id="cutForm">
+                                {% csrf_token %}
+
+                                <!-- Buttons for bulk actions -->
+                                <div class="d-flex justify-content-between mb-2">
+                                    <button class="btn btn-primary" type="submit">Cut Selected Sheets</button>
+                                    <button class="btn btn-danger" type="submit" form="archiveForm">Archive Selected</button>
+                                </div>
+
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col"><input type="checkbox" id="select_all"></th>
+                                            <th scope="col">Name</th>
+                                            <th scope="col">Done By</th>
+                                            <th scope="col">Number of Leads</th>
+                                            <th scope="col">Done Date</th>
+                                            <!-- <th scope="col">Actions</th> -->
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for sheet in page_obj %}
+                                        <tr>
+                                            <!-- Checkbox to select each sheet -->
+                                            <td><input type="checkbox" name="selected_sheets" value="{{ sheet.id }}" class="sheet-checkbox">
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'administrator:view-sheet' sheet.id %}">{{ sheet.name }}</a>
+                                            </td>
+                                            <td>
+                                                {% if sheet.user %}
+                                                {{ sheet.user.username }}
+                                                {% else %}
+                                                Unknown
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ sheet.leads.count }}</td>
+                                            <td>{{ sheet.created_at|date:"d-m-Y H:i" }}</td>
+                                            <!-- <td>
+                                                <form method="POST" action="{% url 'administrator:archive-sheet' sheet.id %}">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-danger btn-sm">Archive</button>
+                                                </form>                                                
+                                            </td> -->
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </form>
+
+                            <!-- Archive Form (hidden, handled by JavaScript) -->
+                            <form method="POST" action="{% url 'administrator:archive-sheet-bulk' %}" id="archiveForm">
+                                {% csrf_token %}
+                            </form>
+
+                            <!-- Pagination controls -->
+                            {% if page_obj.has_other_pages %}
+                            <nav aria-label="Page navigation">
+                                <ul class="pagination justify-content-center">
+                                    {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% if q %}&q={{ q }}{% endif %}">&laquo;
+                                            First</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link"
+                                            href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}">&lsaquo;
+                                            Previous</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&laquo; First</span>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&lsaquo; Previous</span>
+                                    </li>
+                                    {% endif %}
+
+                                    <li class="page-item disabled">
+                                        <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                                    </li>
+
+                                    {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link"
+                                            href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}">Next
+                                            &rsaquo;</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link"
+                                            href="?page={{ page_obj.paginator.num_pages }}{% if q %}&q={{ q }}{% endif %}">Last
+                                            &raquo;</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">Next &rsaquo;</span>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <span class="page-link">Last &raquo;</span>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                            {% endif %}
+                            {% else %}
+                            <p>No Sheets found.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<script>
+    // Handle bulk actions
+    document.addEventListener('DOMContentLoaded', function() {
+        // Select All checkbox
+        document.getElementById('select_all').addEventListener('change', function(e) {
+            document.querySelectorAll('.sheet-checkbox').forEach(checkbox => {
+                checkbox.checked = e.target.checked;
+            });
+        });
+
+        // Handle form submissions with selected checkboxes
+        function prepareFormSubmission(form, selectedIds) {
+            // Remove existing hidden inputs
+            const existingInputs = form.querySelectorAll('input[name="selected_sheets"]');
+            existingInputs.forEach(input => input.remove());
+
+            // Add new hidden inputs for each selected ID
+            selectedIds.forEach(id => {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'selected_sheets';
+                hiddenInput.value = id;
+                form.appendChild(hiddenInput);
+            });
+        }
+
+        // Cut form handler
+        document.getElementById('cutForm').addEventListener('submit', function(e) {
+            const selectedIds = Array.from(document.querySelectorAll('.sheet-checkbox:checked'))
+                .map(checkbox => checkbox.value);
+            
+            if (selectedIds.length === 0) {
+                e.preventDefault();
+                alert('Please select at least one sheet to cut');
+                return;
+            }
+
+            prepareFormSubmission(this, selectedIds);
+        });
+
+        // Archive form handler
+        document.getElementById('archiveForm').addEventListener('submit', function(e) {
+            const selectedIds = Array.from(document.querySelectorAll('.sheet-checkbox:checked'))
+                .map(checkbox => checkbox.value);
+
+            if (selectedIds.length === 0) {
+                e.preventDefault();
+                alert('Please select at least one sheet to archive');
+                return;
+            }
+
+            prepareFormSubmission(this, selectedIds);
+        });
+    });
+</script>
+{% endblock content %}

@@ -1,0 +1,33 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h3 class="mb-4">Agents List</h3>
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th scope="col">Username</th>
+                        <th scope="col">Group</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for agent in agents %}
+                        <tr>
+                            <td>{{ agent.username }}</td>
+                            <td>{{ agent.groups.first.name }}</td> <!-- Display first group name -->
+                            <td>
+                                <a href="{% url 'operations_manager:view-agent-done-shows' agent.id %}" class="btn btn-primary btn-sm">
+                                    View Done Shows
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

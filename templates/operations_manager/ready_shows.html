@@ -1,0 +1,207 @@
+{% extends "layout/base.html" %}
+{% load custom_filters %}
+{% block content %}
+<main>
+    <div class="container">
+        <section class="section">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Ready Shows</h5>
+
+                            <!-- Tabs for filtering by label -->
+                            <ul class="nav nav-tabs">
+                                <li class="nav-item">
+                                    <a class="nav-link {% if active_label == 'EHUB' %}active{% endif %}"
+                                    href="{% url 'operations_manager:ready-shows' 'EHUB' %}">EHUB</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link {% if active_label == 'EHUB2' %}active{% endif %}"
+                                    href="{% url 'operations_manager:ready-shows' 'EHUB2' %}">EHUB2</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link {% if active_label == 'EP' %}active{% endif %}"
+                                    href="{% url 'operations_manager:ready-shows' 'EP' %}">EP</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link {% if active_label == 'UK' %}active{% endif %}"
+                                    href="{% url 'operations_manager:ready-shows' 'UK' %}">UK</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link {% if active_label == 'Asia' %}active{% endif %}"
+                                    href="{% url 'operations_manager:ready-shows' 'Asia' %}">Asia</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link {% if active_label == 'Europe' %}active{% endif %}"
+                                    href="{% url 'operations_manager:ready-shows' 'Europe' %}">Europe</a>
+                                </li>
+                            </ul>
+
+                            <!-- Search Bar -->
+                            <form method="get" action="{% url 'operations_manager:ready-shows' active_label %}" class="my-3">
+                                <div class="input-group">
+                                    <input type="text" name="search" class="form-control" placeholder="Search by Sheet Name"
+                                           value="{{ search_query }}" aria-label="Search">
+                                    <button type="submit" class="btn btn-primary">Search</button>
+                                </div>
+                            </form>
+
+                            {% if ready_shows %}
+                            <form method="post" action="{% url 'operations_manager:cut-ready-shows' %}" id="cutForm">
+                                {% csrf_token %}
+                                
+                                <!-- Action buttons -->
+                                <div class="d-flex justify-content-between mt-3">
+                                    <button type="submit" class="btn btn-primary">Cut Selected Shows</button>
+                                    <button type="submit" form="archiveForm" class="btn btn-danger">Archive Selected</button>
+                                </div>
+
+                                <table class="table table-bordered mt-3">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">
+                                                <input type="checkbox" id="selectAll">
+                                            </th>
+                                            <th scope="col">Sheet Name</th>
+                                            <th scope="col">Done Date</th>
+                                            <th scope="col">Leads Count</th>
+                                            <!-- <th scope="col">Actions</th> -->
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for ready_show in ready_shows %}
+                                        <tr>
+                                            <td>
+                                                <input type="checkbox" name="selected_ready_shows" value="{{ ready_show.id }}" class="show-checkbox">
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'operations_manager:view-ready-show' ready_show.id %}">{{ ready_show.sheet.name }}</a>
+                                            </td>
+                                            <td>{{ ready_show.sheet.done_date }}</td>
+                                            <td>{{ ready_show.leads.count }}</td>
+                                            <!-- <td>
+                                                <form method="POST" action="{% url 'operations_manager:archive-sheet' ready_show.id %}">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-danger btn-sm">Archive</button>
+                                                </form>   
+                                            </td> -->
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </form>
+
+                            <!-- Archive Form (hidden, handled by JavaScript) -->
+                            <form method="POST" action="{% url 'operations_manager:archive_ready_show_bulk' %}" id="archiveForm">
+                                {% csrf_token %}
+                            </form>
+                            
+                            {% else %}
+                            <p>No Ready Shows available.</p>
+                            {% endif %}
+
+                            <!-- Pagination controls -->
+                            {% if ready_shows.has_other_pages %}
+                            <nav aria-label="Page navigation">
+                                <ul class="pagination justify-content-center">
+                                    {% if ready_shows.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1&search={{ search_query }}">&laquo; First</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ ready_shows.previous_page_number }}&search={{ search_query }}">&lsaquo; Previous</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&laquo; First</span>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&lsaquo; Previous</span>
+                                    </li>
+                                    {% endif %}
+
+                                    <li class="page-item disabled">
+                                        <span class="page-link">Page {{ ready_shows.number }} of {{ ready_shows.paginator.num_pages }}</span>
+                                    </li>
+
+                                    {% if ready_shows.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ ready_shows.next_page_number }}&search={{ search_query }}">Next &rsaquo;</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ ready_shows.paginator.num_pages }}&search={{ search_query }}">Last &raquo;</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">Next &rsaquo;</span>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <span class="page-link">Last &raquo;</span>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Handle bulk actions
+        document.addEventListener('DOMContentLoaded', function() {
+            // Select All checkbox
+            document.getElementById('selectAll').addEventListener('change', function(e) {
+                document.querySelectorAll('.show-checkbox').forEach(checkbox => {
+                    checkbox.checked = e.target.checked;
+                });
+            });
+
+            // Handle form submissions with selected checkboxes
+            function prepareFormSubmission(form, selectedIds, inputName) {
+                // Remove existing hidden inputs
+                const existingInputs = form.querySelectorAll(`input[name="${inputName}"]`);
+                existingInputs.forEach(input => input.remove());
+
+                // Add new hidden inputs for each selected ID
+                selectedIds.forEach(id => {
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = inputName;
+                    hiddenInput.value = id;
+                    form.appendChild(hiddenInput);
+                });
+            }
+
+            // Cut form handler
+            document.getElementById('cutForm').addEventListener('submit', function(e) {
+                const selectedIds = Array.from(document.querySelectorAll('.show-checkbox:checked'))
+                    .map(checkbox => checkbox.value);
+                
+                if (selectedIds.length === 0) {
+                    e.preventDefault();
+                    alert('Please select at least one show to cut');
+                    return;
+                }
+            });
+
+            // Archive form handler
+            document.getElementById('archiveForm').addEventListener('submit', function(e) {
+                const selectedIds = Array.from(document.querySelectorAll('.show-checkbox:checked'))
+                    .map(checkbox => checkbox.value);
+
+                if (selectedIds.length === 0) {
+                    e.preventDefault();
+                    alert('Please select at least one show to archive');
+                    return;
+                }
+
+                prepareFormSubmission(this, selectedIds, 'selected_ready_shows');
+            });
+        });
+    </script>
+</main>
+{% endblock %}
