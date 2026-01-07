@@ -390,7 +390,7 @@ def ready_shows_view(request, label=None):
     ).order_by("-id")
 
     # Pagination
-    paginator = Paginator(ready_shows, 60)  # Show 30 items per page
+    paginator = Paginator(ready_shows, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -424,7 +424,7 @@ def done_ready_shows(request, label=None):
     done_shows = done_shows.order_by("-id")
 
     # Pagination
-    paginator = Paginator(done_shows, 60)  # Show 30 items per page
+    paginator = Paginator(done_shows, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -458,7 +458,7 @@ def unassigned_sales_shows(request, label='EHUB'):
     labels = ['EHUB', 'EHUB2', 'EP', 'UK', 'Asia', 'Europe']
 
     # Pagination
-    paginator = Paginator(unassigned_shows, 60)
+    paginator = Paginator(unassigned_shows, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
@@ -542,7 +542,7 @@ def unassigned_x_sales_shows(request, label='EHUB'):
     unassigned_shows = unassigned_shows.order_by("-id")
 
     # Pagination
-    paginator = Paginator(unassigned_shows, 60)
+    paginator = Paginator(unassigned_shows, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
@@ -630,7 +630,7 @@ def assigned_sales_shows(request, label='EHUB'):
 
     # Pagination
     page_number = request.GET.get('page', 1)  # Get the page number from the request, default to 1
-    paginator = Paginator(assigned_shows, 60)
+    paginator = Paginator(assigned_shows, 20)
     page_obj = paginator.get_page(page_number)
 
     context = {
@@ -994,7 +994,7 @@ def archived_ready_shows(request):
         archived_sheets = archived_sheets.filter(sheet__name__icontains=query)  # Filter by show name
 
     # Pagination
-    paginator = Paginator(archived_sheets, 60)
+    paginator = Paginator(archived_sheets, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
