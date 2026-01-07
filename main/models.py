@@ -161,7 +161,7 @@ class LeadTerminationCode(models.Model):
     lead = models.ForeignKey(Lead, on_delete=models.CASCADE)
     flag = models.ForeignKey(TerminationCode, on_delete=models.CASCADE)   # The terminatin code value
     sales_show = models.ForeignKey(SalesShow, on_delete=models.CASCADE)
-    CB_date = models.DateTimeField(null=True)
+    CB_date = models.DateField(null=True)
     notes = models.TextField(null=True)
     is_qualified = models.BooleanField(default=False)
     entry_date = models.DateTimeField(auto_now_add=True)
@@ -191,7 +191,7 @@ class LeadTerminationHistory(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     entry_date = models.DateTimeField(auto_now_add=True)
     termination_code = models.ForeignKey(TerminationCode, on_delete=models.CASCADE)
-    cb_date = models.DateTimeField(null=True)
+    cb_date = models.DateField(null=True)
     notes = models.TextField(null=True)
     lead = models.ForeignKey(Lead, on_delete=models.CASCADE)
     show = models.ForeignKey(SalesShow, null=True, blank=True, on_delete=models.CASCADE)
