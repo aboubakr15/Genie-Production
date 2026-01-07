@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404, render, redirect
+from django.contrib import messages
 from django.contrib.auth.models import User
 from main.custom_decorators import is_in_group
 from main.models import (LeadContactNames, LeadEmails, LeadPhoneNumbers, LeadTerminationCode, IncomingsCount,
@@ -208,6 +209,9 @@ def view_team_prospect(request, code_id=None, leader_id=None):
             cb_date = request.POST.get(f'cb_date_{lead_id}_{sales_show_id}')
             is_qualified = request.POST.get(f'is_qualified_{lead_id}') == 'on'  # Check if the checkbox is checked
 
+            if not termination_code_id:
+                continue
+
             target_user_id = request.POST.get(f'target_user_{lead_id}_{sales_show_id}')
             target_user = None
             if target_user_id:
@@ -226,47 +230,56 @@ def view_team_prospect(request, code_id=None, leader_id=None):
             else:
                 cb_date = None
 
-            new_code = TerminationCode.objects.get(id=termination_code_id)
+            new_code = None
+            if termination_code_id:
+                try:
+                    new_code = TerminationCode.objects.get(id=termination_code_id)
+                except TerminationCode.DoesNotExist:
+                    new_code = None
 
-            if status:
-                lead_termination.status = status
-            if num_rooms:
-                lead_termination.num_rooms = int(num_rooms)
-            if num_nights:
-                lead_termination.num_nights = int(num_nights)
-            if options:
-                lead_termination.options = options.strip()
-            if new_code:
-                lead_termination.flag = new_code
-            if cb_date:
-                lead_termination.CB_date = cb_date
-            if notes:
-                lead_termination.notes = notes
-            
-            lead_termination.target_user = target_user
+            try:
+                if status:
+                    lead_termination.status = status
+                if num_rooms:
+                    lead_termination.num_rooms = int(num_rooms)
+                if num_nights:
+                    lead_termination.num_nights = int(num_nights)
+                if options:
+                    lead_termination.options = options.strip()
+                if new_code:
+                    lead_termination.flag = new_code
+                if cb_date:
+                    lead_termination.CB_date = cb_date
+                if notes:
+                    lead_termination.notes = notes
+                
+                lead_termination.target_user = target_user
 
-            latest_termination = LeadTerminationHistory.objects.filter(lead=lead_termination.lead).order_by('-entry_date').first()
+                latest_termination = LeadTerminationHistory.objects.filter(lead=lead_termination.lead).order_by('-entry_date').first()
 
-            # Only create a new entry if there's a new termination code or callback date
-            if latest_termination is None or (
-                (new_code is not None and latest_termination.termination_code != new_code) or
-                (cb_date is not None and latest_termination.cb_date != cb_date)
-                ):
-                # Create a new history record if either field has changed
-                LeadTerminationHistory.objects.create(
-                    user=request.user,
-                    termination_code=new_code,
-                    cb_date=cb_date,
-                    lead=lead_termination.lead,
-                    show=lead_termination.sales_show,
-                    notes=notes,
-                    target_user=target_user
-                )
+                # Only create a new entry if there's a new termination code or callback date
+                if latest_termination is None or (
+                    (new_code is not None and latest_termination.termination_code != new_code) or
+                    (cb_date is not None and latest_termination.cb_date != cb_date)
+                    ):
+                    # Create a new history record if either field has changed
+                    LeadTerminationHistory.objects.create(
+                        user=request.user,
+                        termination_code=new_code,
+                        cb_date=cb_date,
+                        lead=lead_termination.lead,
+                        show=lead_termination.sales_show,
+                        notes=notes,
+                        target_user=target_user
+                    )
 
 
-            # Only for flag termination code
-            lead_termination.is_qualified = is_qualified  # Set the checkbox value
-            lead_termination.save()
+                # Only for flag termination code
+                lead_termination.is_qualified = is_qualified  # Set the checkbox value
+                lead_termination.save()
+            except Exception as e:
+                messages.error(request, f"Error updating lead {lead_termination.lead.name}: {str(e)}")
+                continue
 
         if role=="sales_team_leader":
             return redirect('sales_team_leader:view-team-prospect-with-id', code_id=code.id)
