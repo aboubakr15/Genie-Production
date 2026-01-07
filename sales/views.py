@@ -205,8 +205,18 @@ def show_detail(request, show_id, recycle=""):
             if termination_code_id:
                 termination_code = get_object_or_404(TerminationCode, id=termination_code_id)
                 
-                if type(cb_date) == str:
-                    cb_date = cb_date if cb_date.strip() else None
+                if isinstance(cb_date, str) and cb_date.strip():
+                    from django.utils.dateparse import parse_datetime
+                    parsed_date = parse_datetime(cb_date.strip())
+                    if parsed_date:
+                        if timezone.is_naive(parsed_date):
+                             cb_date = timezone.make_aware(parsed_date)
+                        else:
+                             cb_date = parsed_date
+                    else:
+                        cb_date = None
+                else:
+                    cb_date = None
 
                 LeadTerminationHistory.objects.create(
                     user = request.user,
@@ -374,8 +384,18 @@ def view_saved_leads(request, code_id=None):
                 new_code = TerminationCode.objects.get(id=termination_code_id)
                 lead_termination.flag = new_code  # Update termination code
 
-            if type(cb_date) == str:
-                cb_date = cb_date if cb_date.strip() else None
+            if isinstance(cb_date, str) and cb_date.strip():
+                from django.utils.dateparse import parse_datetime
+                parsed_date = parse_datetime(cb_date.strip())
+                if parsed_date:
+                    if timezone.is_naive(parsed_date):
+                         cb_date = timezone.make_aware(parsed_date)
+                    else:
+                         cb_date = parsed_date
+                else:
+                    cb_date = None
+            else:
+                cb_date = None
 
 
             # Update other fields

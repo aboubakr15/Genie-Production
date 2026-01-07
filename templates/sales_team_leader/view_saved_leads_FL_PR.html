@@ -262,10 +262,10 @@
                                         </select>
                                     </td>
                                     <td>
-                                        <input type="date"
+                                        <input type="datetime-local"
                                             name="cb_date_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
                                             id="cb_date_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
-                                            value="{{ lead_data.cb_date|date:'Y-m-d' }}" class="form-control">
+                                            value="{{ lead_data.cb_date|date:'Y-m-d\TH:i' }}" class="form-control">
                                     </td>
                                     <td>
                                         <select name="status_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"

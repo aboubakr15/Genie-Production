@@ -301,9 +301,9 @@
                                             {% endfor %}
                                         </ul>
                                         {% endif %}
-                                        <input type="date"
+                                        <input type="datetime-local"
                                             name="cb_date_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
-                                            value="{{ lead_data.cb_date|date:'Y-m-d' }}" class="form-control cb-date"
+                                            value="{{ lead_data.cb_date|date:'Y-m-d\TH:i' }}" class="form-control cb-date"
                                             id="cb_date_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
                                             style="border-radius: 6px;" />
                                     </td>

@@ -128,9 +128,9 @@
 
                                                 <!-- CB Date Column -->
                                                 <td>
-                                                    <input type="date" name="cb_date_{{ lead_detail.lead.id }}"
+                                                    <input type="datetime-local" name="cb_date_{{ lead_detail.lead.id }}"
                                                         class="form-control cb-date"
-                                                        value="{{ lead_detail.tc.CB_date|date:'Y-m-d\TH:i' }}" {% if not lead_detail.tc or lead_detail.tc.flag.name != 'CB' or lead_detail.tc.flag.name != 'PR' or lead_detail.tc.flag.name != 'IC' %} disabled {% endif %}>
+                                                        value="{{ lead_detail.tc.CB_date|date:'Y-m-d\TH:i' }}" {% if not lead_detail.tc or lead_detail.tc.flag.name != 'CB' and lead_detail.tc.flag.name != 'PR' and lead_detail.tc.flag.name != 'IC' %} disabled {% endif %}>
                                                 </td>
 
                                                 <!-- Notes Column -->

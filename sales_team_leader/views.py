@@ -213,8 +213,18 @@ def view_team_prospect(request, code_id=None, leader_id=None):
             if target_user_id:
                 target_user = User.objects.get(id=target_user_id)
 
-            if isinstance(cb_date, str):
-                cb_date = cb_date.strip() if cb_date.strip() else None
+            if isinstance(cb_date, str) and cb_date.strip():
+                from django.utils.dateparse import parse_datetime
+                parsed_date = parse_datetime(cb_date.strip())
+                if parsed_date:
+                    if timezone.is_naive(parsed_date):
+                         cb_date = timezone.make_aware(parsed_date)
+                    else:
+                         cb_date = parsed_date
+                else:
+                    cb_date = None
+            else:
+                cb_date = None
 
             new_code = TerminationCode.objects.get(id=termination_code_id)
 
