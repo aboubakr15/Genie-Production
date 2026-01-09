@@ -273,11 +273,19 @@
                                     </td>
                                     <td>
                                         {% if lead_data.previous_cb_dates %}
-                                        <ul class="list-unstyled mb-2">
-                                            {% for old_cb_date in lead_data.previous_cb_dates %}
-                                            <li><strong>{{ old_cb_date|date:"Y-m-d H:i" }}</strong></li>
-                                            {% endfor %}
-                                        </ul>
+                                        <div class="dropdown mb-2">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                                    id="dropdownMenuButton-{{ lead_data.lead.id }}" 
+                                                    data-bs-toggle="dropdown" aria-expanded="false"
+                                                    style="font-size: 0.8rem; padding: 2px 6px;">
+                                                <i class="fas fa-history"></i> History ({{ lead_data.previous_cb_dates|length }})
+                                            </button>
+                                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton-{{ lead_data.lead.id }}">
+                                                {% for old_cb_date in lead_data.previous_cb_dates %}
+                                                <li><span class="dropdown-item">{{ old_cb_date|date:"Y-m-d H:i" }}</span></li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
                                         {% endif %}
                                         <input {% if lead_data.termination != "Call back" and lead_data.termination != "Incoming" %} disabled {% endif %}
                                             type="datetime-local"

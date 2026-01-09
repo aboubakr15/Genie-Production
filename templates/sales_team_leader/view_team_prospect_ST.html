@@ -293,27 +293,49 @@
                                     <td>
                                         <select
                                             name="termination_code_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
-                                            class="form-control termination-code-select" style="border-radius: 6px;">
+                                            class="form-control termination-code-select" 
+                                            style="border-radius: 6px;"
+                                            onchange="toggleCbDate(this, {{ lead_data.lead.id }}, {{ lead_data.sales_show_id }})">
                                             {% for code in termination_codes_selection %}
                                             <option value="{{ code.id }}" {% if code.full_name == lead_data.termination %} selected {% endif %}>
                                                 {{ code.name }}
                                             </option>
                                             {% endfor %}
                                         </select>
+                                        <select 
+                                            name="target_user_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
+                                            class="form-control mt-2 target-user-select" 
+                                            style="border-radius: 6px; display: {% if lead_data.termination == 'ST' or lead_data.termination == 'Send To' %}block{% else %}none{% endif %};">
+                                            <option value="">Select User</option>
+                                            {% for user in target_users %}
+                                            <option value="{{ user.id }}" {% if lead_data.target_user.id == user.id %} selected {% endif %}>
+                                                {{ user.username }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
                                     </td>
                                     <td>
                                         {% if lead_data.previous_cb_dates %}
-                                        <ul class="list-unstyled mb-2">
-                                            {% for old_cb_date in lead_data.previous_cb_dates %}
-                                            <li><strong>{{ old_cb_date|date:"Y-m-d H:i" }}</strong></li>
-                                            {% endfor %}
-                                        </ul>
+                                        <div class="dropdown mb-2">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                                    id="dropdownMenuButton-{{ lead_data.lead.id }}" 
+                                                    data-bs-toggle="dropdown" aria-expanded="false"
+                                                    style="font-size: 0.8rem; padding: 2px 6px;">
+                                                <i class="fas fa-history"></i> History ({{ lead_data.previous_cb_dates|length }})
+                                            </button>
+                                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton-{{ lead_data.lead.id }}">
+                                                {% for old_cb_date in lead_data.previous_cb_dates %}
+                                                <li><span class="dropdown-item">{{ old_cb_date|date:"Y-m-d H:i" }}</span></li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
                                         {% endif %}
                                         <input type="datetime-local"
                                             name="cb_date_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
                                             value="{{ lead_data.cb_date|date:'Y-m-d\TH:i' }}" class="form-control cb-date"
                                             id="cb_date_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
-                                            style="border-radius: 6px;" />
+                                            style="border-radius: 6px;" 
+                                            {% if lead_data.termination != 'CB' and lead_data.termination != 'PR' and lead_data.termination != 'IC' and lead_data.termination != 'ST' %} disabled {% endif %} />
                                     </td>
                                     <td>
                                         <select name="status_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
@@ -438,6 +460,26 @@
 </div>
 
 <script>
+    function toggleCbDate(select, leadId, showId) {
+        const cbDateInput = $(`#cb_date_${leadId}_${showId}`);
+        const targetUserSelect = $(`select[name="target_user_${leadId}_${showId}"]`);
+        const selectedTerminationCode = select.options[select.selectedIndex].text.trim();
+
+        if (['CB', 'PR', 'IC', 'ST'].includes(selectedTerminationCode)) {
+            cbDateInput.prop('disabled', false);
+        } else {
+            cbDateInput.prop('disabled', true);
+            cbDateInput.val('');
+        }
+
+        if (selectedTerminationCode === 'ST') {
+            targetUserSelect.show();
+        } else {
+            targetUserSelect.hide();
+            targetUserSelect.val('');
+        }
+    }
+
     $(document).ready(function () {
         function addItem(buttonClass, inputIdPrefix, listIdPrefix, apiUrl, itemName) {
             $(document).on('click', buttonClass, function () {
