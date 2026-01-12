@@ -121,7 +121,7 @@ def show_detail(request, show_id, recycle=""):
     termination_codes = TerminationCode.objects.all() if request.user.groups.first().name in ["sales_manager", "sales_team_leader"] else TerminationCode.objects.exclude(name="IC")
     
     # Send To Logic: Fetch potential target users (Team Leaders and Sales Managers)
-    target_users = User.objects.filter(groups__name__in=['sales_team_leader']).distinct()
+    target_users = User.objects.filter(groups__name__in=['sales_team_leader', 'sales_manager']).distinct()
 
     error_message = None
 
@@ -356,7 +356,7 @@ def view_saved_leads(request, code_id=None):
 
 
     # Fetch potential target users (Team Leaders and Sales Managers)
-    target_users = User.objects.filter(groups__name__in=['sales_team_leader']).distinct()
+    target_users = User.objects.filter(groups__name__in=['sales_team_leader', 'sales_manager']).distinct()
 
     if request.method == 'POST':
         for lead_termination in leads:

@@ -193,7 +193,7 @@ def view_team_prospect(request, code_id=None, leader_id=None):
         ).distinct()
     
     # Fetch potential target users (Team Leaders and Sales Managers)
-    target_users = User.objects.filter(groups__name__in=['sales_team_leader']).distinct()
+    target_users = User.objects.filter(groups__name__in=['sales_team_leader', 'sales_manager']).distinct()
 
 
     if request.method == 'POST':
