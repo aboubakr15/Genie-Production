@@ -130,7 +130,7 @@
                                                 <td>
                                                     <input type="datetime-local" name="cb_date_{{ lead_detail.lead.id }}"
                                                         class="form-control cb-date"
-                                                        value="{{ lead_detail.tc.CB_date|date:'Y-m-d\TH:i' }}" {% if not lead_detail.tc or lead_detail.tc.flag.name != 'CB' and lead_detail.tc.flag.name != 'PR' and lead_detail.tc.flag.name != 'IC' %} disabled {% endif %}>
+                                                        value="{{ lead_detail.tc.CB_date|date:'Y-m-d\TH:i' }}">
                                                 </td>
 
                                                 <!-- Notes Column -->
@@ -190,8 +190,6 @@
 
 <script>
 
-    console.log("Table: ", table)
-
     function toggleCbDate(select, leadId) {
         const cbDateInput = $('input[name="cb_date_' + leadId + '"]');
         const targetUserSelect = $('select[name="target_user_' + leadId + '"]');
@@ -203,7 +201,7 @@
         // Actually, the previous logic used hardcoded IDs which is risky.
         // Let's use the selected option text to overlap with names.
 
-        if (selectedTerminationCode == "CB" || selectedTerminationCode == "PR" || selectedTerminationCode == "IC") {
+        if (selectedTerminationCode == "CB" || selectedTerminationCode == "PR" || selectedTerminationCode == "IC" || selectedTerminationCode == "ST") {
             cbDateInput.prop('disabled', false);
         } else {
             cbDateInput.prop('disabled', true);

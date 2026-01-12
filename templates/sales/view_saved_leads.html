@@ -481,7 +481,7 @@
 
         // Check for CB/PR/IC codes to enable date input (standardizing with show_detail logic)
         // Adjust these values based on your actual TerminationCode names/full_names
-        if (['CB', 'PR', 'IC', 'Call back', 'Prospect', 'Incoming'].some(code => selectedOption.includes(code) || selectedOption === code)) {
+        if (['CB', 'PR', 'IC', 'ST', 'Call back', 'Prospect', 'Incoming'].some(code => selectedOption.includes(code) || selectedOption === code)) {
              cbDateInput.prop('disabled', false);
         } else {
              cbDateInput.prop('disabled', true);
