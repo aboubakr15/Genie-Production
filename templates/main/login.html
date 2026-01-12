@@ -42,11 +42,46 @@
         border: none;
         text-transform: uppercase;
     }
+    .logo-image {
+        width: 100%;
+        height: 35%;
+        margin-bottom: 40px;
+        border-radius: 25px;
+        box-shadow: 
+            0 0 30px rgba(0, 240, 255, 0.4),
+            0 0 60px rgba(0, 240, 255, 0.2),
+            0 0 90px rgba(0, 240, 255, 0.1);
+        transition: all 0.4s ease;
+        filter: drop-shadow(0 0 15px rgba(0, 240, 255, 0.5));
+        animation: logoGlow 3s ease-in-out infinite;
+    }
+    .logo-image:hover {
+        transform: scale(1.05);
+        box-shadow: 
+            0 0 40px rgba(0, 240, 255, 0.6),
+            0 0 80px rgba(0, 240, 255, 0.3),
+            0 0 120px rgba(0, 240, 255, 0.15);
+        filter: drop-shadow(0 0 20px rgba(0, 240, 255, 0.7));
+    }
+    @keyframes logoGlow {
+        0%, 100% {
+            box-shadow: 
+                0 0 30px rgba(0, 240, 255, 0.4),
+                0 0 60px rgba(0, 240, 255, 0.2),
+                0 0 90px rgba(0, 240, 255, 0.1);
+        }
+        50% {
+            box-shadow: 
+                0 0 40px rgba(0, 240, 255, 0.6),
+                0 0 80px rgba(0, 240, 255, 0.3),
+                0 0 120px rgba(0, 240, 255, 0.15);
+        }
+    }
 </style>
 
 <div class="container d-flex justify-content-center">
     <div class="login-card text-center">
-        <img src="{% static 'assets/Genie_logo.jpeg' %}" alt="Genie Logo" style="width: 120px; margin-bottom: 20px;">
+        <img src="{% static 'assets/Genie_logo.jpeg' %}" alt="Genie Logo" class="logo-image">
         
         <h3 style="color: white; margin-bottom: 30px;">Welcome Back</h3>
 

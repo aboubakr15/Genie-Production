@@ -18,7 +18,8 @@ DEBUG = True
 CSRF_TRUSTED_ORIGINS = [
     "https://app-service-production-4990.up.railway.app",
     "https://genie-copy-production.up.railway.app",
-    'http://127.0.0.1:8000',  # Keep localhost for development
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
 ]
 
 ALLOWED_HOSTS = [
@@ -272,8 +273,4 @@ AI_AGENT_MAX_COMPANIES_PER_TASK = int(os.environ.get("AI_AGENT_MAX_COMPANIES_PER
 AI_AGENT_BATCH_SLEEP_SECONDS = float(os.environ.get("AI_AGENT_BATCH_SLEEP_SECONDS", "1.0"))
 AI_AGENT_RETRY_SLEEP_SECONDS = float(os.environ.get("AI_AGENT_RETRY_SLEEP_SECONDS", "1.0"))
 
-# --- SECURITY FIX ---
-CSRF_TRUSTED_ORIGINS = [
-    'http://127.0.0.1:8000',
-    'http://localhost:8000',
-]
+
