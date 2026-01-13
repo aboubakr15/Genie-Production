@@ -12,11 +12,10 @@ SECRET_KEY = 'django-insecure-x0t)8qx9buoxxbiq#v4hmxdqt&$e(t%#c0=5jj$rthyb1!042@
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Change it to True while Developing, to load your static files
-DEBUG = True
+DEBUG = False
 
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://genie-production-production.up.railway.app',
     "https://app-service-production-4990.up.railway.app",
     "https://genie-copy-1-production.up.railway.app",
     'https://genie-cut-staging.up.railway.app',
@@ -24,7 +23,6 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 ALLOWED_HOSTS = [
-    'genie-production-production.up.railway.app',
     "app-service-production-4990.up.railway.app",
     "genie-copy-1-production.up.railway.app",
     'genie-cut-staging.up.railway.app',
