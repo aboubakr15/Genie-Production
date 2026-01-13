@@ -18,7 +18,6 @@ DEBUG = False
 CSRF_TRUSTED_ORIGINS = [
     'https://genie-production-production.up.railway.app',
     "https://app-service-production-4990.up.railway.app",
-    "https://genie-copy-1-production.up.railway.app/",
     'https://genie-production-x8952.sevalla.app',
     'http://127.0.0.1:8000',  # Keep localhost for development
 ]
@@ -26,7 +25,6 @@ CSRF_TRUSTED_ORIGINS = [
 ALLOWED_HOSTS = [
     'genie-production-production.up.railway.app',
     "app-service-production-4990.up.railway.app",
-    "genie-copy-1-production.up.railway.app",
     'genie-production-x8952.sevalla.app',
     '127.0.0.1',
     'localhost',
