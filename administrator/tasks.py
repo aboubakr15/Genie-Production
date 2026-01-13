@@ -13,6 +13,7 @@ import os
 
 @shared_task
 def cut_sheet_into_ready_show_task(sheet_id, user_id):
+    user = None
     try:
         user = User.objects.get(id=user_id)
         # Get the sheet and mark it as done

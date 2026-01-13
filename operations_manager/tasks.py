@@ -9,6 +9,7 @@ from main.utils import send_websocket_message, NOTIFICATIONS_STATES
 
 @shared_task
 def cut_ready_show_into_sales_shows_task(ready_show_id, user_id):
+    user = None
     try:
         user = User.objects.get(id=user_id)
         # Get the ReadyShow and mark it as done
