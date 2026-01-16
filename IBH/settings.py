@@ -273,3 +273,24 @@ AI_AGENT_CHUNK_SIZE = int(os.environ.get("AI_AGENT_CHUNK_SIZE", "20"))
 AI_AGENT_MAX_COMPANIES_PER_TASK = int(os.environ.get("AI_AGENT_MAX_COMPANIES_PER_TASK", "10000"))
 AI_AGENT_BATCH_SLEEP_SECONDS = float(os.environ.get("AI_AGENT_BATCH_SLEEP_SECONDS", "1.0"))
 AI_AGENT_RETRY_SLEEP_SECONDS = float(os.environ.get("AI_AGENT_RETRY_SLEEP_SECONDS", "1.0"))
+
+# S3 / Railway Storage Configuration
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+if AWS_ACCESS_KEY_ID:
+    INSTALLED_APPS += ['storages']
+    AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
+    AWS_S3_ENDPOINT_URL = os.environ.get('AWS_S3_ENDPOINT_URL')
+    AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'auto')
+    
+    # Optional: Configure object parameters
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': 'max-age=86400',
+    }
+    
+    # Use S3 for default file storage
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    
+    # Ensure usage of v4 signature
+    AWS_S3_SIGNATURE_VERSION = 's3v4'
+

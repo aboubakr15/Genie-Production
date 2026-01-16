@@ -565,17 +565,16 @@ def upload_sheet(request):
         if 'file' in request.FILES:
             file = request.FILES['file']
             
-            # Save the file to a temporary location
-            temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp_sheets')
-            os.makedirs(temp_dir, exist_ok=True)
-            file_path = os.path.join(temp_dir, file.name)
+            # Save the file using the default storage (S3 or local)
+            from django.core.files.storage import default_storage
             
-            with open(file_path, 'wb+') as destination:
-                for chunk in file.chunks():
-                    destination.write(chunk)
-
-            # Call the Celery task
-            process_sheet_task.delay(file_path, file.name, request.user.id)
+            # Use default_storage to save the file. This works for both local and S3.
+            # We use file.name as the path. S3 storage will handle it.
+            # Local storage will save it to MEDIA_ROOT.
+            file_name_in_storage = default_storage.save(file.name, file)
+            
+            # Call the Celery task with the storage file path/name
+            process_sheet_task.delay(file_name_in_storage, file.name, request.user.id)
 
             messages.success(request, "Your sheet has been uploaded and is being processed in the background. You will be notified upon completion.")
             

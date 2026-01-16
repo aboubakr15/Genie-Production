@@ -21,12 +21,16 @@ def process_sheet_task(file_path, original_filename, user_id):
     try:
         user = User.objects.get(id=user_id)
         
-        if original_filename.endswith('.xlsx'):
-            data = pd.read_excel(file_path, engine='openpyxl', header=None)
-        elif original_filename.endswith('.xls'):
-            data = pd.read_excel(file_path, header=None)
-        elif original_filename.endswith('.csv'):
-            data = pd.read_csv(file_path, header=None)
+        from django.core.files.storage import default_storage
+
+        # Read the file from storage (S3 or local)
+        with default_storage.open(file_path) as f:
+            if original_filename.endswith('.xlsx'):
+                data = pd.read_excel(f, engine='openpyxl', header=None)
+            elif original_filename.endswith('.xls'):
+                data = pd.read_excel(f, header=None)
+            elif original_filename.endswith('.csv'):
+                data = pd.read_csv(f, header=None)
         else:
             # In a real-world scenario, you'd want better error handling here
             print(f"Unsupported file format: {original_filename}")
