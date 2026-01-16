@@ -25,16 +25,12 @@ def process_sheet_task(file_path, original_filename, user_id):
 
         # Read the file from storage (S3 or local)
         with default_storage.open(file_path) as f:
-            if original_filename.endswith('.xlsx'):
+            if original_filename.endswith(('.xlsx', '.xls')):
                 data = pd.read_excel(f, engine='openpyxl', header=None)
-            elif original_filename.endswith('.xls'):
-                data = pd.read_excel(f, header=None)
             elif original_filename.endswith('.csv'):
                 data = pd.read_csv(f, header=None)
-        else:
-            # In a real-world scenario, you'd want better error handling here
-            print(f"Unsupported file format: {original_filename}")
-            return
+            else:
+                raise ValueError(f"Unsupported file format: {original_filename}")
 
         if data.empty:
             print(f"Uploaded file is empty: {original_filename}")
