@@ -300,7 +300,7 @@ def search(request):
         shows_queryset = SalesShow.objects.filter(
             Agent__isnull=False,
             name__icontains=query
-        ).select_related('Agent').distinct()
+        ).select_related('Agent').distinct().order_by('-id')
 
         paginator = Paginator(shows_queryset, 20)
         page_number = request.GET.get('page')
