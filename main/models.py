@@ -35,6 +35,7 @@ class Sheet(models.Model):
     is_approved = models.BooleanField(default=False)    #True when the team leader approves the upload process
     is_archived = models.BooleanField(default=False)
     is_x = models.BooleanField(default=False)           # true for x shows - bussiness needs - handled differently   
+    generated_mail_file = models.FileField(upload_to='generated_sheets/', null=True, blank=True)
     
     def __str__(self):
         return self.name

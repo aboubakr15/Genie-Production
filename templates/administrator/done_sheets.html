@@ -18,6 +18,7 @@
                                         <th scope="col">Done By</th>
                                         <th scope="col">Number of Leads</th>
                                         <th scope="col">Done Date</th>
+                                        <th scope="col">Download</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -35,6 +36,13 @@
                                         </td>
                                         <td>{{ sheet.leads.count }}</td>
                                         <td>{{ sheet.done_date|date:"d-m-Y H:i" }}</td>
+                                        <td>
+                                            {% if sheet.generated_mail_file %}
+                                            <a href="{{ sheet.generated_mail_file.url }}" class="btn btn-sm btn-primary" download>Download</a>
+                                            {% else %}
+                                            <span class="text-muted">No File</span>
+                                            {% endif %}
+                                        </td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
