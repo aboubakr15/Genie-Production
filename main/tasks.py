@@ -3,6 +3,7 @@ import pandas as pd
 from .utils import has_valid_contact, is_valid_phone_number, clean_company_name, filter_companies, get_string_value
 from .models import Lead, Sheet, LeadContactNames, LeadEmails, LeadPhoneNumbers, LeadsAverage, User, LeadsColors
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import IntegrityError
 from datetime import datetime, timedelta
 import pytz
 import random
@@ -123,7 +124,12 @@ def process_sheet_task(sheet_id, original_filename, user_id, is_x=False):
                 try:
                     LeadContactNames.objects.get(lead=lead, sheet=sheet, value=contact_name)
                 except ObjectDoesNotExist:
-                    LeadContactNames.objects.create(lead=lead, sheet=sheet, value=contact_name)
+                    # Handle potential race conditions / duplicates gracefully
+                    try:
+                        LeadContactNames.objects.create(lead=lead, sheet=sheet, value=contact_name)
+                    except IntegrityError:
+                        # Another process created the same contact concurrently; safe to ignore
+                        pass
 
             if 'Color' in data.columns:
                 color = get_string_value(row, 'Color')
