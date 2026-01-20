@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import pytz
 import random
 import string
+from io import BytesIO
 
 def generate_random_string(length=5):
     """Generate a random string of fixed length."""
@@ -14,23 +15,24 @@ def generate_random_string(length=5):
     return ''.join(random.choice(letters) for i in range(length))
 
 @shared_task
-def process_sheet_task(file_path, original_filename, user_id):
+def process_sheet_task(sheet_id, original_filename, user_id, is_x=False):
     """
     Celery task to process an uploaded sheet in the background.
     """
     try:
         user = User.objects.get(id=user_id)
-        
-        from django.core.files.storage import default_storage
+        sheet = Sheet.objects.get(id=sheet_id)
 
-        # Read the file from storage (S3 or local)
-        with default_storage.open(file_path) as f:
-            if original_filename.endswith(('.xlsx', '.xls')):
-                data = pd.read_excel(f, engine='openpyxl', header=None)
-            elif original_filename.endswith('.csv'):
-                data = pd.read_csv(f, header=None)
-            else:
-                raise ValueError(f"Unsupported file format: {original_filename}")
+        if not sheet.input_file:
+            raise ValueError("Uploaded file bytes are missing from the database (Sheet.input_file is empty).")
+
+        f = BytesIO(sheet.input_file)
+        if original_filename.endswith(('.xlsx', '.xls')):
+            data = pd.read_excel(f, engine='openpyxl', header=None)
+        elif original_filename.endswith('.csv'):
+            data = pd.read_csv(f, header=None)
+        else:
+            raise ValueError(f"Unsupported file format: {original_filename}")
 
         if data.empty:
             print(f"Uploaded file is empty: {original_filename}")
@@ -72,10 +74,12 @@ def process_sheet_task(file_path, original_filename, user_id):
         random_suffix = generate_random_string(5)
         unique_sheet_name = f"{original_filename}_{random_suffix}"
 
-        sheet, created = Sheet.objects.get_or_create(
-            name=unique_sheet_name,
-            defaults={'user': user, 'created_at': current_time_with_offset}
-        )
+        # Preserve existing Sheet row (created at upload time), just set the final unique name.
+        sheet.name = unique_sheet_name
+        sheet.user = user
+        sheet.created_at = sheet.created_at or current_time_with_offset
+        sheet.is_x = bool(is_x)
+        sheet.save(update_fields=["name", "user", "is_x"])
 
         new_leads_count = 0
 
@@ -129,7 +133,9 @@ def process_sheet_task(file_path, original_filename, user_id):
             sheet.leads.add(lead)
 
         sheet.is_approved = True
-        sheet.save()
+        # Clear stored input file bytes after processing to save DB storage
+        sheet.input_file = None
+        sheet.save(update_fields=["is_approved", "input_file"])
 
         if new_leads_count > 0:
             LeadsAverage.objects.create(

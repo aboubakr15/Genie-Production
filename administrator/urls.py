@@ -1,7 +1,26 @@
 from django.urls import path
-from .views import (add_user , delete_user, edit_user, index, done_sheets, archive_sheet, archived_sheets, credit_management_view,
-                     unarchive_sheet, manage_users, view_logs, cut_sheet_into_ready_show, manage_sheets,view_sheet_admin,
-                     cut_multiple_sheets, manage_x_sheets, cut_x_multiple_sheets, done_x_sheets, archive_sheet_bulk)
+from .views import (
+    add_user,
+    delete_user,
+    edit_user,
+    index,
+    done_sheets,
+    archive_sheet,
+    archived_sheets,
+    credit_management_view,
+    unarchive_sheet,
+    manage_users,
+    view_logs,
+    cut_sheet_into_ready_show,
+    manage_sheets,
+    view_sheet_admin,
+    cut_multiple_sheets,
+    manage_x_sheets,
+    cut_x_multiple_sheets,
+    done_x_sheets,
+    archive_sheet_bulk,
+    download_generated_mail,
+)
 
 app_name="administrator"
 urlpatterns = [
@@ -16,6 +35,7 @@ urlpatterns = [
     path('cut-sheet/<int:sheet_id>/', cut_sheet_into_ready_show, name='cut-sheet'),
     path('sheets-done/', done_sheets, name='sheets-done'),
     path('sheets-x-done/', done_x_sheets, name='sheets-x-done'),
+    path('download-generated-mail/<int:sheet_id>/', download_generated_mail, name='download-generated-mail'),
     path('cut-multiple-sheets/', cut_multiple_sheets, name='cut-multiple-sheets'),
     path('cut-multiple-x-sheets/', cut_x_multiple_sheets, name='cut-multiple-x-sheets'),
     path('archive-sheet/<int:sheet_id>/', archive_sheet, name='archive-sheet'),

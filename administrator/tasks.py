@@ -260,17 +260,13 @@ def cut_sheet_into_ready_show_task(sheet_id, user_id):
                 lead_email = lead_email_obj.value
                 sheet_ws.append([lead.name, lead_email])
 
-        # Save the Excel workbook to the model field (S3)
-        from django.core.files.base import ContentFile
+        # Save the Excel workbook bytes directly in the database instead of external storage
         from io import BytesIO
-        
+
         excel_file = BytesIO()
         workbook.save(excel_file)
-        excel_file.seek(0)
-        
-        # Save to S3 via the model's FileField
-        sheet.generated_mail_file.save(f"{sheet.name}.xlsx", ContentFile(excel_file.read()))
-        sheet.save()
+        sheet.generated_mail_content = excel_file.getvalue()
+        sheet.save(update_fields=["generated_mail_content"])
 
         # Success Notification
         notification = Notification.objects.create(

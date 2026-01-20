@@ -478,16 +478,20 @@ def cut_sheet_into_ready_show(request, sheet_id):
             lead_email = lead_email_obj.value
             sheet_ws.append([lead.name, lead_email])
 
-    # Save the Excel workbook to the model field
-    from django.core.files.base import ContentFile
+    # Save the Excel workbook bytes directly in the database instead of external storage
     from io import BytesIO
-    
+
     excel_file = BytesIO()
     workbook.save(excel_file)
-    excel_file.seek(0)
-    
-    sheet.generated_mail_file.save(f"{sheet.name}.xlsx", ContentFile(excel_file.read()))
-    sheet.save()
+    sheet.generated_mail_content = excel_file.getvalue()
+    sheet.save(update_fields=["generated_mail_content"])
+    # Save the Excel workbook bytes directly in the database instead of external storage
+    from io import BytesIO
+
+    excel_file = BytesIO()
+    workbook.save(excel_file)
+    sheet.generated_mail_content = excel_file.getvalue()
+    sheet.save(update_fields=["generated_mail_content"])
 
     return redirect('administrator:manage-sheets')
 
@@ -529,6 +533,33 @@ def done_sheets(request):
         'done_sheets': done_sheets
     }
     return render(request, 'administrator/done_sheets.html', context)
+
+
+@user_passes_test(lambda user: is_in_group(user, "administrator"))
+def download_generated_mail(request, sheet_id):
+    """
+    Stream the generated email Excel file from the database and clear it afterwards
+    to save storage.
+    """
+    from django.http import HttpResponse
+
+    sheet = get_object_or_404(Sheet, id=sheet_id)
+
+    if not sheet.generated_mail_content:
+        return HttpResponse("No generated email file available for this sheet.", status=404)
+
+    filename = f"{sheet.name}.xlsx"
+    response = HttpResponse(
+        sheet.generated_mail_content,
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+
+    # Clear stored content after download to save storage
+    sheet.generated_mail_content = None
+    sheet.save(update_fields=["generated_mail_content"])
+
+    return response
 
 
 @user_passes_test(lambda user: is_in_group(user, "administrator"))

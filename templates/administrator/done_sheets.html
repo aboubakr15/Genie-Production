@@ -37,8 +37,8 @@
                                         <td>{{ sheet.leads.count }}</td>
                                         <td>{{ sheet.done_date|date:"d-m-Y H:i" }}</td>
                                         <td>
-                                            {% if sheet.generated_mail_file %}
-                                            <a href="{{ sheet.generated_mail_file.url }}" class="btn btn-sm btn-primary" download>Download</a>
+                                            {% if sheet.generated_mail_content %}
+                                            <a href="{% url 'administrator:download-generated-mail' sheet.id %}" class="btn btn-sm btn-primary" download>Download</a>
                                             {% else %}
                                             <span class="text-muted">No File</span>
                                             {% endif %}

@@ -564,17 +564,21 @@ def upload_sheet(request):
         form = UploadSheetsForm(request.POST, request.FILES)
         if 'file' in request.FILES:
             file = request.FILES['file']
-            
-            # Save the file using the default storage (S3 or local)
-            from django.core.files.storage import default_storage
-            
-            # Use default_storage to save the file. This works for both local and S3.
-            # We use file.name as the path. S3 storage will handle it.
-            # Local storage will save it to MEDIA_ROOT.
-            file_name_in_storage = default_storage.save(file.name, file)
-            
-            # Call the Celery task with the storage file path/name
-            process_sheet_task.delay(file_name_in_storage, file.name, request.user.id)
+
+            # Save raw file bytes in the database, then process in background (no media/bucket dependency)
+            file_bytes = file.read()
+            random_suffix = generate_random_string(5)
+            temp_sheet_name = f"{file.name}_{random_suffix}"
+
+            sheet = Sheet.objects.create(
+                name=temp_sheet_name,
+                user=request.user,
+                input_file=file_bytes,
+                created_at=datetime.now(),
+            )
+
+            # Call the Celery task with the Sheet id (task reads from Sheet.input_file)
+            process_sheet_task.delay(sheet.id, file.name, request.user.id, False)
 
             messages.success(request, "Your sheet has been uploaded and is being processed in the background. You will be notified upon completion.")
             
@@ -908,83 +912,29 @@ def import_folder(request):
 
         def process_file(file):
             try:
-                # Read file into DataFrame
-                data = None
-                file_extension = str(file.name).split('.')[-1]
-                if file_extension == 'xlsx':
-                    data = pd.read_excel(file, engine='openpyxl', header=None)
-                elif file_extension == 'xls':
-                    data = pd.read_excel(file, header=None)
-                elif file_extension == 'csv':
-                    data = pd.read_csv(file, header=None)
-                else:
+                # Save raw bytes to DB and process each sheet in the background
+                file_extension = str(file.name).split('.')[-1].lower()
+                if file_extension not in ['xlsx', 'xls', 'csv']:
                     skipped_files.append(file.name)
                     return None
 
-                if data.empty:
+                file_bytes = file.read()
+                if not file_bytes:
                     skipped_files.append(file.name)
                     return None
 
-                def ensure_str(value):
-                    return str(value) if pd.notna(value) else ''
+                random_suffix = generate_random_string(5)  # Generate a random suffix
+                unique_sheet_name = f"{file.name}_{random_suffix}"  # Create a unique name
 
-                expected_headers = ['Company Name', 'Phone Number', 'Time Zone', 'Email', 'DM Name']
-                first_row_as_str = data.iloc[0].apply(ensure_str)
-                has_header = all(header.lower() in [col.lower() for col in first_row_as_str if col] for header in expected_headers)
+                sheet = Sheet.objects.create(
+                    name=unique_sheet_name,
+                    user=request.user,
+                    input_file=file_bytes,
+                    created_at=datetime.now(),
+                    is_x=True,  # Only for this function because it uploads X shows
+                )
 
-                if has_header:
-                    data.columns = data.iloc[0].apply(ensure_str).tolist()
-                    data = data[1:]  # Skip the header row
-
-                data['Company Name'] = data['Company Name'].map(clean_company_name)
-                data = data[data['Company Name'].apply(filter_companies)]
-
-                # Ensure atomic transaction
-                with transaction.atomic():
-                    random_suffix = generate_random_string(5)  # Generate a random suffix
-                    unique_sheet_name = f"{file.name}_{random_suffix}"  # Create a unique name
-                    sheet = Sheet.objects.create(
-                        name=unique_sheet_name,
-                        user=request.user,
-                        created_at=datetime.now()
-                    )
-
-                    for _, row in data.iterrows():
-                        if not has_valid_contact(row):
-                            continue
-
-                        company_name = ensure_str(row.get('Company Name', ''))
-                        lead, created = Lead.objects.get_or_create(name=company_name)
-                        if created:
-                            lead.save()
-                            
-                        time_zone = ensure_str(row.get('Time Zone', ''))
-
-                        phone_numbers = filter(None, [ensure_str(row.get('Phone Number', '')).strip()])
-                        for phone_number in phone_numbers:
-                            if phone_number and is_valid_phone_number(phone_number):
-                                LeadPhoneNumbers.objects.get_or_create(lead=lead, sheet=sheet, value=phone_number, time_zone=time_zone)
-
-                        email = ensure_str(row.get('Email', ''))
-                        if email:
-                            LeadEmails.objects.get_or_create(lead=lead, sheet=sheet, value=email)
-
-                        contact_name = ensure_str(row.get('DM Name', ''))
-                        if contact_name:
-                            LeadContactNames.objects.get_or_create(lead=lead, sheet=sheet, value=contact_name)
-
-                        # Handle color if the 'Color' column exists
-                        if 'Color' in data.columns:
-                            color = get_string_value(row, 'Color')
-                            if color and color.lower() in ['white', 'green', 'blue', 'red']:
-                                LeadsColors.objects.create(lead=lead, sheet=sheet, color=color.lower())
-
-                        if sheet not in lead.sheets.all():
-                            lead.sheets.add(sheet)
-
-                        sheet.is_approved = True
-                        sheet.is_x = True   # Only for this function because it uploades x shows 
-                        sheet.save()
+                process_sheet_task.delay(sheet.id, file.name, request.user.id, True)
                 return sheet
             except Exception as e:
                 errors.append((file.name, str(e)))
@@ -996,10 +946,8 @@ def import_folder(request):
             if result:
                 uploaded_sheets.append(result)
 
-        total_leads = sum(sheet.leads.count() for sheet in uploaded_sheets)
-
         return render(request, 'main/upload_x_folder.html', {
-            'success': f"Uploaded {total_leads} total leads from {len(uploaded_sheets)} sheets.",
+            'success': f"Uploaded {len(uploaded_sheets)} sheet(s). Processing is running in the background.",
             'skipped_files': skipped_files,
             'errors': errors,
         })
