@@ -1,0 +1,610 @@
+/*--------------------------------------------------------------
+# GENIE LIGHT THEME - Bright & Professional
+# Version: 2.0 - Production Ready
+# Description: Light theme inspired by Genie logo colors
+# Colors: Sky Blue (#1E90FF) + Golden Yellow (#FFA500) + Crisp Whites
+--------------------------------------------------------------*/
+
+/* ============================================================
+   1. CSS VARIABLES & THEME FOUNDATION
+   ============================================================ */
+:root[data-theme="light"] {
+    /* --- PRIMARY GENIE LIGHT COLORS --- */
+    --genie-bg: #F0F4F8;              /* Soft Blue-Gray Background */
+    --genie-panel: #FFFFFF;           /* Pure White Panels */
+    --genie-panel-light: #F8FAFB;     /* Subtle Gray-Blue */
+    --genie-border: #D0DCE8;          /* Soft Blue Border */
+    --genie-cyan: #1E90FF;            /* Bright Sky Blue (from logo) */
+    --genie-gold: #FFA500;            /* Golden Orange (from logo) */
+    --genie-gold-gradient: linear-gradient(180deg, #FFA500 0%, #FF8C00 100%);
+
+    /* --- TEXT COLORS --- */
+    --text-primary: #1A202C;          /* Deep Charcoal */
+    --text-secondary: #2D3748;        /* Dark Gray */
+    --text-label: #4A5568;            /* Medium Gray */
+    --text-muted: #718096;            /* Light Gray */
+
+    /* --- STATUS COLORS --- */
+    --genie-success: #10B981;
+    --genie-success-glow: rgba(16, 185, 129, 0.2);
+    --genie-danger: #EF4444;
+    --genie-danger-glow: rgba(239, 68, 68, 0.2);
+    --genie-warning: #F59E0B;
+    --genie-info: #3B82F6;
+
+    /* --- GRADIENTS --- */
+    --primary-gradient: linear-gradient(135deg, #1E90FF 0%, #0066CC 100%);
+    --secondary-gradient: linear-gradient(135deg, #FFA500 0%, #FF8C00 100%);
+    --credit-gradient: linear-gradient(135deg, #1E90FF 0%, #00BFFF 100%);
+    --success-gradient: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+
+    /* --- SHADOWS & EFFECTS --- */
+    --card-shadow: 0 2px 8px rgba(30, 144, 255, 0.1);
+    --card-shadow-hover: 0 8px 24px rgba(30, 144, 255, 0.15);
+    --glow-cyan: 0 0 20px rgba(30, 144, 255, 0.3);
+    --glow-gold: 0 0 20px rgba(255, 165, 0, 0.3);
+
+    /* --- BORDERS & RADIUS --- */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+    --radius-xl: 25px;
+
+    /* --- TRANSITIONS --- */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+    /* --- LAYOUT --- */
+    --header-height: 70px;
+    --sidebar-width: 280px;
+
+    scroll-behavior: smooth;
+}
+
+/* ============================================================
+   2. GLOBAL BASE STYLES
+   ============================================================ */
+[data-theme="light"] body {
+    background-color: var(--genie-bg) !important;
+    background-image:
+        radial-gradient(circle at 20% 20%, rgba(30, 144, 255, 0.05), transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(255, 165, 0, 0.05), transparent 40%);
+    color: var(--text-primary) !important;
+    font-family: 'Outfit', 'Inter', sans-serif;
+    overflow-x: hidden;
+}
+
+/* ============================================================
+   3. CARDS & PANELS
+   ============================================================ */
+[data-theme="light"] .modern-filter-card,
+[data-theme="light"] .card,
+[data-theme="light"] .bg-white,
+[data-theme="light"] .card-body,
+[data-theme="light"] form .card,
+[data-theme="light"] .main-card,
+[data-theme="light"] .credit-card,
+[data-theme="light"] .expiration-card {
+    background-color: var(--genie-panel) !important;
+    background: var(--genie-panel) !important;
+    border: 1px solid var(--genie-border) !important;
+    color: var(--text-primary) !important;
+    box-shadow: var(--card-shadow) !important;
+    border-radius: var(--radius-md) !important;
+    transition: var(--transition-normal);
+}
+
+[data-theme="light"] .card:hover {
+    box-shadow: var(--card-shadow-hover) !important;
+    transform: translateY(-2px);
+    border-color: var(--genie-cyan) !important;
+}
+
+[data-theme="light"] .card-header,
+[data-theme="light"] .card-header-custom {
+    background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%) !important;
+    border-bottom: 2px solid var(--genie-cyan) !important;
+    color: var(--text-primary) !important;
+    padding: 1.25rem 1.5rem;
+}
+
+[data-theme="light"] .card-title {
+    color: var(--genie-cyan) !important;
+    font-weight: 700 !important;
+    margin-bottom: 0;
+}
+
+[data-theme="light"] .card-body {
+    padding: 1.5rem;
+    background: var(--genie-panel) !important;
+}
+
+/* ============================================================
+   4. FORM CONTROLS
+   ============================================================ */
+[data-theme="light"] .form-control,
+[data-theme="light"] .form-select,
+[data-theme="light"] .form-textarea,
+[data-theme="light"] input[type="text"],
+[data-theme="light"] input[type="email"],
+[data-theme="light"] input[type="password"],
+[data-theme="light"] input[type="number"],
+[data-theme="light"] input[type="date"],
+[data-theme="light"] input[type="search"],
+[data-theme="light"] input[type="tel"],
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+    background-color: var(--genie-panel-light) !important;
+    border: 1px solid var(--genie-border) !important;
+    color: var(--text-primary) !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 0.65rem 1rem;
+    font-size: 0.95rem;
+    transition: var(--transition-fast);
+    color-scheme: light;
+}
+
+[data-theme="light"] .form-control:focus,
+[data-theme="light"] .form-select:focus,
+[data-theme="light"] input:focus,
+[data-theme="light"] select:focus,
+[data-theme="light"] textarea:focus {
+    background-color: #FFFFFF !important;
+    color: var(--text-primary) !important;
+    border-color: var(--genie-cyan) !important;
+    box-shadow: 0 0 0 3px rgba(30, 144, 255, 0.1) !important;
+    outline: none;
+    transform: translateY(-1px);
+}
+
+[data-theme="light"] .form-control:read-only {
+    background-color: #F3F4F6 !important;
+    opacity: 0.8;
+}
+
+/* Date Picker Icon */
+[data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(38%) sepia(96%) saturate(2434%) hue-rotate(197deg) brightness(102%) contrast(102%);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+[data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    transform: scale(1.2);
+    filter: invert(38%) sepia(96%) saturate(2434%) hue-rotate(197deg) brightness(120%) contrast(102%);
+}
+
+/* ============================================================
+   5. LABELS & TEXT
+   ============================================================ */
+[data-theme="light"] .form-label,
+[data-theme="light"] label,
+[data-theme="light"] .text-label-grey,
+[data-theme="light"] .form-label-custom,
+[data-theme="light"] strong {
+    color: var(--text-label) !important;
+    font-weight: 600 !important;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+[data-theme="light"] .form-text-custom,
+[data-theme="light"] small.text-muted {
+    color: var(--text-muted) !important;
+    font-size: 0.875rem;
+}
+
+[data-theme="light"] .display-4,
+[data-theme="light"] h1,
+[data-theme="light"] h2,
+[data-theme="light"] h3,
+[data-theme="light"] h4,
+[data-theme="light"] h5,
+[data-theme="light"] h6 {
+    color: var(--genie-cyan) !important;
+    font-weight: 700;
+}
+
+/* ============================================================
+   6. BUTTONS
+   ============================================================ */
+[data-theme="light"] .btn-primary,
+[data-theme="light"] .btn-primary-custom,
+[data-theme="light"] button[type="submit"],
+[data-theme="light"] .btn-login {
+    background: var(--genie-gold-gradient) !important;
+    color: #FFFFFF !important;
+    font-weight: 700;
+    border: none !important;
+    text-transform: uppercase;
+    border-radius: var(--radius-sm) !important;
+    padding: 0.75rem 1.5rem;
+    transition: var(--transition-normal);
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(255, 165, 0, 0.2);
+}
+
+[data-theme="light"] .btn-primary:hover,
+[data-theme="light"] button[type="submit"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 165, 0, 0.3);
+    background: linear-gradient(180deg, #FFB520 0%, #FF9500 100%) !important;
+}
+
+[data-theme="light"] .btn-outline-primary {
+    background: transparent !important;
+    border: 2px solid var(--genie-cyan) !important;
+    color: var(--genie-cyan) !important;
+}
+
+[data-theme="light"] .btn-outline-primary:hover {
+    background: var(--genie-cyan) !important;
+    color: #FFFFFF !important;
+}
+
+[data-theme="light"] .btn-outline-info {
+    border-color: var(--genie-cyan) !important;
+    color: var(--genie-cyan) !important;
+}
+
+[data-theme="light"] .btn-outline-danger {
+    border-color: var(--genie-danger) !important;
+    color: var(--genie-danger) !important;
+}
+
+[data-theme="light"] .btn-success {
+    background: var(--genie-success) !important;
+    color: white !important;
+    border: none;
+}
+
+[data-theme="light"] .btn-secondary {
+    background: #E5E7EB !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--genie-border) !important;
+}
+
+/* ============================================================
+   7. ICONS
+   ============================================================ */
+[data-theme="light"] .card-body i,
+[data-theme="light"] .glow-icon {
+    color: var(--genie-cyan) !important;
+    transition: var(--transition-normal);
+}
+
+[data-theme="light"] .card:hover i,
+[data-theme="light"] .btn:hover .glow-icon {
+    color: var(--genie-gold) !important;
+    transform: scale(1.1);
+}
+
+[data-theme="light"] .icon-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    padding: 20px;
+    margin-bottom: 10px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, rgba(30, 144, 255, 0.1), rgba(30, 144, 255, 0.05));
+}
+
+/* ============================================================
+   8. TABLES
+   ============================================================ */
+[data-theme="light"] .table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--text-secondary);
+    border-color: var(--genie-border) !important;
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="light"] .table thead,
+[data-theme="light"] .table th {
+    background: linear-gradient(135deg, #EBF5FF 0%, #DBEAFE 100%) !important;
+    color: var(--genie-cyan) !important;
+    border-bottom: 2px solid var(--genie-cyan) !important;
+    font-weight: 700;
+    padding: 1rem 0.75rem;
+}
+
+[data-theme="light"] .table tbody tr {
+    border-bottom: 1px solid var(--genie-border);
+    transition: var(--transition-fast);
+}
+
+[data-theme="light"] .table tbody tr:hover {
+    background: rgba(30, 144, 255, 0.05) !important;
+}
+
+[data-theme="light"] .table td {
+    color: var(--text-secondary) !important;
+    padding: 0.875rem 0.75rem;
+    vertical-align: middle;
+}
+
+[data-theme="light"] .table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(30, 144, 255, 0.02);
+}
+
+/* ============================================================
+   9. HEADER & SIDEBAR
+   ============================================================ */
+[data-theme="light"] #header,
+[data-theme="light"] .header,
+[data-theme="light"] #sidebar,
+[data-theme="light"] .sidebar {
+    background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFB 100%) !important;
+    border-color: var(--genie-border) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .sidebar-nav .nav-link {
+    background: transparent !important;
+    color: var(--text-label) !important;
+    transition: var(--transition-fast);
+    border-radius: var(--radius-sm);
+    margin: 0.25rem 0.5rem;
+    padding: 0.75rem 1rem;
+}
+
+[data-theme="light"] .sidebar-nav .nav-link:hover,
+[data-theme="light"] .sidebar-nav .nav-link.active {
+    background: linear-gradient(135deg, rgba(30, 144, 255, 0.1), rgba(30, 144, 255, 0.05)) !important;
+    color: var(--genie-cyan) !important;
+    font-weight: 600;
+}
+
+/* ============================================================
+   10. STATUS & BADGE COLORS
+   ============================================================ */
+[data-theme="light"] .text-genie-success,
+[data-theme="light"] .text-success {
+    color: var(--genie-success) !important;
+}
+
+[data-theme="light"] .text-genie-danger,
+[data-theme="light"] .text-danger {
+    color: var(--genie-danger) !important;
+}
+
+[data-theme="light"] .text-warning {
+    color: var(--genie-warning) !important;
+}
+
+[data-theme="light"] .badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+[data-theme="light"] .bg-success {
+    background: var(--genie-success) !important;
+}
+
+[data-theme="light"] .bg-danger {
+    background: var(--genie-danger) !important;
+}
+
+/* ============================================================
+   11. SPECIAL COMPONENTS
+   ============================================================ */
+[data-theme="light"] .hero-section {
+    background: var(--primary-gradient);
+    border-radius: var(--radius-lg);
+    padding: 3rem 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 24px rgba(30, 144, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+[data-theme="light"] .hero-icon {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: var(--radius-lg);
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-normal);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .hero-icon:hover {
+    transform: scale(1.1) rotate(5deg);
+}
+
+[data-theme="light"] .feature-badge {
+    background: var(--secondary-gradient);
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-block;
+    margin: 0.2rem;
+    box-shadow: 0 2px 8px rgba(255, 165, 0, 0.2);
+}
+
+[data-theme="light"] .stats-row {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+[data-theme="light"] .stat-number {
+    font-size: 1.8rem;
+    font-weight: bold;
+    display: block;
+    color: white;
+}
+
+[data-theme="light"] .credit-card {
+    background: var(--credit-gradient) !important;
+    border-radius: var(--radius-lg) !important;
+    padding: 2rem;
+    box-shadow: 0 8px 24px rgba(30, 144, 255, 0.2) !important;
+}
+
+[data-theme="light"] .expiration-card {
+    background: var(--secondary-gradient) !important;
+    border-radius: var(--radius-lg) !important;
+    padding: 2rem;
+    box-shadow: 0 8px 24px rgba(255, 165, 0, 0.2) !important;
+}
+
+[data-theme="light"] .credit-amount {
+    font-size: 3.5rem;
+    font-weight: bold;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+    color: white;
+}
+
+/* ============================================================
+   12. ALERTS & TOASTS
+   ============================================================ */
+[data-theme="light"] .alert {
+    background: var(--genie-panel) !important;
+    border: 1px solid var(--genie-border) !important;
+    color: var(--text-primary) !important;
+    border-radius: var(--radius-md) !important;
+}
+
+[data-theme="light"] .alert-success {
+    border-color: var(--genie-success) !important;
+    background: rgba(16, 185, 129, 0.1) !important;
+}
+
+[data-theme="light"] .alert-danger {
+    border-color: var(--genie-danger) !important;
+    background: rgba(239, 68, 68, 0.1) !important;
+}
+
+[data-theme="light"] .alert-warning {
+    border-color: var(--genie-warning) !important;
+    background: rgba(245, 158, 11, 0.1) !important;
+}
+
+[data-theme="light"] .toast {
+    background: var(--genie-panel) !important;
+    border: 1px solid var(--genie-border) !important;
+    color: var(--text-primary) !important;
+}
+
+/* ============================================================
+   13. PAGINATION
+   ============================================================ */
+[data-theme="light"] .pagination .page-link {
+    background: var(--genie-panel) !important;
+    border: 1px solid var(--genie-border) !important;
+    color: var(--genie-cyan) !important;
+    border-radius: var(--radius-sm) !important;
+    margin: 0 0.25rem;
+    transition: var(--transition-fast);
+}
+
+[data-theme="light"] .pagination .page-link:hover {
+    background: var(--genie-cyan) !important;
+    color: #FFFFFF !important;
+    transform: translateY(-2px);
+}
+
+[data-theme="light"] .pagination .page-item.active .page-link {
+    background: var(--genie-cyan) !important;
+    color: #FFFFFF !important;
+}
+
+/* ============================================================
+   14. TABS & NAV
+   ============================================================ */
+[data-theme="light"] .nav-tabs {
+    border-bottom: 2px solid var(--genie-border) !important;
+}
+
+[data-theme="light"] .nav-tabs .nav-link {
+    background: transparent;
+    color: var(--text-label) !important;
+    border: none;
+    border-radius: var(--radius-sm);
+    margin-right: 0.5rem;
+    transition: var(--transition-fast);
+}
+
+[data-theme="light"] .nav-tabs .nav-link:hover {
+    background: rgba(30, 144, 255, 0.1);
+    color: var(--genie-cyan) !important;
+}
+
+[data-theme="light"] .nav-tabs .nav-link.active {
+    background: #FFFFFF !important;
+    color: var(--genie-cyan) !important;
+    border-bottom: 3px solid var(--genie-cyan) !important;
+    font-weight: 700;
+}
+
+/* ============================================================
+   15. DROPDOWNS
+   ============================================================ */
+[data-theme="light"] .dropdown-menu {
+    background: var(--genie-panel) !important;
+    border: 1px solid var(--genie-border) !important;
+    border-radius: var(--radius-md) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .dropdown-item {
+    color: var(--text-secondary) !important;
+    transition: var(--transition-fast);
+}
+
+[data-theme="light"] .dropdown-item:hover {
+    background: rgba(30, 144, 255, 0.1) !important;
+    color: var(--genie-cyan) !important;
+}
+
+/* ============================================================
+   16. THEME TOGGLE BUTTON STYLES
+   ============================================================ */
+[data-theme="light"] .theme-toggle-btn {
+    background: linear-gradient(135deg, #1E90FF 0%, #0066CC 100%) !important;
+    color: white !important;
+    border: none !important;
+    transition: var(--transition-normal);
+}
+
+[data-theme="light"] .theme-toggle-btn:hover {
+    background: linear-gradient(135deg, #0066CC 0%, #004C99 100%) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(30, 144, 255, 0.3);
+}
+
+/* ============================================================
+   17. RESPONSIVE DESIGN
+   ============================================================ */
+@media (max-width: 768px) {
+    [data-theme="light"] .hero-section {
+        padding: 2rem 1.5rem;
+    }
+
+    [data-theme="light"] .hero-icon {
+        width: 60px;
+        height: 60px;
+    }
+
+    [data-theme="light"] .credit-amount {
+        font-size: 2.5rem;
+    }
+
+    [data-theme="light"] .card-body {
+        padding: 1rem;
+    }
+}

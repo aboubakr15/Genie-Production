@@ -6,140 +6,58 @@
   <meta charset="utf-8" />
   <meta content="width=device-width, initial-scale=1.0" name="viewport" />
 
-  <title>The Genie</title>
+  <title>{% block title %}The Genie{% endblock %}</title>
+  <meta name="description" content="{% block description %}Genie - Smart Lead Management Platform{% endblock %}" />
   <link rel="icon" href="{% static 'assets/Genie_logo.jpeg' %}" type="image/x-icon">
 
+  <!-- Google Fonts -->
   <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
+  <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
+
+  <!-- Bootstrap 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Vendor CSS -->
   <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet" />
+
+  <!-- Main CSS Files -->
   <link href="{% static 'assets/css/style.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/css/genie-theme.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/css/genie-theme-light.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/css/header-theme.css' %}" rel="stylesheet" />
 
-  <style>
-    /* --- GENIE THEME: FINAL PRODUCTION (With Dark Calendar) --- */
-    :root {
-        --genie-bg: #050A14;        /* Page Background */
-        --genie-panel: #111827;     /* Card/Bar Background */
-        --genie-border: #374151;    /* Borders */
-        --genie-cyan: #00F0FF;      /* Icons/Text */
-        --genie-gold: #FFD700;      /* Buttons */
-        --text-label: #94a3b8;      /* Darker Grey for Labels */
-    }
+  <!-- Theme Switcher (load early to prevent flash) -->
+  <script src="{% static 'assets/js/theme-switcher.js' %}"></script>
 
-    /* 1. GLOBAL BACKGROUND */
-    body {
-        background-color: var(--genie-bg) !important;
-        color: #ffffff !important;
-        font-family: 'Outfit', sans-serif;
-    }
-
-    /* 2. THE "WHITE STRAP" KILLER */
-    .modern-filter-card, 
-    .card, 
-    .bg-white, 
-    .card-body,
-    form .card {
-        background-color: var(--genie-panel) !important;
-        background: var(--genie-panel) !important;
-        border: 1px solid var(--genie-border) !important;
-        color: white !important;
-        box-shadow: none !important;
-        border-radius: 12px !important;
-    }
-
-    /* 3. INPUT FIELDS & DATE PICKER STYLING */
-    .form-control, 
-    .form-select, 
-    input[type="text"], 
-    input[type="date"], 
-    input[type="search"] {
-        background-color: #1F2937 !important; 
-        border: 1px solid var(--genie-border) !important;
-        color: white !important;
-        border-radius: 8px !important;
-        
-        /* THIS LINE FORCES THE CALENDAR POPUP TO BE DARK */
-        color-scheme: dark; 
-    }
-
-    /* Customizing the Calendar Icon inside the Date Input */
-    input[type="date"]::-webkit-calendar-picker-indicator {
-        /* This filter turns the icon Neon Cyan */
-        filter: invert(76%) sepia(61%) saturate(3547%) hue-rotate(160deg) brightness(101%) contrast(104%);
-        cursor: pointer;
-        transition: transform 0.2s;
-    }
-    input[type="date"]::-webkit-calendar-picker-indicator:hover {
-        transform: scale(1.2); /* Slight zoom on hover */
-    }
-
-    /* 4. LABELS (Darker Grey) */
-    .form-label, label {
-        color: var(--text-label) !important;
-        font-weight: 600 !important;
-        margin-bottom: 5px;
-    }
-
-    /* 5. ICONS (Padding Fix + Glow) */
-    .card-body i {
-        display: inline-block;
-        padding: 20px !important;  /* Space inside the box */
-        margin-bottom: 10px;
-        color: var(--genie-cyan) !important;
-        transition: all 0.3s ease;
-    }
-    /* Only glow when hovering the CARD or the ICON */
-    .card:hover i {
-        color: #fff !important;
-        text-shadow: 0 0 15px var(--genie-cyan);
-        transform: scale(1.1);
-    }
-
-    /* 6. DASHBOARD NUMBERS */
-    .display-4, h1, h2, h3, h5 {
-        color: var(--genie-cyan) !important;
-        font-weight: 600;
-    }
-
-    /* 7. BUTTONS */
-    .btn-primary, button[type="submit"] {
-        background: linear-gradient(180deg, #FFD700 0%, #E5C100 100%) !important;
-        color: #000 !important;
-        font-weight: 800;
-        border: none !important;
-        text-transform: uppercase;
-    }
-
-    /* 8. HEADER & SIDEBAR */
-    #header, .header, #sidebar, .sidebar {
-        background-color: var(--genie-panel) !important;
-        border-color: var(--genie-border) !important;
-    }
-    .sidebar-nav .nav-link { background: transparent !important; color: #9ca3af !important; }
-    .sidebar-nav .nav-link:hover, .sidebar-nav .nav-link.active {
-        background: rgba(0, 240, 255, 0.1) !important;
-        color: var(--genie-cyan) !important;
-    }
-    
-    /* 9. TABLES */
-    .table { --bs-table-bg: transparent; --bs-table-color: white; border-color: var(--genie-border); }
-    th { color: var(--genie-cyan) !important; border-bottom: 1px solid var(--genie-cyan) !important; }
-</style>
+  <!-- Page-Specific Styles Block -->
+  {% block extra_styles %}{% endblock %}
 </head>
 
 <body>
+  <!-- Header -->
   {% include 'layout/header.html' %}
 
+  <!-- Sidebar -->
   {% include 'layout/sidebar.html' %}
 
-  <main id="main" class="main">
+  <!-- Main Content Area -->
+  <main id="main" class="main fade-in">
     {% block content %}{% endblock %}
   </main>
 
+  <!-- jQuery (if needed for legacy code) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- Bootstrap Bundle with Popper -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Main JS -->
   <script src="{% static 'assets/js/main.js' %}"></script>
+
+  <!-- Page-Specific Scripts Block -->
+  {% block extra_scripts %}{% endblock %}
 </body>
 </html>

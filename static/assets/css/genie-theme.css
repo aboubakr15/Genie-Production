@@ -1,0 +1,716 @@
+/*--------------------------------------------------------------
+# GENIE THEME - CENTRALIZED STYLING SYSTEM
+# Version: 2.0 - Production Ready
+# Description: Complete theme system for Genie application
+--------------------------------------------------------------*/
+
+/* ============================================================
+   1. CSS VARIABLES & THEME FOUNDATION
+   ============================================================ */
+:root {
+    /* --- PRIMARY GENIE COLORS --- */
+    --genie-bg: #050A14;              /* Deep Space Background */
+    --genie-panel: #111827;           /* Card/Panel Background */
+    --genie-panel-light: #1F2937;     /* Input/Secondary Panel */
+    --genie-border: #374151;          /* Borders */
+    --genie-cyan: #00F0FF;            /* Neon Cyan (Icons/Accents) */
+    --genie-gold: #FFD700;            /* Gold Buttons */
+    --genie-gold-gradient: linear-gradient(180deg, #FFD700 0%, #E5C100 100%);
+
+    /* --- TEXT COLORS --- */
+    --text-primary: #ffffff;
+    --text-secondary: #e5e7eb;
+    --text-label: #94a3b8;            /* Darker Grey for Labels */
+    --text-muted: #6b7280;
+
+    /* --- STATUS COLORS (With Glow) --- */
+    --genie-success: #10b981;
+    --genie-success-glow: rgba(16, 185, 129, 0.3);
+    --genie-danger: #ef4444;
+    --genie-danger-glow: rgba(239, 68, 68, 0.3);
+    --genie-warning: #f59e0b;
+    --genie-info: #3b82f6;
+
+    /* --- GRADIENTS --- */
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --credit-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+
+    /* --- SHADOWS & EFFECTS --- */
+    --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    --card-shadow-hover: 0 15px 40px rgba(0, 240, 255, 0.15);
+    --glow-cyan: 0 0 15px rgba(0, 240, 255, 0.5);
+    --glow-gold: 0 0 20px rgba(255, 215, 0, 0.4);
+
+    /* --- BORDERS & RADIUS --- */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+    --radius-xl: 25px;
+
+    /* --- TRANSITIONS --- */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+    /* --- LAYOUT --- */
+    --header-height: 70px;
+    --sidebar-width: 280px;
+
+    /* Smooth scrolling */
+    scroll-behavior: smooth;
+}
+
+/* ============================================================
+   2. GLOBAL BASE STYLES
+   ============================================================ */
+body {
+    background-color: var(--genie-bg) !important;
+    background-image: radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.03), transparent 60%);
+    color: var(--text-primary) !important;
+    font-family: 'Outfit', 'Inter', sans-serif;
+    overflow-x: hidden;
+}
+
+/* Smooth text rendering */
+* {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================================
+   3. CARDS & PANELS
+   ============================================================ */
+.modern-filter-card,
+.card,
+.bg-white,
+.card-body,
+form .card,
+.main-card,
+.credit-card,
+.expiration-card {
+    background-color: var(--genie-panel) !important;
+    background: var(--genie-panel) !important;
+    border: 1px solid var(--genie-border) !important;
+    color: var(--text-primary) !important;
+    box-shadow: var(--card-shadow) !important;
+    border-radius: var(--radius-md) !important;
+    transition: var(--transition-normal);
+}
+
+.card:hover {
+    box-shadow: var(--card-shadow-hover) !important;
+    transform: translateY(-2px);
+}
+
+.card-header,
+.card-header-custom {
+    background-color: var(--genie-panel) !important;
+    border-bottom: 1px solid var(--genie-border) !important;
+    color: var(--text-primary) !important;
+    padding: 1.25rem 1.5rem;
+}
+
+.card-title {
+    color: var(--genie-cyan) !important;
+    font-weight: 600 !important;
+    margin-bottom: 0;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* ============================================================
+   4. FORM CONTROLS (Inputs, Selects, Textareas)
+   ============================================================ */
+.form-control,
+.form-select,
+.form-textarea,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="search"],
+input[type="tel"],
+select,
+textarea {
+    background-color: var(--genie-panel-light) !important;
+    border: 1px solid var(--genie-border) !important;
+    color: var(--text-primary) !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 0.65rem 1rem;
+    font-size: 0.95rem;
+    transition: var(--transition-fast);
+
+    /* Dark mode calendar/picker */
+    color-scheme: dark;
+}
+
+.form-control:focus,
+.form-select:focus,
+.form-textarea:focus,
+input:focus,
+select:focus,
+textarea:focus {
+    background-color: var(--genie-panel-light) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--genie-cyan) !important;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.3) !important;
+    outline: none;
+    transform: translateY(-1px);
+}
+
+.form-control:read-only {
+    background-color: var(--genie-panel) !important;
+    opacity: 0.7;
+}
+
+/* Date Picker Calendar Icon (Cyan Glow) */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(76%) sepia(61%) saturate(3547%) hue-rotate(160deg) brightness(101%) contrast(104%);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    transform: scale(1.2);
+}
+
+/* ============================================================
+   5. LABELS & TEXT
+   ============================================================ */
+.form-label,
+label,
+.text-label-grey,
+.form-label-custom,
+strong {
+    color: var(--text-label) !important;
+    font-weight: 600 !important;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.form-text-custom,
+small.text-muted {
+    color: var(--text-muted) !important;
+    font-size: 0.875rem;
+}
+
+/* Headings */
+.display-4,
+h1, h2, h3, h4, h5, h6 {
+    color: var(--genie-cyan) !important;
+    font-weight: 600;
+}
+
+h1 { font-size: 2rem; }
+h2 { font-size: 1.75rem; }
+h3 { font-size: 1.5rem; }
+h4 { font-size: 1.25rem; }
+h5 { font-size: 1.1rem; }
+
+/* ============================================================
+   6. BUTTONS
+   ============================================================ */
+.btn-primary,
+.btn-primary-custom,
+button[type="submit"],
+.btn-login {
+    background: var(--genie-gold-gradient) !important;
+    color: #000 !important;
+    font-weight: 600;
+    border: none !important;
+    text-transform: capitalize;
+    border-radius: var(--radius-sm) !important;
+    padding: 0.5rem 1.25rem;
+    font-size: 0.9rem;
+    transition: var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.3px;
+}
+
+.btn-primary:hover,
+.btn-primary-custom:hover,
+button[type="submit"]:hover,
+.btn-login:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+    filter: brightness(1.1);
+}
+
+/* Small button variant */
+.btn-sm {
+    padding: 0.375rem 1rem !important;
+    font-size: 0.85rem !important;
+}
+
+/* Large button variant */
+.btn-lg {
+    padding: 0.625rem 1.5rem !important;
+    font-size: 0.95rem !important;
+}
+
+.btn-outline-primary {
+    background: transparent !important;
+    border: 2px solid var(--genie-cyan) !important;
+    color: var(--genie-cyan) !important;
+}
+
+.btn-outline-primary:hover {
+    background: var(--genie-cyan) !important;
+    color: #000 !important;
+}
+
+.btn-outline-info {
+    border-color: var(--genie-cyan) !important;
+    color: var(--genie-cyan) !important;
+}
+
+.btn-outline-danger {
+    border-color: var(--genie-danger) !important;
+    color: var(--genie-danger) !important;
+}
+
+.btn-success {
+    background: var(--genie-success) !important;
+    color: white !important;
+    border: none;
+}
+
+.btn-secondary {
+    background: var(--genie-panel-light) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--genie-border) !important;
+}
+
+/* ============================================================
+   7. ICONS (With Glow Effects)
+   ============================================================ */
+.card-body i,
+.glow-icon {
+    color: var(--genie-cyan) !important;
+    transition: var(--transition-normal);
+    text-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+}
+
+.card:hover i,
+.btn:hover .glow-icon {
+    color: #fff !important;
+    text-shadow: var(--glow-cyan);
+    transform: scale(1.1);
+}
+
+/* Icon with padding (Dashboard cards) */
+.icon-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    padding: 20px;
+    margin-bottom: 10px;
+    border-radius: var(--radius-md);
+    background: rgba(0, 240, 255, 0.1);
+}
+
+/* ============================================================
+   8. TABLES
+   ============================================================ */
+.table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--text-secondary);
+    border-color: var(--genie-border) !important;
+    color: var(--text-secondary) !important;
+}
+
+.table thead,
+.table th {
+    color: var(--genie-cyan) !important;
+    border-bottom: 2px solid var(--genie-cyan) !important;
+    background: var(--genie-panel-light) !important;
+    font-weight: 600;
+    padding: 1rem 0.75rem;
+    white-space: nowrap;
+}
+
+.table tbody tr {
+    border-bottom: 1px solid var(--genie-border);
+    transition: var(--transition-fast);
+}
+
+.table tbody tr:hover {
+    background: rgba(0, 240, 255, 0.05) !important;
+}
+
+.table td {
+    color: var(--text-secondary) !important;
+    padding: 0.875rem 0.75rem;
+    vertical-align: middle;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* ============================================================
+   9. HEADER & SIDEBAR
+   ============================================================ */
+#header,
+.header,
+#sidebar,
+.sidebar {
+    background-color: var(--genie-panel) !important;
+    border-color: var(--genie-border) !important;
+}
+
+.sidebar-nav .nav-link {
+    background: transparent !important;
+    color: var(--text-label) !important;
+    transition: var(--transition-fast);
+    border-radius: var(--radius-sm);
+    margin: 0.25rem 0.5rem;
+    padding: 0.75rem 1rem;
+}
+
+.sidebar-nav .nav-link:hover,
+.sidebar-nav .nav-link.active {
+    background: rgba(0, 240, 255, 0.1) !important;
+    color: var(--genie-cyan) !important;
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+
+/* ============================================================
+   10. STATUS & BADGE COLORS
+   ============================================================ */
+.text-genie-success,
+.text-success {
+    color: var(--genie-success) !important;
+    text-shadow: 0 0 8px var(--genie-success-glow);
+}
+
+.text-genie-danger,
+.text-danger {
+    color: var(--genie-danger) !important;
+    text-shadow: 0 0 8px var(--genie-danger-glow);
+}
+
+.text-warning {
+    color: var(--genie-warning) !important;
+}
+
+.badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.bg-success {
+    background: var(--genie-success) !important;
+}
+
+.bg-danger {
+    background: var(--genie-danger) !important;
+}
+
+/* ============================================================
+   11. SPECIAL COMPONENTS
+   ============================================================ */
+
+/* Hero Section (AI Agent Dashboard) */
+.hero-section {
+    background: var(--primary-gradient);
+    border-radius: var(--radius-lg);
+    padding: 3rem 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--card-shadow);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-icon {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border-radius: var(--radius-lg);
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-normal);
+}
+
+.hero-icon:hover {
+    transform: scale(1.1) rotate(5deg);
+}
+
+/* Feature Badges */
+.feature-badge {
+    background: var(--secondary-gradient);
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    display: inline-block;
+    margin: 0.2rem;
+}
+
+/* Stats Display */
+.stats-row {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+}
+
+.stat-item {
+    text-align: center;
+    color: white;
+}
+
+.stat-number {
+    font-size: 1.8rem;
+    font-weight: bold;
+    display: block;
+    color: var(--genie-cyan);
+}
+
+/* Credit Cards */
+.credit-card,
+.expiration-card {
+    border-radius: var(--radius-lg) !important;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.credit-card {
+    background: var(--credit-gradient) !important;
+}
+
+.expiration-card {
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%) !important;
+}
+
+.credit-amount {
+    font-size: 3.5rem;
+    font-weight: bold;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+/* ============================================================
+   12. ANIMATIONS
+   ============================================================ */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes logoGlow {
+    0%, 100% {
+        box-shadow:
+            0 0 30px rgba(0, 240, 255, 0.4),
+            0 0 60px rgba(0, 240, 255, 0.2);
+    }
+    50% {
+        box-shadow:
+            0 0 40px rgba(0, 240, 255, 0.6),
+            0 0 80px rgba(0, 240, 255, 0.3);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* Apply animations */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+.logo-glow {
+    animation: logoGlow 3s ease-in-out infinite;
+}
+
+/* ============================================================
+   13. ALERTS & TOASTS
+   ============================================================ */
+.alert {
+    background: var(--genie-panel) !important;
+    border: 1px solid var(--genie-border) !important;
+    color: var(--text-primary) !important;
+    border-radius: var(--radius-md) !important;
+}
+
+.alert-success {
+    border-color: var(--genie-success) !important;
+    background: rgba(16, 185, 129, 0.1) !important;
+}
+
+.alert-danger {
+    border-color: var(--genie-danger) !important;
+    background: rgba(239, 68, 68, 0.1) !important;
+}
+
+.alert-warning {
+    border-color: var(--genie-warning) !important;
+    background: rgba(245, 158, 11, 0.1) !important;
+}
+
+.toast {
+    background: var(--genie-panel) !important;
+    border: 1px solid var(--genie-border) !important;
+    color: var(--text-primary) !important;
+}
+
+/* ============================================================
+   14. PAGINATION
+   ============================================================ */
+.pagination .page-link {
+    background: var(--genie-panel) !important;
+    border: 1px solid var(--genie-border) !important;
+    color: var(--genie-cyan) !important;
+    border-radius: var(--radius-sm) !important;
+    margin: 0 0.25rem;
+    transition: var(--transition-fast);
+}
+
+.pagination .page-link:hover {
+    background: var(--genie-cyan) !important;
+    color: #000 !important;
+    transform: translateY(-2px);
+}
+
+.pagination .page-item.active .page-link {
+    background: var(--genie-cyan) !important;
+    color: #000 !important;
+}
+
+.pagination .page-item.disabled .page-link {
+    opacity: 0.5;
+}
+
+/* ============================================================
+   15. TABS & NAV
+   ============================================================ */
+.nav-tabs {
+    border-bottom: 2px solid var(--genie-border) !important;
+}
+
+.nav-tabs .nav-link {
+    background: transparent;
+    color: var(--text-label) !important;
+    border: none;
+    border-radius: var(--radius-sm);
+    margin-right: 0.5rem;
+    transition: var(--transition-fast);
+}
+
+.nav-tabs .nav-link:hover {
+    background: rgba(0, 240, 255, 0.1);
+    color: var(--genie-cyan) !important;
+}
+
+.nav-tabs .nav-link.active {
+    background: var(--genie-panel-light) !important;
+    color: var(--genie-cyan) !important;
+    border-bottom: 2px solid var(--genie-cyan) !important;
+}
+
+/* ============================================================
+   16. DROPDOWNS
+   ============================================================ */
+.dropdown-menu {
+    background: var(--genie-panel) !important;
+    border: 1px solid var(--genie-border) !important;
+    border-radius: var(--radius-md) !important;
+    box-shadow: var(--card-shadow);
+}
+
+.dropdown-item {
+    color: var(--text-secondary) !important;
+    transition: var(--transition-fast);
+}
+
+.dropdown-item:hover {
+    background: rgba(0, 240, 255, 0.1) !important;
+    color: var(--genie-cyan) !important;
+}
+
+/* ============================================================
+   17. RESPONSIVE DESIGN
+   ============================================================ */
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 2rem 1.5rem;
+        border-radius: var(--radius-md);
+    }
+
+    .hero-icon {
+        width: 60px;
+        height: 60px;
+    }
+
+    .credit-amount {
+        font-size: 2.5rem;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+
+    h1 { font-size: 1.75rem; }
+    h2 { font-size: 1.5rem; }
+}
+
+/* ============================================================
+   18. UTILITY CLASSES
+   ============================================================ */
+.genie-border {
+    border: 1px solid var(--genie-border) !important;
+}
+
+.genie-bg {
+    background: var(--genie-bg) !important;
+}
+
+.genie-panel {
+    background: var(--genie-panel) !important;
+}
+
+.text-cyan {
+    color: var(--genie-cyan) !important;
+}
+
+.text-gold {
+    color: var(--genie-gold) !important;
+}
+
+.shadow-glow {
+    box-shadow: var(--glow-cyan) !important;
+}
+
+.hover-lift {
+    transition: var(--transition-normal);
+}
+
+.hover-lift:hover {
+    transform: translateY(-3px);
+}

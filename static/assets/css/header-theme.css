@@ -1,0 +1,121 @@
+/*--------------------------------------------------------------
+# HEADER THEME-AWARE STYLES
+# Styles that adapt to both dark and light themes
+--------------------------------------------------------------*/
+
+/* ============================================================
+   DARK THEME HEADER & DROPDOWN
+   ============================================================ */
+[data-theme="dark"] #header,
+[data-theme="dark"] .header {
+    background-color: #111827 !important;
+    border-bottom: 1px solid #374151 !important;
+}
+
+[data-theme="dark"] .dropdown-menu.profile {
+    background: #111827 !important;
+    border: 1px solid #374151 !important;
+}
+
+[data-theme="dark"] .dropdown-header h6 {
+    color: #00F0FF !important;
+}
+
+[data-theme="dark"] .dropdown-header span {
+    color: #9ca3af !important;
+}
+
+[data-theme="dark"] .dropdown-divider {
+    border-color: #374151 !important;
+}
+
+[data-theme="dark"] .dropdown-item {
+    color: white !important;
+}
+
+[data-theme="dark"] .dropdown-item:hover {
+    background: rgba(0, 240, 255, 0.1) !important;
+    color: #00F0FF !important;
+}
+
+[data-theme="dark"] .dropdown-item i {
+    color: #FFD700 !important;
+}
+
+[data-theme="dark"] .nav-profile .dropdown-toggle {
+    color: #00F0FF !important;
+}
+
+/* ============================================================
+   LIGHT THEME HEADER & DROPDOWN
+   ============================================================ */
+[data-theme="light"] #header,
+[data-theme="light"] .header {
+    background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFB 100%) !important;
+    border-bottom: 1px solid #D0DCE8 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .dropdown-menu.profile {
+    background: #FFFFFF !important;
+    border: 1px solid #D0DCE8 !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .dropdown-header h6 {
+    color: #1E90FF !important;
+}
+
+[data-theme="light"] .dropdown-header span {
+    color: #4A5568 !important;
+}
+
+[data-theme="light"] .dropdown-divider {
+    border-color: #D0DCE8 !important;
+}
+
+[data-theme="light"] .dropdown-item {
+    color: #1A202C !important;
+}
+
+[data-theme="light"] .dropdown-item:hover {
+    background: rgba(30, 144, 255, 0.1) !important;
+    color: #1E90FF !important;
+}
+
+[data-theme="light"] .dropdown-item i {
+    color: #FFA500 !important;
+}
+
+[data-theme="light"] .nav-profile .dropdown-toggle {
+    color: #1E90FF !important;
+}
+
+/* ============================================================
+   THEME TOGGLE BUTTON (works in both themes)
+   ============================================================ */
+.theme-toggle-btn {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.theme-toggle-btn:hover {
+    transform: translateX(5px);
+}
+
+.theme-toggle-btn i {
+    transition: transform 0.3s ease;
+}
+
+.theme-toggle-btn:hover i {
+    transform: rotate(20deg) scale(1.1);
+}
+
+/* Logo image styles */
+.logo img {
+    transition: transform 0.3s ease;
+}
+
+.logo img:hover {
+    transform: scale(1.05);
+}

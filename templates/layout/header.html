@@ -28,6 +28,17 @@
               <span style="color: #9ca3af;">{{ request.user.groups.first.name }}</span>
             </li>
             <li><hr class="dropdown-divider" style="border-color: #374151;"></li>
+
+            <!-- Theme Toggle Button -->
+            <li>
+              <a class="dropdown-item d-flex align-items-center theme-toggle-btn" href="#" id="theme-toggle-btn" style="color: white;">
+                <i class="bi bi-sun-fill me-2" style="color: #FFD700;"></i>
+                <span class="theme-text">Light Mode</span>
+              </a>
+            </li>
+
+            <li><hr class="dropdown-divider" style="border-color: #374151;"></li>
+
             <li>
               <a class="dropdown-item d-flex align-items-center" href="{% url 'main:logout' %}" style="color: white;">
                 <i class="bi bi-box-arrow-right" style="color: #FFD700;"></i>
