@@ -17,14 +17,14 @@ DEBUG = True
 
 CSRF_TRUSTED_ORIGINS = [
     "https://app-service-production-4990.up.railway.app",
-    "https://genie-copy-production.up.railway.app",
+    "https://genie-cut-staging.up.railway.app",
     "http://127.0.0.1:8000",
     "http://localhost:8000",
 ]
 
 ALLOWED_HOSTS = [
     "app-service-production-4990.up.railway.app",
-    "genie-copy-production.up.railway.app",
+    "genie-cut-staging.up.railway.app",
     '127.0.0.1',
     'localhost',
 ]
