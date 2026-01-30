@@ -1,0 +1,99 @@
+/* ============================================
+   GLOBAL RESETS & WHITE COLOR ELIMINATION
+   ============================================
+   This file ensures NO white backgrounds exist
+   ============================================ */
+
+/* ===== RESET WHITE BACKGROUNDS ===== */
+* {
+  box-sizing: border-box;
+}
+
+/* Force remove all white backgrounds */
+.bg-white,
+[style*="background-color: #fff"],
+[style*="background-color: #ffffff"],
+[style*="background-color: white"],
+[style*="background: #fff"],
+[style*="background: #ffffff"],
+[style*="background: white"],
+[style*="background-color: rgba(255, 255, 255"],
+[style*="background: rgba(255, 255, 255"] {
+  background-color: var(--genie-panel) !important;
+  background: var(--genie-panel) !important;
+}
+
+/* ===== RESET WHITE BORDERS ===== */
+[style*="border-color: #fff"],
+[style*="border-color: #ffffff"],
+[style*="border-color: white"] {
+  border-color: var(--genie-border) !important;
+}
+
+/* ===== ONLY TARGET BLACK/GREY TEXT → WHITE ===== */
+/* PRESERVE ALL OTHER COLORS (cyan, gold, etc.) */
+* {
+  color: inherit !important; /* KEEPS ORIGINAL COLORS */
+}
+
+/* ONLY change black/grey text to white */
+.text-dark, 
+.text-muted, 
+.text-secondary,
+.text-black,
+.text-gray,
+.text-grey,
+[class*="grey"]:not([class*="cyan"]), 
+[class*="gray"]:not([class*="cyan"]),
+[class*="dark"]:not([class*="cyan"]),
+[style*="color: black"],
+[style*="color: grey"],
+[style*="color: gray"],
+[style*="color: #000"],
+[style*="color: #333"],
+[style*="color: #666"],
+[style*="color: #444"],
+[style*="color: #555"] {
+  color: var(--text-primary) !important;
+}
+
+/* PRESERVE CYAN/GOLD COLORS */
+.btn-cyan, 
+.login-gold,
+[style*="cyan"], 
+[class*="cyan"]:not([class*="grey"]),
+[style*="gold"],
+[class*="gold"] {
+  color: inherit !important;
+  background: inherit !important;
+}
+
+/* ===== SCROLLBAR STYLING ===== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--genie-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--genie-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--genie-cyan);
+}
+
+/* ===== SELECTION ===== */
+::selection {
+  background-color: var(--genie-cyan);
+  color: var(--genie-bg);
+}
+
+::-moz-selection {
+  background-color: var(--genie-cyan);
+  color: var(--genie-bg);
+}

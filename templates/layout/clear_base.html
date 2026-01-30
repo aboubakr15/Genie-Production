@@ -8,7 +8,7 @@
   <meta content="width=device-width, initial-scale=1.0" name="viewport" />
 
   <title>Genie</title>
-  <link rel="icon" href="{% static 'assets/Genie_logo.jpeg' %}" type="image/x-icon">
+  <link rel="icon" href="{% static 'assets/Genie_TransparentLogo.png' %}" type="image/x-icon">
   <meta content="" name="description" />
   <meta content="" name="keywords" />
 
@@ -29,9 +29,13 @@
 
   <!-- Template Main CSS File -->
   <link href="{% static 'assets/css/style.css' %}" rel="stylesheet" />
+  
+  <!-- CENTRALIZED THEME SYSTEM - DO NOT MODIFY INLINE STYLES -->
+  <link href="{% static 'assets/css/theme.css' %}" rel="stylesheet" />
+  <link href="{% static 'assets/css/global.css' %}" rel="stylesheet" />
 </head>
 
-<body>
+<body class="theme-container">
   {% block content%} {%endblock%}
 </body>
 <script src="{% static 'assets/vendor/apexcharts/apexcharts.min.js' %}"></script>

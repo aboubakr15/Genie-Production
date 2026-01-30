@@ -1,0 +1,25 @@
+{
+  "theme_analysis": {
+    "date": "2024",
+    "pages_scanned": 106,
+    "current_colors": {
+      "primary_background": "#050A14",
+      "panel_background": "#111827",
+      "border_color": "#374151",
+      "accent_cyan": "#00F0FF",
+      "accent_gold": "#FFD700",
+      "text_label": "#94a3b8",
+      "input_background": "#1F2937",
+      "text_primary": "#ffffff",
+      "text_secondary": "#9ca3af"
+    },
+    "white_instances_found": {
+      "base.html": ["color: #ffffff", "color: white"],
+      "login.html": ["color: white", "color: #ffffff", "rgba(255, 255, 255, 0.5)", "rgba(255, 255, 255, 0.7)"],
+      "style.css": ["Multiple instances of #fff, #ffffff, white, rgba(255,255,255)"],
+      "header.html": ["color: white"],
+      "administrator/index.html": ["background-color: #F8FAFC"]
+    },
+    "notes": "All white colors except text should be replaced with theme variables"
+  }
+}

@@ -8,11 +8,11 @@
         <div class="card shadow-sm p-4 modern-filter-card" style="animation: fadeIn 0.5s ease-in;">
             <div class="row g-3 align-items-end">
                 <div class="col-md-4">
-                    <label for="start_date" class="form-label text-dark fw-bold">Start Date</label>
+                    <label for="start_date" class="form-label fw-bold">Start Date</label>
                     <input type="date" name="start_date" id="start_date" class="form-control form-control-lg" value="{{ start_date }}" style="border-radius: 8px; transition: transform 0.2s ease, box-shadow 0.2s ease;" onfocus="this.style.transform='scale(1.02)'; this.style.boxShadow='0 0 5px rgba(74, 144, 226, 0.5)';" onblur="this.style.transform='scale(1)'; this.style.boxShadow='none';">
                 </div>
                 <div class="col-md-4">
-                    <label for="end_date" class="form-label text-dark fw-bold">End Date</label>
+                    <label for="end_date" class="form-label fw-bold">End Date</label>
                     <input type="date" name="end_date" id="end_date" class="form-control form-control-lg" value="{{ end_date }}" style="border-radius: 8px; transition: transform 0.2s ease, box-shadow 0.2s ease;" onfocus="this.style.transform='scale(1.02)'; this.style.boxShadow='0 0 5px rgba(74, 144, 226, 0.5)';" onblur="this.style.transform='scale(1)'; this.style.boxShadow='none';">
                 </div>
                 <div class="col-md-4">
@@ -22,15 +22,15 @@
         </div>
         <style>
             .modern-filter-card {
-                background-color: #F8FAFC !important;
-                border-radius: 12px !important;
-                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1) !important;
+                background-color: var(--genie-panel) !important;
+                border-radius: var(--radius-md) !important;
+                box-shadow: var(--shadow-card) !important;
             }
             .modern-filter-card .form-control {
-                border-radius: 8px !important;
+                border-radius: var(--radius-sm) !important;
             }
             .modern-filter-card .btn {
-                border-radius: 8px !important;
+                border-radius: var(--radius-sm) !important;
             }
             @keyframes fadeIn {
                 from { opacity: 0; }

@@ -4,7 +4,120 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
 <style>
-    /* Table Layout Fixes */
+    /* --- 1. Global Page Colors (Dark Mode) --- */
+    body {
+        color: #ffffff; /* Default text white */
+    }
+
+    /* Force all "dark" bootstrap text to be white */
+    .text-dark {
+        color: #ffffff !important;
+    }
+
+    /* --- 2. Main Title (Prospect) --- */
+    /* Overwrite Bootstrap's primary color for this page to Cyan */
+    .text-primary {
+        color: #00F0FF !important;
+        text-shadow: 0 0 15px rgba(0, 240, 255, 0.4); /* Cyan Glow */
+    }
+
+    /* --- 3. Card & Container Layout --- */
+    .card {
+        background-color: #1a1a1a; /* Dark Card Background */
+        border: 1px solid #333;
+        width: 100%;
+        margin: 0;
+        overflow: hidden;
+        color: #ffffff;
+    }
+
+    .container {
+        max-width: 100%;
+        padding: 0 15px;
+    }
+
+    /* --- 4. Inputs (Search Bar & Edit Fields) --- */
+    .form-control, input[type="text"], input[type="date"], textarea, select {
+        background-color: #1F2937 !important; /* Dark Input Background */
+        color: #ffffff !important;           /* White Text */
+        border: 1px solid #374151 !important;
+    }
+
+    /* Placeholder text (e.g. "Search Name...") */
+    .form-control::placeholder {
+        color: rgba(255, 255, 255, 0.5) !important;
+    }
+
+    /* Focus State for inputs */
+    .form-control:focus {
+        border-color: #00F0FF !important;
+        box-shadow: 0 0 5px rgba(0, 240, 255, 0.3) !important;
+    }
+
+    /* --- 5. Buttons & Dropdowns --- */
+    /* "Order By" Dropdown - Cyan Theme */
+    #orderByDropdown {
+        color: #00F0FF !important;
+        border: 1px solid #00F0FF !important;
+        background-color: transparent !important;
+    }
+
+    #orderByDropdown:hover, #orderByDropdown:focus {
+        background-color: #00F0FF !important;
+        color: #000000 !important; /* Black text on hover */
+        box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+    }
+
+    /* Dropdown Menu Items */
+    .dropdown-menu {
+        background-color: #1F2937 !important;
+        border: 1px solid #374151;
+    }
+    .dropdown-item {
+        color: #ffffff !important;
+    }
+    .dropdown-item:hover {
+        background-color: #00F0FF !important;
+        color: #000000 !important;
+    }
+
+    /* "Save Changes" Button */
+    .btn-success {
+        background-color: #00F0FF !important; /* Cyan */
+        border-color: #00F0FF !important;
+        color: #000000 !important; /* Black Text */
+        font-weight: bold;
+    }
+
+    /* "Search" Button */
+    .btn-primary {
+        background-color: #00F0FF !important;
+        border-color: #00F0FF !important;
+        color: #000000 !important;
+        font-weight: bold;
+    }
+
+    /* --- 6. Tabs (CB, PR, etc.) --- */
+    .nav-tabs .nav-link {
+        color: rgba(255, 255, 255, 0.6) !important;
+        background-color: transparent;
+        border: 1px solid transparent;
+    }
+
+    .nav-tabs .nav-link:hover {
+        color: #00F0FF !important;
+        border-color: #333;
+    }
+
+    /* The Active Tab */
+    .nav-tabs .nav-link.active {
+        background-color: #00F0FF !important;
+        color: #000000 !important;
+        border-color: #00F0FF !important;
+        font-weight: bold;
+    }
+
+    /* --- 7. Table Styling --- */
     .table-responsive {
         margin: 0;
         padding: 0;
@@ -16,102 +129,53 @@
         width: 100%;
         margin-bottom: 0;
         table-layout: fixed;
+        color: #ffffff !important; /* Force table text white */
     }
 
     .table th {
-        background: var(--bg-gradient);
-        /* color: white; */
+        background: #111; /* Dark header */
+        color: #00F0FF;   /* Cyan Header Text */
         font-weight: 500;
         padding: 12px 8px;
         vertical-align: middle;
         word-wrap: break-word;
+        border-bottom: 1px solid #333;
     }
 
     .table td {
         padding: 12px 8px;
         vertical-align: middle;
         word-wrap: break-word;
+        background-color: #1a1a1a !important; /* Match card bg */
+        color: #ffffff !important;
+        border-bottom: 1px solid #333;
     }
 
-    /* Column Widths */
-    .table th:nth-child(1) {
-        width: 10%;
+    /* --- 8. Column Widths (Preserved from original) --- */
+    .table th:nth-child(1) { width: 10%; } /* ID */
+    .table th:nth-child(2) { width: 15%; } /* Entry Date */
+    .table th:nth-child(3) { width: 20%; } /* Company */
+    .table th:nth-child(4) { width: 15%; } /* Phone */
+    .table th:nth-child(5) { width: 15%; } /* Email */
+    .table th:nth-child(6) { width: 12%; } /* DM */
+    .table th:nth-child(7) { width: 13%; } /* Code */
+
+    /* --- 9. Alerts (No Leads Found) --- */
+    .alert-warning {
+        background-color: rgba(255, 215, 0, 0.1) !important; /* Transparent Gold */
+        color: #ffffff !important;
+        border: 1px solid #FFD700 !important;
     }
 
-    /* Entry Date */
-    .table th:nth-child(2) {
-        width: 15%;
-    }
-
-    /* Company Name */
-    .table th:nth-child(3) {
-        width: 20%;
-    }
-
-    /* Phone No. */
-    .table th:nth-child(4) {
-        width: 15%;
-    }
-
-    /* Email */
-    .table th:nth-child(5) {
-        width: 15%;
-    }
-
-    /* DM Names */
-    .table th:nth-child(6) {
-        width: 12%;
-    }
-
-    /* Termination Code */
-    .table th:nth-child(7) {
-        width: 13%;
-    }
-
-    /* CB Date */
-
-    /* Custom Row Styling */
-    .table-custom-row td {
-        padding: 0;
-    }
-
-    .sub-row {
-        border-radius: 6px;
-        padding: 15px;
-        margin: 0;
-        width: 100%;
-    }
-
-    /* Form Controls in Table */
-    .table .form-control {
-        width: 100%;
-        max-width: 100%;
-    }
-
-    /* Responsive Adjustments */
+    /* --- 10. Responsive --- */
     @media (max-width: 1200px) {
-        .table-responsive {
-            overflow-x: auto;
-        }
-    }
-
-    /* Card and Container Fixes */
-    .card {
-        width: 100%;
-        margin: 0;
-        overflow: hidden;
-    }
-
-    .container {
-        max-width: 100%;
-        padding: 0 15px;
+        .table-responsive { overflow-x: auto; }
     }
 </style>
 
 <div id="sortedContent" class="container mt-4">
     <div class="card p-4 shadow-sm" style="border-radius: 12px;">
         <h1 class="text-primary fw-bold">Prospect</h1>
-
         <!-- Bootstrap Tabs for Termination Codes -->
         <ul class="nav nav-tabs border-0 mb-4" id="myTab" role="tablist">
             {% for code in termination_codes %}

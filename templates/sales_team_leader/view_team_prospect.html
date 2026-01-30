@@ -1,6 +1,8 @@
 {% extends 'layout/base.html' %}
+{% load static %}
 
 {% block content %}
+<div class="theme-container">
 
 <style>
     .table-responsive {
@@ -17,8 +19,8 @@
     }
 
     .table th {
-        background: var(--bg-gradient);
-        color: white;
+        background: var(--genie-panel);
+        color: var(--text-primary);
         font-weight: 500;
         padding: 12px 8px;
         vertical-align: middle;
@@ -79,7 +81,7 @@
     }
 
     .sub-row {
-        background-color: #E6F0FA;
+        background-color: var(--genie-panel);
         border-radius: 6px;
         padding: 15px;
         margin: 0;
@@ -132,13 +134,14 @@
 </style>
 
 <div class="container mt-4">
-    <div class="card p-4 shadow-sm" style="background-color: #F8FAFC; border-radius: 12px;">
-        <h1 class="text-primary fw-bold">Team Prospect: {{ team_name }}</h1>
+    <div class="card p-4 shadow-sm">
+        <h1 class="fw-bold">Team Prospect: {% if team_name %}{{ team_name }}{% else %}All Teams{% endif %}</h1>
 
+        {% if termination_codes %}
         <ul class="nav nav-tabs border-0 mb-4" id="myTab" role="tablist">
             {% for code in termination_codes %}
             <li class="nav-item" role="presentation">
-                <a class="nav-link text-dark {% if code.id == selected_code.id %}active bg-light{% endif %}"
+                <a class="nav-link {% if code.id == selected_code.id %}active{% endif %}"
                     id="tab-{{ code.id }}-tab" {% if role == "sales_team_leader" %}
                     href="{% url 'sales_team_leader:view-team-prospect-with-id' code.id %}" {% else %}
                     href="{% url 'sales_manager:view-team-prospect-with-leader' code.id leader.id %}" {% endif %}
@@ -150,9 +153,10 @@
             </li>
             {% endfor %}
         </ul>
+        {% endif %}
 
         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-            <h4 class="text-dark mb-2">{{ selected_code.full_name }}</h4>
+            <h4 class="mb-2">{% if selected_code %}{{ selected_code.full_name }}{% else %}All Codes{% endif %}</h4>
             <div class="d-flex align-items-center">
                 <!-- Search Form -->
                 <form method="GET" class="d-flex me-3">
@@ -195,9 +199,9 @@
         </div>
 
         <div class="tab-content mt-3" id="myTabContent">
-            <div class="tab-pane fade show active" id="tab-{{ selected_code.id }}" role="tabpanel"
-                aria-labelledby="tab-{{ selected_code.id }}-tab">
-                {% if leads_data|length > 0 %}
+            <div class="tab-pane fade show active" id="tab-{% if selected_code %}{{ selected_code.id }}{% else %}default{% endif %}" role="tabpanel"
+                aria-labelledby="tab-{% if selected_code %}{{ selected_code.id }}{% else %}default{% endif %}-tab">
+                {% if leads_data and leads_data|length > 0 %}
                 <form method="POST">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-success mb-3" style="border-radius: 8px; padding: 8px 20px;">
@@ -205,7 +209,7 @@
                     </button>
                     <div class="table-responsive">
                         <table class="table table-striped table-bordered table-hover"
-                            style="background-color: #fff; border-radius: 8px; overflow: hidden;">
+                            style="border-radius: 8px; overflow: hidden;">
                             <thead class="table-primary">
                                 <tr>
                                     <th>Entry Date</th>
@@ -221,8 +225,8 @@
                             <tbody>
                                 {% for lead_data in leads_data %}
                                 <tr>
-                                    <td>{{ lead_data.entry_date|date:"Y-m-d H:i" }}</td>
-                                    <td>{{ lead_data.lead.name }}</td>
+                                    <td>{% if lead_data.entry_date %}{{ lead_data.entry_date|date:"Y-m-d H:i" }}{% else %}N/A{% endif %}</td>
+                                    <td>{% if lead_data.lead and lead_data.lead.name %}{{ lead_data.lead.name }}{% else %}N/A{% endif %}</td>
                                     <td>
                                         <ul id="phone-numbers-{{ lead_data.lead.id }}" class="list-unstyled mb-2">
                                             {% for phone in lead_data.phones %}
@@ -296,12 +300,12 @@
                                             id="cb_date_{{ lead_data.lead.id }}_{{ lead_data.sales_show_id }}"
                                             style="border-radius: 6px;" />
                                     </td>
-                                    <td>{{ lead_data.Agent }}</td>
+                                    <td>{% if lead_data.Agent %}{{ lead_data.Agent }}{% else %}N/A{% endif %}</td>
                                 </tr>
                                 <tr class="table-custom-row">
                                     <td colspan="9">
                                         <div class="sub-row"
-                                            style="background-color: #E6F0FA; border-radius: 6px; overflow-y: auto;">
+                                            style="border-radius: 6px; overflow-y: auto;">
                                             <div><strong>Show:</strong> {{ lead_data.sales_show }}</div>
                                             <div>
                                                 <strong>Special Notes:</strong>

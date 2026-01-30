@@ -21,15 +21,15 @@
   --danger-color: #e74c3c;
 
   /* Backgrounds */
-  --bg-body: #f4f6f9;
-  --bg-card: #ffffff;
-  --bg-sidebar: #ffffff;
-  --bg-header: rgba(255, 255, 255, 0.95);
+  --bg-body: var(--genie-bg);
+  --bg-card: var(--genie-panel);
+  --bg-sidebar: var(--genie-panel);
+  --bg-header: var(--genie-panel);
 
-  /* Text */
-  --text-primary: #2c3e50;
-  --text-secondary: #7f8c8d;
-  --text-muted: #95a5a6;
+  /* Text - Using theme variables */
+  --text-primary: var(--text-primary);
+  --text-secondary: var(--text-secondary);
+  --text-muted: var(--text-label);
 
   /* Shadows & Borders */
   --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
@@ -197,7 +197,7 @@ h6 {
 }
 
 .dropdown-menu .dropdown-item:hover {
-  background-color: #f8f9fa;
+  background-color: var(--genie-panel);
   color: var(--primary-color);
 }
 
@@ -206,7 +206,7 @@ h6 {
     content: "";
     width: 13px;
     height: 13px;
-    background: #fff;
+    background: var(--genie-panel);
     position: absolute;
     top: -7px;
     right: 20px;
@@ -305,7 +305,7 @@ h6 {
 
 .accordion-button:not(.collapsed) {
   color: var(--primary-color);
-  background-color: #f8f9fa;
+  background-color: var(--genie-panel);
 }
 
 .accordion-flush .accordion-button {
@@ -508,7 +508,7 @@ h6 {
 }
 
 .header-nav .notifications .notification-item:hover {
-  background-color: #f6f9ff;
+  background-color: rgba(0, 240, 255, 0.1);
 }
 
 .header-nav .messages {
@@ -543,7 +543,7 @@ h6 {
 }
 
 .header-nav .messages .message-item:hover {
-  background-color: #f6f9ff;
+  background-color: rgba(0, 240, 255, 0.1);
 }
 
 .header-nav .profile {
@@ -576,7 +576,7 @@ h6 {
 }
 
 .header-nav .profile .dropdown-item:hover {
-  background-color: #f6f9ff;
+  background-color: rgba(0, 240, 255, 0.1);
 }
 
 /*--------------------------------------------------------------
@@ -691,7 +691,7 @@ h6 {
 
 /* Submenu styling */
 .sidebar .nav-content {
-  background-color: #f6f9ff;
+  background-color: rgba(0, 240, 255, 0.1);
   border-radius: 4px;
   margin: 0 6px;
   overflow: hidden;
@@ -715,7 +715,7 @@ h6 {
 }
 
 .sidebar .nav-content a:hover {
-  background-color: #e0e7ff;
+  background-color: rgba(0, 240, 255, 0.15);
   color: #4154f1;
 }
 
@@ -983,7 +983,7 @@ h6 {
   line-height: 0;
   border-radius: 50%;
   flex-shrink: 0;
-  border: 3px solid #fff;
+  border: 3px solid var(--genie-panel);
   flex-grow: 0;
 }
 
@@ -1179,7 +1179,7 @@ h6 {
 
 .contact .php-email-form .loading {
   display: none;
-  background: #fff;
+  background: var(--genie-panel);
   text-align: center;
   padding: 15px;
   margin-bottom: 24px;
@@ -1347,7 +1347,7 @@ h6 {
   width: 40%;
   height: 100vh;
   /* Full height of the viewport */
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: var(--genie-panel-transparent);
   /* Slightly opaque background for contrast */
   padding: 60px;
   /* Adjusted padding for more form space */

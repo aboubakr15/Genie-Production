@@ -4,37 +4,37 @@
 {% block content %}
 <style>
     body {
-        background-color: #050A14;
-        background-image: radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.1), transparent 60%);
+        background-color: var(--genie-bg);
+        background-image: radial-gradient(circle at 50% 50%, var(--cyan-rgba-1), transparent 60%);
         height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
     }
     .login-card {
-        background: rgba(17, 24, 39, 0.9);
-        border: 1px solid #00F0FF;
-        border-radius: 20px;
-        box-shadow: 0 0 30px rgba(0, 240, 255, 0.15);
+        background: var(--genie-panel-transparent);
+        border: 1px solid var(--genie-cyan);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-cyan);
         padding: 3rem;
         width: 100%;
         max-width: 450px;
     }
     .form-control {
-        background: #1F2937;
-        border: 1px solid #374151;
-        color: white;
+        background: var(--genie-input-bg);
+        border: 1px solid var(--genie-border);
+        color: var(--text-primary);
         padding: 12px;
     }
     .form-control:focus {
-        background: #1F2937;
-        color: white;
-        border-color: #00F0FF;
-        box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+        background: var(--genie-input-bg);
+        color: var(--text-primary);
+        border-color: var(--genie-cyan);
+        box-shadow: 0 0 10px var(--cyan-rgba-3);
     }
     .btn-login {
-        background: linear-gradient(90deg, #FFC800, #FFD700);
-        color: black;
+        background: var(--genie-gold-gradient-horizontal);
+        color: #000;
         font-weight: bold;
         width: 100%;
         padding: 12px;
@@ -46,44 +46,54 @@
         width: 100%;
         height: 35%;
         margin-bottom: 40px;
-        border-radius: 25px;
+        border-radius: var(--radius-xl);
         box-shadow: 
-            0 0 30px rgba(0, 240, 255, 0.4),
-            0 0 60px rgba(0, 240, 255, 0.2),
-            0 0 90px rgba(0, 240, 255, 0.1);
+            0 0 30px var(--cyan-rgba-4),
+            0 0 60px var(--cyan-rgba-2),
+            0 0 90px var(--cyan-rgba-1);
         transition: all 0.4s ease;
-        filter: drop-shadow(0 0 15px rgba(0, 240, 255, 0.5));
+        filter: drop-shadow(0 0 15px var(--cyan-rgba-5));
         animation: logoGlow 3s ease-in-out infinite;
     }
     .logo-image:hover {
         transform: scale(1.05);
         box-shadow: 
-            0 0 40px rgba(0, 240, 255, 0.6),
-            0 0 80px rgba(0, 240, 255, 0.3),
-            0 0 120px rgba(0, 240, 255, 0.15);
-        filter: drop-shadow(0 0 20px rgba(0, 240, 255, 0.7));
+            0 0 40px var(--cyan-rgba-6),
+            0 0 80px var(--cyan-rgba-3),
+            0 0 120px var(--cyan-rgba-1);
+        filter: drop-shadow(0 0 20px var(--cyan-rgba-7));
     }
     @keyframes logoGlow {
         0%, 100% {
             box-shadow: 
-                0 0 30px rgba(0, 240, 255, 0.4),
-                0 0 60px rgba(0, 240, 255, 0.2),
-                0 0 90px rgba(0, 240, 255, 0.1);
+                0 0 30px var(--cyan-rgba-4),
+                0 0 60px var(--cyan-rgba-2),
+                0 0 90px var(--cyan-rgba-1);
         }
         50% {
             box-shadow: 
-                0 0 40px rgba(0, 240, 255, 0.6),
-                0 0 80px rgba(0, 240, 255, 0.3),
-                0 0 120px rgba(0, 240, 255, 0.15);
+                0 0 40px var(--cyan-rgba-6),
+                0 0 80px var(--cyan-rgba-3),
+                0 0 120px var(--cyan-rgba-1);
         }
+    }
+    .form-control::placeholder {
+        color: var(--text-placeholder) !important; 
+        opacity: 1;
+    }
+    .login-card label {
+        color: var(--text-muted) !important; 
+    }
+    .form-control {
+        color: var(--text-primary) !important;
     }
 </style>
 
 <div class="container d-flex justify-content-center">
     <div class="login-card text-center">
-        <img src="{% static 'assets/Genie_logo.jpeg' %}" alt="Genie Logo" class="logo-image">
+        <img src="{% static 'assets/Genie_TransparentLogo.png' %}" alt="Genie Logo" class="logo-image">
         
-        <h3 style="color: white; margin-bottom: 30px;">Welcome Back</h3>
+        <h3 style="color: var(--text-primary); margin-bottom: 30px;">Welcome Back</h3>
 
         <form method="POST" novalidate>
             {% csrf_token %}
@@ -93,16 +103,16 @@
             {% endif %}
 
             <div class="mb-3 text-start">
-                <label class="text-white mb-1">Username</label>
+                <label class="mb-1">Username</label>
                 <input type="text" name="username" class="form-control" placeholder="Enter username" required>
             </div>
 
             <div class="mb-3 text-start">
-                <label class="text-white mb-1">Password</label>
+                <label class="mb-1">Password</label>
                 <input type="password" name="password" class="form-control" placeholder="Enter password" required>
             </div>
 
-            <button type="submit" class="btn btn-login">Login</button>
+            <button type="submit" class="btn btn-login login-gold">Login</button>
         </form>
     </div>
 </div>

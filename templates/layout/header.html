@@ -6,7 +6,7 @@
     
     <a href="/" class="logo d-flex ps-5 ms-4" style="text-decoration: none;">
       
-      <img src="{% static 'assets/Genie_logo.jpeg' %}" 
+      <img src="{% static 'assets/Genie_TransparentLogo.png' %}" 
            alt="The Genierator" 
            style="max-height: 55px; width: auto; object-fit: contain;">
 
@@ -14,6 +14,14 @@
 
     <nav class="header-nav ms-auto">
       <ul class="d-flex align-items-center">
+        
+        <!-- Theme Toggle Button -->
+        <li class="nav-item pe-3">
+          <button class="theme-toggle-btn" type="button" aria-label="Toggle theme">
+            <span class="theme-icon">☀️</span>
+            <span class="theme-text">Bright</span>
+          </button>
+        </li>
         
         <li class="nav-item dropdown pe-4">
           <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
@@ -29,8 +37,8 @@
             </li>
             <li><hr class="dropdown-divider" style="border-color: #374151;"></li>
             <li>
-              <a class="dropdown-item d-flex align-items-center" href="{% url 'main:logout' %}" style="color: white;">
-                <i class="bi bi-box-arrow-right" style="color: #FFD700;"></i>
+              <a class="dropdown-item d-flex align-items-center" href="{% url 'main:logout' %}" style="color: var(--text-primary);">
+                <i class="bi bi-box-arrow-right" style="color: var(--genie-gold);"></i>
                 <span>Sign Out</span>
               </a>
             </li>

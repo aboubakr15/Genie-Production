@@ -1,39 +1,82 @@
 {% extends "layout/base.html" %}
+{% load static %}
 
 {% block content %}
-<div class="container mt-4">
-    <h3 class="mb-4">Recycled Shows for The Team: <strong>{{ team_name }}</strong></h3>
+<div class="theme-container">
+    <div class="container mt-4">
+        <h3 class="mb-4">Recycled Shows for The Team: <strong>{% if team_name %}{{ team_name }}{% else %}All Teams{% endif %}</strong></h3>
 
-    {% if team_members %}
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Team Members</h5>
-            </div>
-            <div class="card-body">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th scope="col">Username</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for member in team_members %}
+        {% if recycled_teams %}
+            {% for team in recycled_teams %}
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">{% if team.name %}{{ team.name }}{% else %}Team{% endif %}</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if team.members %}
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Username</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for member in team.members %}
+                                        <tr>
+                                            <td>
+                                                {% if member.user__id and role %}
+                                                    <a href="/{{role}}/view-team-member-recycled/{{member.user__id}}/new">
+                                                        {% if member.user__username %}{{ member.user__username }}{% else %}N/A{% endif %}
+                                                    </a>
+                                                {% else %}
+                                                    {% if member.user__username %}{{ member.user__username }}{% else %}N/A{% endif %}
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <p>No members in this team</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% elif team_members %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Team Members</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
                             <tr>
-                                <td>
-                                    <a href="/{{role}}/view-team-member-recycled/{{member.user__id}}/new" >
-                                        {{ member.user__username }}
-                                    </a>
-                                </td>
-                            </txr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                <th scope="col">Username</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for member in team_members %}
+                                <tr>
+                                    <td>
+                                        {% if member.user__id and role %}
+                                            <a href="/{{role}}/view-team-member-recycled/{{member.user__id}}/new">
+                                                {% if member.user__username %}{{ member.user__username }}{% else %}N/A{% endif %}
+                                            </a>
+                                        {% else %}
+                                            {% if member.user__username %}{{ member.user__username }}{% else %}N/A{% endif %}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
-    {% else %}
-        <div class="alert alert-info" role="alert">
-            No team members found.
-        </div>
-    {% endif %}
+        {% else %}
+            <div class="alert alert-info" role="alert">
+                No recycled team data available
+            </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

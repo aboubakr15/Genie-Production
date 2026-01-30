@@ -117,7 +117,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': os.environ.get('MYSQL_DATABASE', "genie"),
         'USER': os.environ.get('MYSQLUSER', "root"),
-        'PASSWORD': os.environ.get('MYSQLPASSWORD', "Admin123"),
+        'PASSWORD': os.environ.get('MYSQLPASSWORD', "10102003"),
         'HOST': os.environ.get('MYSQLHOST', "localhost"),
         'PORT': os.environ.get('MYSQLPORT', "3306"),
         'OPTIONS': {
@@ -130,7 +130,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': os.environ.get('MYSQL_DATABASE_global', "global"),
         'USER': os.environ.get('MYSQLUSER_global', "root"),
-        'PASSWORD': os.environ.get('MYSQLPASSWORD_global', "10102003"),
+        'PASSWORD': os.environ.get('MYSQLPASSWORD_global', "1234"),
         'HOST': os.environ.get('MYSQLHOST_global', "localhost"),
         'PORT': os.environ.get('MYSQLPORT_global', "3306"),
         'OPTIONS': {
